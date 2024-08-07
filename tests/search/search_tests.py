@@ -53,6 +53,23 @@ def test_exact_name_match():
     }
 
 
+def test_quote_some_jibber_jabber():
+    """"""
+    response = client.post("/search/generate_rq", json={
+        "input": "species \"do not change this!\" in North America"
+    })
+
+    assert response.json == {
+        "input": "species \"do not change this!\" in North America",
+        "rq": {
+            "scientificname": "do not change this!",
+            "continent": "North America"
+        },
+        "result": "success",
+        "message": ""
+    }
+
+
 def test_update_input():
     """"""
     response = client.post("/search/update_input", json={
