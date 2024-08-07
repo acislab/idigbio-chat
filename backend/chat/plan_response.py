@@ -1,8 +1,8 @@
 # This import statement initializes all defined actions
 # noinspection PyUnresolvedReferences
-from procedures import *
+from chat.procedures import *
 
-from procedures.procedure import all_procedures
+from chat.procedures.procedure import all_procedures
 from chat.types import Conversation
 from chat.agent import Agent
 
