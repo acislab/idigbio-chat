@@ -1,4 +1,4 @@
-from procedures.procedure import Procedure, all_procedures
+from chat.procedures.procedure import Procedure, all_procedures
 from chat.agent import Agent
 from chat.types import Conversation
 from tools.search_idigbio import ask_llm_to_generate_search_query

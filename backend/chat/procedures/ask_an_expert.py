@@ -1,4 +1,4 @@
-from procedures.procedure import Procedure, all_procedures
+from chat.procedures.procedure import Procedure, all_procedures
 from chat.agent import Agent
 from chat.types import Conversation
 from tools.expert_opinion import ask_llm_for_expert_opinion
