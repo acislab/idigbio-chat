@@ -20,7 +20,7 @@ def ask_llm_to_call_a_function(agent: Agent, conversation: Conversation):
         messages=[
                      {
                          "role": "system",
-                         "content": "You call functions to find species occurrence records that may help answer users' "
+                         "content": "You call functions to retrieve information that may help answer the user's "
                                     "biodiversity-related queries. You do not answer queries yourself. If no other "
                                     "functions match the user's query, call for help from an expert using the "
                                     "ask_an_expert function."
