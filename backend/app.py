@@ -40,12 +40,8 @@ def chat():
 @app.route("/search/generate_rq", methods=["POST"])
 def api_search():
     data = request.json
-    user_message = data["input"]
-
     agent = Agent()
-
-    response = search(agent, user_message)
-
+    response = search(agent, data)
     return response
 
 

@@ -16,7 +16,8 @@ ABORT = {
 }
 
 
-def search(agent: Agent, user_input: str):
+def search(agent: Agent, data: dict):
+    user_input = data["input"]
     should_parse = check_if_user_input_is_on_topic(agent, user_input)
 
     if should_parse:
