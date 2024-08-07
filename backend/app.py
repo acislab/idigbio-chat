@@ -41,7 +41,7 @@ def chat():
 def api_search():
     data = request.json
     agent = Agent()
-    response = search(agent, data)
+    response = search.generate_rq(agent, data)
     return response
 
 
