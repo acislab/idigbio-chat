@@ -5,6 +5,8 @@ from chat.agent import Agent
 from chat.types import Conversation
 from chat.plan_response import ask_llm_to_call_a_function
 
+from search.search import search
+
 app = Flask(__name__)
 CORS(app)
 
@@ -33,6 +35,18 @@ def chat():
     # generated_query = json.dumps(generate_query(user_text).model_dump(exclude_none=True))
 
     return {"response": response}
+
+
+@app.route("/search/generate_rq", methods=["POST"])
+def api_search():
+    data = request.json
+    user_message = data["input"]
+
+    agent = Agent()
+
+    response = search(agent, user_message)
+
+    return response
 
 
 if __name__ == '__main__':
