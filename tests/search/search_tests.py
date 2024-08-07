@@ -51,3 +51,26 @@ def test_exact_name_match():
         "result": "success",
         "message": ""
     }
+
+
+def test_update_input():
+    """"""
+    response = client.post("/search/update_input", json={
+        "input": "Ursus arctos in North America",
+        "rq": {
+            "genus": "Ursus",
+            "specificepithet": "arctos",
+            "continent": "Canada"
+        }
+    })
+
+    assert response.json == {
+        "input": "Ursus arctos in Canada",
+        "rq": {
+            "genus": "Ursus",
+            "specificepithet": "arctos",
+            "continent": "Canada"
+        },
+        "result": "success",
+        "message": ""
+    }

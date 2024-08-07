@@ -1,9 +1,11 @@
 from chat.agent import Agent
-import search.functions.generate_rq as rq
+import search.functions.generate_rq as llm_gen_rq
+import search.functions.update_inputs as llm_update_input
 
 
 def generate_rq(agent: Agent, data: dict):
-    return rq.run(agent, data)
+    return llm_gen_rq.run(agent, data)
 
 
-__all__ = ["generate_rq"]
+def update_input(agent: Agent, data: dict):
+    return llm_update_input.run(agent, data)
