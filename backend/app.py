@@ -5,7 +5,7 @@ from chat.agent import Agent
 from chat.types import Conversation
 from chat.plan_response import ask_llm_to_call_a_function
 
-from search.search import search
+import search.api
 
 app = Flask(__name__)
 CORS(app)
@@ -41,7 +41,7 @@ def chat():
 def api_search():
     data = request.json
     agent = Agent()
-    response = search.generate_rq(agent, data)
+    response = search.api.generate_rq(agent, data)
     return response
 
 

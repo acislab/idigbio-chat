@@ -4,6 +4,17 @@ import fields
 from chat.agent import Agent
 from idigbio_records_api_schema import LLMQueryOutput
 
+
+def run(agent: Agent, data: dict):
+    user_input = data["input"]
+    should_parse = check_if_user_input_is_on_topic(agent, user_input)
+
+    if should_parse:
+        return search_species_occurrence_records(agent, user_input)
+    else:
+        return report_failure(agent, user_input)
+
+
 SEARCH = {
     "name": "search_species_occurrence_records",
     "description": "Shows an interactive list of species occurrence records in iDigBio and a map of their "
@@ -14,16 +25,6 @@ ABORT = {
     "name": "ask_an_expert",
     "description": "If none of the other tools satisfy the user's request, ask an expert for help."
 }
-
-
-def search(agent: Agent, data: dict):
-    user_input = data["input"]
-    should_parse = check_if_user_input_is_on_topic(agent, user_input)
-
-    if should_parse:
-        return search_species_occurrence_records(agent, user_input)
-    else:
-        return report_failure(agent, user_input)
 
 
 def check_if_user_input_is_on_topic(agent, user_input):
