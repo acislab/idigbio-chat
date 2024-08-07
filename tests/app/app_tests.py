@@ -1,16 +1,7 @@
-import json
-
 from app import app
 
 app.testing = True
 client = app.test_client()
-
-
-def test_index_route():
-    response = client.get('/')
-
-    assert response.status_code == 200
-    assert response.data.decode('utf-8') == '{"message":"Hello, World!"}\n'
 
 
 def test_simple_idigbio_search():
@@ -50,10 +41,10 @@ def test_expert_opinion():
         "message": "What color are polar bears? Please be brief."
     }).json["response"]
 
+    print("\n", response)
+
     assert response["type"] == "expert"
     assert response["data"]["source"] == "LLM"
-
-    print(response.json)
 
 
 def test_conversation():

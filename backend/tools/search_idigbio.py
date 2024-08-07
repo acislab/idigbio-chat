@@ -1,16 +1,16 @@
-import instructor
-import openai
-from dotenv import load_dotenv
-
 import idigbio_util
+from chat.agent import Agent
+from chat.types import Conversation
 from idigbio_records_api_schema import LLMQueryOutput
 
-load_dotenv()  # Load API key and patch the instructor client
-client = instructor.from_openai(openai.OpenAI())
 
-
-def ask_llm_to_generate_search_query(prompt: str):
-    result = __generate_query__(prompt)
+def ask_llm_to_generate_search_query(agent: Agent, conversation: Conversation):
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=1,
+        response_model=LLMQueryOutput,
+        messages=conversation,
+    )
 
     params = result.model_dump(exclude_none=True)
     url_params = idigbio_util.url_encode_params(params)
@@ -35,21 +35,3 @@ def ask_llm_to_generate_search_query(prompt: str):
             }
         }
     ]
-
-
-def __generate_query__(prompt: str) -> LLMQueryOutput:
-    return client.chat.completions.create(
-        model="gpt-4o",
-        temperature=1,
-        response_model=LLMQueryOutput,
-        messages=[
-            {
-                "role": "system",
-                "content": ""
-            },
-            {
-                "role": "user",
-                "content": prompt
-            }
-        ],
-    )
