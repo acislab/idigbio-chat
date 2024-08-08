@@ -1,3 +1,5 @@
+import json
+
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
@@ -72,10 +74,14 @@ def textbox_demo():
         params = {"rq": response["rq"]}
         url_params = idigbio_util.url_encode_params(params)
 
+        input = response["input"]
+        rq = json.dumps(response["rq"])
+
         return render_template("textbox.html",
                                portal_url=f"https://beta-portal.idigbio.org/portal/search?{url_params}",
                                api_url=f"https://search.idigbio.org/v2/search/records?{url_params}",
-                               **response)
+                               input=input,
+                               rq=rq)
 
 
 if __name__ == '__main__':
