@@ -1,8 +1,7 @@
 import json
 
-import fields
 from chat.agent import Agent
-from idigbio_records_api_schema import LLMQueryOutput
+from search.types import Message
 
 SYSTEM_PROMPT = """
 You translate iDigBio Records Search API parameters into natural language requests. If a request is provided as 
@@ -43,20 +42,20 @@ You: species = Homo sapiens, continent = Asia
 """
 
 
-def run(agent: Agent, data: dict) -> dict:
+def run(agent: Agent, data: dict) -> Message:
     reference_input = data["input"]
     rq = data["rq"]
 
     new_input = generate_new_input_from_rq(agent, reference_input, rq)
 
-    # Make sure new input translates to the given rq
+    # TODO: Make sure new input translates back to the given rq
 
-    return {
-        "input": new_input,
-        "rq": rq,
-        "result": "success",
-        "message": ""
-    }
+    return Message(
+        input=new_input,
+        rq=rq,
+        result="success",
+        message=""
+    )
 
 
 def generate_new_input_from_rq(agent, reference_input, rq) -> str:

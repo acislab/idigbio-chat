@@ -46,8 +46,9 @@ def generate_rq():
     print("REQUEST:", data)
 
     agent = Agent()
-    response = search.api.generate_rq(agent, data)
+    response = search.api.generate_rq(agent, data).model_dump(exclude_none=True)
     print("RESPONSE:", response)
+
     return response
 
 
@@ -57,7 +58,7 @@ def update_input():
     print("REQUEST:", data)
 
     agent = Agent()
-    response = search.api.update_input(agent, data)
+    response = search.api.update_input(agent, data).model_dump(exclude_none=True)
     print("RESPONSE:", response)
 
     return response
@@ -75,9 +76,9 @@ def textbox_demo():
         agent = Agent()
         response = {}
         if data["action"] == "generate_rq":
-            response = search.api.generate_rq(agent, data)
+            response = search.api.generate_rq(agent, data).model_dump(exclude_none=True)
         elif data["action"] == "update_input":
-            response = search.api.update_input(agent, data)
+            response = search.api.update_input(agent, data).model_dump(exclude_none=True)
 
         rq = json.dumps(response["rq"]) if type(response["rq"]) == dict else response["rq"]
         params = {"rq": response["rq"]}

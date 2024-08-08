@@ -1,11 +1,12 @@
 import json
 
+from search.types import Message, Result
 from fields import fields
 from chat.agent import Agent
 from idigbio_records_api_schema import LLMQueryOutput
 
 
-def run(agent: Agent, data: dict):
+def run(agent: Agent, data: dict) -> Message:
     user_input = data["input"]
     should_parse = check_if_user_input_is_on_topic(agent, user_input)
 
@@ -27,7 +28,7 @@ ABORT = {
 }
 
 
-def check_if_user_input_is_on_topic(agent, user_input):
+def check_if_user_input_is_on_topic(agent, user_input) -> bool:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
@@ -264,7 +265,7 @@ You: {{
 """
 
 
-def search_species_occurrence_records(agent: Agent, user_input: str):
+def search_species_occurrence_records(agent: Agent, user_input: str) -> Message:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
@@ -282,18 +283,18 @@ def search_species_occurrence_records(agent: Agent, user_input: str):
 
     params = result.model_dump(exclude_none=True)
 
-    return {
-        "input": user_input,
-        "rq": params["rq"],
-        "result": "success",
-        "message": ""
-    }
+    return Message(
+        input=user_input,
+        rq=params["rq"],
+        result=Result.success,
+        message=""
+    )
 
 
-def report_failure(agent: Agent, user_input: str):
-    return {
-        "input": user_input,
-        "rq": {},
-        "result": "error",
-        "message": "Failed to understand user input"
-    }
+def report_failure(agent: Agent, user_input: str) -> Message:
+    return Message(
+        input=user_input,
+        rq={},
+        result=Result.error,
+        message="Failed to understand user input"
+    )
