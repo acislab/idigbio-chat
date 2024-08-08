@@ -1,0 +1,43 @@
+<div class="row">
+    <div class="col-12">
+        <h1>iDigBio Natural Language Search</h1>
+    </div>
+    <div class="col-12">
+        <form action="/search/demo" method="post">
+            <div class="form-group">
+                <label for="textbox">What records do you want to search for?</label>
+                <br>
+                <textarea id="textbox" name="input" style="width: 100%"
+                          placeholder="Homo sapiens in the United States">{{ input }}</textarea>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-lg btn-success" type="submit" name="action" value="generate_rq">Update structured
+                    query
+                </button>
+            </div>
+
+            <br>
+
+            <div class="form-group">
+                <label for="rq">Request parameters:</label>
+
+                <br>
+                <textarea id="rq" name="rq" style="width: 100%"
+                          placeholder="{}">{{ rq }}</textarea>
+            </div>
+            <div class="form-group">
+                <button class="btn btn-lg btn-success" type="submit" name="action" value="update_input">Update search
+                    text
+                </button>
+            </div>
+        </form>
+
+        <div>
+            Portal search: <a href="{{ portal_url }}" target="_blank" rel="noopener noreferrer">{{ portal_url }}</a>
+        </div>
+
+        <div>
+            API search: <a href="{{ api_url }}" target="_blank" rel="noopener noreferrer">{{ api_url }}</a>
+        </div>
+    </div>
+</div>

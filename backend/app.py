@@ -1,13 +1,14 @@
-from flask import Flask, jsonify, request
+from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
+import idigbio_util
 from chat.agent import Agent
 from chat.types import Conversation
 from chat.plan_response import ask_llm_to_call_a_function
 
 import search.api
 
-app = Flask(__name__)
+app = Flask(__name__, template_folder="templates")
 CORS(app)
 
 
@@ -53,5 +54,29 @@ def update_input():
     return response
 
 
+@app.route("/search/demo", methods=["GET", "POST"])
+def textbox_demo():
+    if request.method == "GET":
+        return render_template("textbox.html")
+    elif request.method == "POST":
+        print(request.form)
+
+        data = request.form
+
+        agent = Agent()
+        if data["action"] == "generate_rq":
+            response = search.api.generate_rq(agent, data)
+        elif data["action"] == "update_input":
+            response = search.api.update_input(agent, data)
+
+        params = {"rq": response["rq"]}
+        url_params = idigbio_util.url_encode_params(params)
+
+        return render_template("textbox.html",
+                               portal_url=f"https://beta-portal.idigbio.org/portal/search?{url_params}",
+                               api_url=f"https://search.idigbio.org/v2/search/records?{url_params}",
+                               **response)
+
+
 if __name__ == '__main__':
-    app.run(debug=True, port=8080)
+    app.run(debug=True, port=8080, host="0.0.0.0")
