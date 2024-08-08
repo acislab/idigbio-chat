@@ -1,6 +1,6 @@
 from chat.agent import Agent
 import search.functions.generate_rq as llm_gen_rq
-import search.functions.update_inputs as llm_update_input
+import search.functions.update_input as llm_update_input
 
 
 def generate_rq(agent: Agent, data: dict):

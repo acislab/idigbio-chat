@@ -228,7 +228,7 @@ user places something in quotes, use the full text that is quoted, do not break 
 User: "Homo sapiens"
 You: {{
     "genus": "Homo",
-    "specificepithet: "sapiens
+    "specificepithet: "sapiens"
 }}
 
 ## Example 2
