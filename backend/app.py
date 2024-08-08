@@ -43,16 +43,23 @@ def chat():
 @app.route("/search/generate_rq", methods=["POST"])
 def generate_rq():
     data = request.json
+    print("REQUEST:", data)
+
     agent = Agent()
     response = search.api.generate_rq(agent, data)
+    print("RESPONSE:", response)
     return response
 
 
 @app.route("/search/update_input", methods=["POST"])
 def update_input():
     data = request.json
+    print("REQUEST:", data)
+
     agent = Agent()
     response = search.api.update_input(agent, data)
+    print("RESPONSE:", response)
+
     return response
 
 
@@ -61,7 +68,7 @@ def textbox_demo():
     if request.method == "GET":
         return render_template("textbox.html")
     elif request.method == "POST":
-        print(request.form)
+        print("REQUEST:", request.form)
 
         data = request.form
 
@@ -78,6 +85,8 @@ def textbox_demo():
 
         input = response["input"]
         message = response["message"]
+
+        print("RESPONSE:", response)
 
         return render_template("textbox.html",
                                portal_url=f"https://beta-portal.idigbio.org/portal/search?{url_params}",
