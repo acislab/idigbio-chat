@@ -1,14 +1,11 @@
-import json
-
 from flask import Flask, jsonify, request, render_template
 from flask_cors import CORS
 
-import idigbio_util
-from chat.agent import Agent
-from chat.types import Conversation
-from chat.plan_response import ask_llm_to_call_a_function
-
 import search.api
+import search.demo
+from chat.agent import Agent
+from chat.plan_response import ask_llm_to_call_a_function
+from chat.types import Conversation
 
 app = Flask(__name__, template_folder="templates")
 CORS(app)
@@ -42,11 +39,9 @@ def chat():
 
 @app.route("/search/generate_rq", methods=["POST"])
 def generate_rq():
-    data = request.json
-    print("REQUEST:", data)
-
+    print("REQUEST:", request.json)
     agent = Agent()
-    response = search.api.generate_rq(agent, data).model_dump(exclude_none=True)
+    response = search.api.generate_rq(agent, request.json)
     print("RESPONSE:", response)
 
     return response
@@ -54,11 +49,9 @@ def generate_rq():
 
 @app.route("/search/update_input", methods=["POST"])
 def update_input():
-    data = request.json
-    print("REQUEST:", data)
-
+    print("REQUEST:", request.json)
     agent = Agent()
-    response = search.api.update_input(agent, data).model_dump(exclude_none=True)
+    response = search.api.update_input(agent, request.json).model_dump(exclude_none=True)
     print("RESPONSE:", response)
 
     return response
@@ -67,35 +60,15 @@ def update_input():
 @app.route("/search/demo", methods=["GET", "POST"])
 def textbox_demo():
     if request.method == "GET":
-        return render_template("textbox.html")
+        return render_template("textbox.html.j2")
     elif request.method == "POST":
         print("REQUEST:", request.form)
-
-        data = request.form
-
         agent = Agent()
-        response = {}
-        if data["action"] == "generate_rq":
-            response = search.api.generate_rq(agent, data).model_dump(exclude_none=True)
-        elif data["action"] == "update_input":
-            response = search.api.update_input(agent, data).model_dump(exclude_none=True)
-
-        rq = json.dumps(response["rq"]) if type(response["rq"]) == dict else response["rq"]
-        params = {"rq": response["rq"]}
-        url_params = idigbio_util.url_encode_params(params)
-
-        input = response["input"]
-        message = response["message"]
-
+        response = search.demo.run(agent, request.form)
         print("RESPONSE:", response)
 
-        return render_template("textbox.html",
-                               portal_url=f"https://beta-portal.idigbio.org/portal/search?{url_params}",
-                               api_url=f"https://search.idigbio.org/v2/search/records?{url_params}",
-                               input=input,
-                               rq=rq,
-                               message=message)
+        return render_template("textbox.html.j2", **response)
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080, host="0.0.0.0")
+    app.run(debug=True, port=8081, host="0.0.0.0")

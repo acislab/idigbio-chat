@@ -1,9 +1,7 @@
-import json
-
-from search.types import Message, Result
-from fields import fields
 from chat.agent import Agent
+from fields import fields
 from idigbio_records_api_schema import LLMQueryOutput
+from search.data_types import Message, Result
 
 
 def run(agent: Agent, data: dict) -> Message:

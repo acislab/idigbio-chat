@@ -1,7 +1,7 @@
 import json
 
 from chat.agent import Agent
-from search.types import Message
+from search.data_types import Message
 
 SYSTEM_PROMPT = """
 You translate iDigBio Records Search API parameters into natural language requests. If a request is provided as 
