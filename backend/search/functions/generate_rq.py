@@ -237,20 +237,28 @@ You: {{
     "scientificname": "Homo sapiens Linnaeus, 1758"
 }}
 
-## Example 3
+## Example 3 - 
 
 User: "Scientific name \"this is fake but use it anyway\""
 You: {{
     "scientificname": "this is fake but use it anyway"
 }}
 
-## Example 4
+## Example 4 - only records that specify a given field
 
 User: "kingdom must be specified"
 You: {{
     "kingdom": {{
         "type": "exists"
     }}
+}}
+
+## Example 5 - strings can be specified as lists
+
+User: "Homo sapiens and Rattus rattus in North America and Australia"
+You: {{
+    "scientificname": ["Homo sapiens", "Rattus rattus],
+    "continent": ["North America", "Australia"]
 }}
 """
 
