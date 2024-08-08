@@ -6,7 +6,8 @@ from idigbio_records_api_schema import LLMQueryOutput
 
 SYSTEM_PROMPT = """
 You translate iDigBio Records Search API parameters into natural language requests. If a request is provided as 
-input, try to adjust that request to fit the new parameters. 
+input, try to adjust that request to fit the new parameters, changing as little as possible. If the request follows a 
+particular format, reuse that format.
 
 ## Example 1
 
@@ -28,6 +29,17 @@ rq: {
 }
 
 You: records for Rattus rattus in Asia and also Europe
+
+## Example 3
+
+reference request: species = Homo sapiens, continent = North America
+rq: {
+    "genus": "Homo",
+    "specificepithet", "sapiens",
+    "continent": "Asia"
+}
+
+You: species = Homo sapiens, continent = Asia
 """
 
 

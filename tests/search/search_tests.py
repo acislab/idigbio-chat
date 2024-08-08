@@ -70,6 +70,40 @@ def test_quote_some_jibber_jabber():
     }
 
 
+def test_value_exists():
+    """"""
+    response = client.post("/search/generate_rq", json={
+        "input": "Records with locality information"
+    })
+
+    assert response.json == {
+        "input": "Records with locality information",
+        "rq": {
+            "locality": {
+                "type": "exists"
+            }
+        },
+        "result": "success",
+        "message": ""
+    }
+
+
+def test_records_with_images():
+    """"""
+    response = client.post("/search/generate_rq", json={
+        "input": "Records with images"
+    })
+
+    assert response.json == {
+        "input": "Records with images",
+        "rq": {
+            "hasImage": "true"
+        },
+        "result": "success",
+        "message": ""
+    }
+
+
 def test_update_input():
     """"""
     response = client.post("/search/update_input", json={
@@ -77,16 +111,40 @@ def test_update_input():
         "rq": {
             "genus": "Ursus",
             "specificepithet": "arctos",
-            "continent": "Canada"
+            "continent": "Australia"
         }
     })
 
     assert response.json == {
-        "input": "Ursus arctos in Canada",
+        "input": "Ursus arctos in Australia",
         "rq": {
             "genus": "Ursus",
             "specificepithet": "arctos",
-            "continent": "Canada"
+            "continent": "Australia"
+        },
+        "result": "success",
+        "message": ""
+    }
+
+
+def test_update_with_original_format():
+    response = client.post("/search/update_input", json={
+        "input": "genus: Ursus\nspecificepithet: arctos\ncountry: Canada\nprovince: Alberta",
+        "rq": {
+            "genus": "Ursus",
+            "specificepithet": "arctos",
+            "country": "Canada",
+            "province": "Quebec"
+        }
+    })
+
+    assert response.json == {
+        "input": "genus: Ursus\nspecificepithet: arctos\ncountry: Canada\nprovince: Quebec",
+        "rq": {
+            "genus": "Ursus",
+            "specificepithet": "arctos",
+            "country": "Canada",
+            "province": "Quebec"
         },
         "result": "success",
         "message": ""
