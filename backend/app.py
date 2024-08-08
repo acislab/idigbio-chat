@@ -66,16 +66,17 @@ def textbox_demo():
         data = request.form
 
         agent = Agent()
+        response = {}
         if data["action"] == "generate_rq":
             response = search.api.generate_rq(agent, data)
         elif data["action"] == "update_input":
             response = search.api.update_input(agent, data)
 
+        rq = json.dumps(response["rq"]) if type(response["rq"]) == dict else response["rq"]
         params = {"rq": response["rq"]}
         url_params = idigbio_util.url_encode_params(params)
 
         input = response["input"]
-        rq = json.dumps(response["rq"])
         message = response["message"]
 
         return render_template("textbox.html",
