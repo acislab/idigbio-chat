@@ -76,12 +76,14 @@ def textbox_demo():
 
         input = response["input"]
         rq = json.dumps(response["rq"])
+        message = response["message"]
 
         return render_template("textbox.html",
                                portal_url=f"https://beta-portal.idigbio.org/portal/search?{url_params}",
                                api_url=f"https://search.idigbio.org/v2/search/records?{url_params}",
                                input=input,
-                               rq=rq)
+                               rq=rq,
+                               message=message)
 
 
 if __name__ == '__main__':

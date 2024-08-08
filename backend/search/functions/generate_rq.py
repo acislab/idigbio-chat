@@ -48,7 +48,8 @@ def check_if_user_input_is_on_topic(agent, user_input):
         ]
     )
 
-    procedure_name = result.choices[0].message.function_call.name
+    fn_call = result.choices[0].message.function_call
+    procedure_name = fn_call.name if fn_call is not None else ""
     return procedure_name == "search_species_occurrence_records"
 
 
