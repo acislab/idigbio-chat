@@ -3,6 +3,22 @@ from chat.agent import Agent
 from chat.types import Conversation
 from idigbio_records_api_schema import LLMQueryOutput
 
+from tools.tool import Tool
+
+
+class SearchSpeciesOccurrenceRecords(Tool):
+    """
+    Responds with links to call the iDigBio Records API and to the iDigBio Search Portal.
+    """
+    schema = {
+        "name": "search_species_occurrence_records",
+        "description": "Shows an interactive list of species occurrence records in iDigBio and a map of their "
+                       "geographic distribution."
+    }
+
+    def call(self, agent: Agent, conversation: Conversation):
+        return ask_llm_to_generate_search_query(agent, conversation)
+
 
 def ask_llm_to_generate_search_query(agent: Agent, conversation: Conversation):
     result = agent.client.chat.completions.create(
