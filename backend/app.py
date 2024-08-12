@@ -1,12 +1,11 @@
 from flask import Flask, jsonify, request, render_template, session
-from flask_session import Session
 from flask_cors import CORS
+from flask_session import Session
 
 import search.api
 import search.demo
-from chat.agent import Agent
 from chat.plan_response import ask_llm_to_call_a_function
-from chat.types import Conversation
+from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
 CORS(app)
@@ -33,7 +32,7 @@ def chat():
     })
 
     agent = Agent()
-    response = ask_llm_to_call_a_function(agent, conversation)
+    response = chat.api.chat(agent, conversation)
 
     session["history"] = conversation
 
