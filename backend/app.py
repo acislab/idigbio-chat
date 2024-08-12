@@ -1,4 +1,5 @@
-from flask import Flask, jsonify, request, render_template
+from flask import Flask, jsonify, request, render_template, session
+from flask_session import Session
 from flask_cors import CORS
 
 import search.api
@@ -10,6 +11,10 @@ from chat.types import Conversation
 app = Flask(__name__, template_folder="templates")
 CORS(app)
 
+app.config["SESSION_PERMANENT"] = True
+app.config["SESSION_TYPE"] = "filesystem"
+Session(app)
+
 
 @app.route("/", methods=["GET"])
 def home():
@@ -18,22 +23,21 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat():
-    data = request.json
-    user_message = data["message"]
+    print("REQUEST:", request.json)
+    user_message = request.json["message"]
+
+    conversation = session.get("history", [])
+    conversation.append({
+        "role": "user",
+        "content": user_message
+    })
 
     agent = Agent()
+    response = ask_llm_to_call_a_function(agent, conversation)
 
-    convo: Conversation = [
-        {
-            "role": "user",
-            "content": user_message
-        }
-    ]
+    session["history"] = conversation
 
-    response = ask_llm_to_call_a_function(agent, convo)
-
-    # generated_query = json.dumps(generate_query(user_text).model_dump(exclude_none=True))
-
+    print("RESPONSE:", response)
     return {"response": response}
 
 
@@ -51,7 +55,7 @@ def generate_rq():
 def update_input():
     print("REQUEST:", request.json)
     agent = Agent()
-    response = search.api.update_input(agent, request.json).model_dump(exclude_none=True)
+    response = search.api.update_input(agent, request.json)
     print("RESPONSE:", response)
 
     return response
