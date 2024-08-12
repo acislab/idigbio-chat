@@ -4,7 +4,7 @@ from flask_session import Session
 
 import search.api
 import search.demo
-from chat.plan_response import ask_llm_to_call_a_function
+from chat.conversation import Conversation, MessageType
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
@@ -25,16 +25,11 @@ def chat():
     print("REQUEST:", request.json)
     user_message = request.json["message"]
 
-    conversation = session.get("history", [])
-    conversation.append({
-        "role": "user",
-        "content": user_message
-    })
-
+    history = session.get("history", [])
     agent = Agent()
-    response = chat.api.chat(agent, conversation)
+    response = chat.api.chat(agent, history)
 
-    session["history"] = conversation
+    session["history"] = history
 
     print("RESPONSE:", response)
     return {"response": response}

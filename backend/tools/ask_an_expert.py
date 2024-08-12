@@ -1,5 +1,5 @@
 from chat.agent import Agent
-from chat.types import Conversation
+from chat.conversation import Conversation
 
 from tools.tool import Tool
 
