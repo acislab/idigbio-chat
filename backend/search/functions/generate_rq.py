@@ -29,7 +29,7 @@ ABORT = {
 def check_if_user_input_is_on_topic(agent, user_input) -> bool:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
-        temperature=1,
+        temperature=0,
         response_model=None,
         max_tokens=100,
         functions=[SEARCH, ABORT],
@@ -266,7 +266,7 @@ You: {{
 def search_species_occurrence_records(agent: Agent, user_input: str) -> Message:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
-        temperature=1,
+        temperature=0,
         response_model=LLMQueryOutput,
         messages=[
             {

@@ -15,7 +15,7 @@ SAMPLE_SIZE = 1
 def ask_llm_to_generate_search_query(prompt: str) -> LLMQueryOutput:
     return client.chat.completions.create(
         model="gpt-4o",
-        temperature=1,
+        temperature=0,
         response_model=LLMQueryOutput,
         messages=[
             {

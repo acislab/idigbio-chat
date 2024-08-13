@@ -16,7 +16,7 @@ def create_plan(agent: Agent, conversation: Conversation, user_message: str):
 def ask_llm_to_call_a_function(agent: Agent, conversation: Conversation):
     result = agent.client.chat.completions.create(
         model="gpt-4o",
-        temperature=1,
+        temperature=0,
         response_model=None,
         max_tokens=100,
         functions=functions,

@@ -45,7 +45,7 @@ ALL_FUNCTIONS = [
 def ask_llm_to_call_a_function(prompt, *functions):
     return client.chat.completions.create(
         model="gpt-4o",
-        temperature=1,
+        temperature=0,
         response_model=None,
         max_tokens=100,
         messages=[

@@ -61,7 +61,7 @@ def run(agent: Agent, data: dict) -> Message:
 def generate_new_input_from_rq(agent, reference_input, rq) -> str:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
-        temperature=1,
+        temperature=0,
         response_model=None,
         max_tokens=100,
         messages=[
