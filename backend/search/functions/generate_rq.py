@@ -33,7 +33,6 @@ def check_if_user_input_is_on_topic(agent, user_input) -> bool:
         response_model=None,
         max_tokens=100,
         functions=[SEARCH, ABORT],
-        tool_choice="required",
         messages=[
             {
                 "role": "system",
