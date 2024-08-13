@@ -84,7 +84,10 @@ def _parse_message_from_dict(d: dict) -> Message:
 
 
 class Conversation:
-    def __init__(self, history):
+    def __init__(self, history: list[dict] = None):
+        if history is None:
+            history = []
+
         self.history: list[Message] = [_parse_message_from_dict(m) for m in history]
 
     def append(self, message: Message):

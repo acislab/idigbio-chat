@@ -55,7 +55,7 @@ def update_input():
     return response
 
 
-@app.route("/search/demo", methods=["GET", "POST"])
+@app.route("/search/demo/", methods=["GET", "POST"])
 def textbox_demo():
     if request.method == "GET":
         return render_template("textbox.html.j2")

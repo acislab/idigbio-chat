@@ -10,14 +10,23 @@ def chat(agent: Agent, history: list, user_message: str) -> dict:
     conversation = Conversation(history)
     conversation.append(UserMessage(user_message))
 
-    plan = create_plan(agent, conversation, user_message)
+    plan = create_plan(agent, conversation)
+    tool_name = plan
 
-    response = tool_lookup[plan]().call(
-        agent=agent,
-        request=user_message,
-        conversation=conversation,
-        state={}
-    )
+    if tool_name in tool_name:
+        response = tool_lookup[tool_name]().call(
+            agent=agent,
+            request=user_message,
+            conversation=conversation,
+            state={}
+        )
+    else:
+        response = {
+            "type": "error",
+            "data": {
+                "message": f"Tried to use undefined tool \"{tool_name}\""
+            }
+        }
 
     conversation.append(response)
 
