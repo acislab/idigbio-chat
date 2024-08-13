@@ -20,26 +20,7 @@ Session(app)
 fake_redis = {}
 
 
-@app.route("/", methods=["GET"])
-def home():
-    return jsonify({"message": "Hello, World!"})
-
-
-@app.route("/chat", methods=["POST"])
-def chat_api():
-    """
-    Expects
-    {
-    }
-
-    Returns
-    {
-    }
-    """
-    print("REQUEST:", request.json)
-    print(request.headers)
-    user_message = request.json["message"]
-
+def get_user_info():
     if "id" not in session:
         user_id = uuid4()
         session["id"] = user_id
@@ -52,16 +33,35 @@ def chat_api():
             "history": Conversation()
         }
 
-    user_data = fake_redis[user_id]
+    return fake_redis[user_id]
+
+
+@app.route("/", methods=["GET"])
+def home():
+    return jsonify({"message": "Hello, World!"})
+
+
+@app.route("/chat", methods=["POST"])
+def chat_api():
+    """
+    Expects
+    { "message": str }
+
+    Returns one or more
+    { "type": str, "value": str | dict }
+    """
+    print("REQUEST:", request.json)
+    print(request.headers)
+    user_message = request.json["message"]
+
+    user = get_user_info()
 
     if user_message.lower() == "clear":
-        fake_redis.pop(user_id, None)
+        fake_redis.pop(user["id"], None)
         return {"clear": True}
     else:
-        history = user_data["history"]
-
         agent = Agent()
-        response = chat.api.chat(agent, history, user_message)
+        response = chat.api.chat(agent, user["history"], user_message)
 
         print("RESPONSE:", response)
         return [m.to_dict() for m in response]
