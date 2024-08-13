@@ -2,7 +2,7 @@ import glob
 import importlib
 from os.path import dirname, basename, isfile, join
 
-from chat.conversation import Conversation
+from chat.conversation import Conversation, Message
 from nlp.agent import Agent
 
 # Automatically populated with all children of Tool in the "tools" package
@@ -15,7 +15,7 @@ class Tool:
     """
     schema: dict
 
-    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None):
+    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None) -> [Message]:
         pass
 
 

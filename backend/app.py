@@ -1,3 +1,5 @@
+from uuid import uuid4
+
 from flask import Flask, jsonify, request, render_template, session
 from flask_cors import CORS
 from flask_session import Session
@@ -5,6 +7,7 @@ from flask_session import Session
 import chat
 import search.api
 import search.demo
+from chat.conversation import Conversation
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
@@ -14,6 +17,8 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
+fake_redis = {}
+
 
 @app.route("/", methods=["GET"])
 def home():
@@ -22,17 +27,44 @@ def home():
 
 @app.route("/chat", methods=["POST"])
 def chat_api():
+    """
+    Expects
+    {
+    }
+
+    Returns
+    {
+    }
+    """
     print("REQUEST:", request.json)
+    print(request.headers)
     user_message = request.json["message"]
 
-    history = session.get("history", [])
-    agent = Agent()
-    response = chat.api.chat(agent, history, user_message)
+    if "id" not in session:
+        user_id = uuid4()
+        session["id"] = user_id
+    else:
+        user_id = session["id"]
 
-    session["history"] = history
+    if user_id not in fake_redis:
+        fake_redis[user_id] = {
+            "id": user_id,
+            "history": Conversation()
+        }
 
-    print("RESPONSE:", response)
-    return {"response": response}
+    user_data = fake_redis[user_id]
+
+    if user_message.lower() == "clear":
+        fake_redis.pop(user_id, None)
+        return {"clear": True}
+    else:
+        history = user_data["history"]
+
+        agent = Agent()
+        response = chat.api.chat(agent, history, user_message)
+
+        print("RESPONSE:", response)
+        return [m.to_dict() for m in response]
 
 
 @app.route("/search/generate_rq", methods=["POST"])

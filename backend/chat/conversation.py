@@ -90,8 +90,11 @@ class Conversation:
 
         self.history: list[Message] = [_parse_message_from_dict(m) for m in history]
 
-    def append(self, message: Message):
-        self.history.append(message)
+    def append(self, message: Message | list[Message]):
+        if isinstance(message, list):
+            self.history.extend(message)
+        else:
+            self.history.append(message)
 
     def render_to_openai(self, system_message) -> list[dict]:
         return [m for m in self.__message_renderer(system_message)]

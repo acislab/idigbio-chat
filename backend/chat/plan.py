@@ -1,9 +1,6 @@
-# This import statement initializes all defined actions
-# noinspection PyUnresolvedReferences
-from nlp.agent import Agent
-
 from chat.conversation import Conversation
 from chat.tools.tool import all_tools
+from nlp.agent import Agent
 
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 function_definitions = [p.schema for p in all_tools]
@@ -31,5 +28,9 @@ def pick_a_tool(agent: Agent, conversation: Conversation) -> str:
         messages=conversation.render_to_openai(PICK_A_TOOL_PROMPT)
     )
 
-    tool_name = result.choices[0].message.function_call.name
-    return "ask_an_expert" if tool_name is None else tool_name
+    fn_call = result.choices[0].message.function_call
+    if fn_call is None:
+        return "ask_an_expert"
+    else:
+        tool_name = fn_call.name
+        return "ask_an_expert" if tool_name is None else tool_name

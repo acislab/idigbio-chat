@@ -1,6 +1,6 @@
 from chat.conversation import Conversation, AiMessage
-from nlp.agent import Agent
 from chat.tools.tool import Tool
+from nlp.agent import Agent
 
 
 class AskAnExpert(Tool):
@@ -27,4 +27,4 @@ def ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
         messages=conversation.render_to_openai("You are a biodiversity expert.")
     )
 
-    return AiMessage(result.choices[0].message.content)
+    return [AiMessage(result.choices[0].message.content)]

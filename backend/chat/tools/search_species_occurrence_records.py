@@ -1,8 +1,7 @@
-from chat.conversation import Conversation
-from nlp.agent import Agent
 import search
-
+from chat.conversation import Conversation, AiMessage
 from chat.tools.tool import Tool
+from nlp.agent import Agent
 
 
 class SearchSpeciesOccurrenceRecords(Tool):
@@ -16,7 +15,8 @@ class SearchSpeciesOccurrenceRecords(Tool):
     }
 
     def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None):
-        return ask_llm_to_generate_search_query(agent, request)
+        res = ask_llm_to_generate_search_query(agent, request)
+        return [AiMessage({"rq": res["rq"]})]
 
 
 def ask_llm_to_generate_search_query(agent: Agent, request: str):

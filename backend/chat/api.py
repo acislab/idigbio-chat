@@ -1,33 +1,27 @@
-from chat.conversation import Conversation, UserMessage
+from chat.conversation import Conversation, UserMessage, ErrorMessage
 from chat.plan import create_plan
-from nlp.agent import Agent
 from chat.tools.tool import all_tools
+from nlp.agent import Agent
 
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 
 
-def chat(agent: Agent, history: list, user_message: str) -> dict:
-    conversation = Conversation(history)
-    conversation.append(UserMessage(user_message))
+def chat(agent: Agent, history: Conversation, user_message: str):
+    history.append(UserMessage(user_message))
 
-    plan = create_plan(agent, conversation)
+    plan = create_plan(agent, history)
     tool_name = plan
 
     if tool_name in tool_name:
         response = tool_lookup[tool_name]().call(
             agent=agent,
             request=user_message,
-            conversation=conversation,
+            conversation=history,
             state={}
         )
     else:
-        response = {
-            "type": "error",
-            "data": {
-                "message": f"Tried to use undefined tool \"{tool_name}\""
-            }
-        }
+        response = [ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")]
 
-    conversation.append(response)
+    history.append(response)
 
-    return response.to_dict()
+    return response
