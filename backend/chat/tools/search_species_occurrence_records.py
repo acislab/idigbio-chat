@@ -2,7 +2,7 @@ from chat.conversation import Conversation
 from nlp.agent import Agent
 import search
 
-from tools.tool import Tool
+from chat.tools.tool import Tool
 
 
 class SearchSpeciesOccurrenceRecords(Tool):

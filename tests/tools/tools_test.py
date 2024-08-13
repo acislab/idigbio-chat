@@ -1,5 +1,5 @@
 def test_import_tools():
-    from tools.tool import all_tools
+    from chat.tools.tool import all_tools
     tool_names = {tool.schema["name"] for tool in all_tools}
 
     assert "ask_an_expert" in tool_names

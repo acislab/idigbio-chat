@@ -1,7 +1,7 @@
 from chat.conversation import Conversation, UserMessage
 from chat.plan import create_plan
 from nlp.agent import Agent
-from tools.tool import all_tools
+from chat.tools.tool import all_tools
 
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 

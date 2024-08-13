@@ -1,6 +1,6 @@
 from chat.conversation import Conversation, AiMessage
 from nlp.agent import Agent
-from tools.tool import Tool
+from chat.tools.tool import Tool
 
 
 class AskAnExpert(Tool):

@@ -25,6 +25,6 @@ def __gather_tools():
                     isfile(f) and not (f.endswith('/__init__.py') or f.endswith("/tool.py"))]
 
     for mod in tool_modules:
-        importlib.import_module(mod, package="tools")
+        importlib.import_module(mod, package=__package__)
 
     all_tools.extend(Tool.__subclasses__())

@@ -3,7 +3,7 @@
 from nlp.agent import Agent
 
 from chat.conversation import Conversation
-from tools.tool import all_tools
+from chat.tools.tool import all_tools
 
 procedure_lookup = {t.schema["name"]: t for t in all_tools}
 functions = [p.schema for p in all_tools]
