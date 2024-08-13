@@ -28,6 +28,7 @@ def pick_a_tool(agent: Agent, conversation: Conversation) -> str:
         response_model=None,
         max_tokens=100,
         functions=function_definitions,
+        tool_choice="required",
         messages=conversation.render_to_openai(PICK_A_TOOL_PROMPT)
     )
 
