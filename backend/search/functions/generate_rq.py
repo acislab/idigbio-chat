@@ -1,6 +1,6 @@
 from nlp.agent import Agent
-from schema.fields import fields
-from schema.idigbio_records_api import LLMQueryOutput
+from schema.idigbio.fields import fields
+from schema.idigbio.records_api import LLMQueryOutput
 from search.data_types import Message, Result
 
 

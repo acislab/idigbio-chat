@@ -1,13 +1,34 @@
 """
 This module provides pydantic schema used to craft and validate LLM responses.
 """
-
-from pydantic import Field, BaseModel, model_validator, ValidationInfo
-from typing import Optional, List, Union
 from datetime import date
-from fields import fields
+from enum import Enum
+from typing import Optional, List, Union, Literal
 
-field_names = [field['field_name'] for field in fields]
+from pydantic import Field, BaseModel
+
+from .fields import fields
+
+# Field values
+DateField = Field(pattern=r"^[0-9]{4}-[0,1][0-9]-[0-3][0-9]$")
+
+
+class DateRange(BaseModel):
+    type: Literal["range"]
+    gte: str = DateField
+    lte: str = DateField
+
+
+class ExistenceEnum(str, Enum):
+    exists: "exists"
+    missing: "missing"
+
+
+class Existence(BaseModel):
+    type: ExistenceEnum
+
+
+String = Union[str, Existence]
 
 
 class GeoPoint(BaseModel):
@@ -16,6 +37,12 @@ class GeoPoint(BaseModel):
     """
     latitude: Optional[float] = Field(None)
     longitude: Optional[float] = Field(None)
+
+
+# Fields
+field_names = [field['field_name'] for field in fields]
+
+ScientificName = str
 
 
 class IDBQuerySchema(BaseModel):
@@ -65,7 +92,7 @@ class IDBQuerySchema(BaseModel):
     recordids: Optional[str] = None
     recordnumber: Optional[str] = None
     recordset: Optional[str] = None
-    scientificname: Optional[Union[str, List[str]]] = None
+    scientificname: Optional[Union[ScientificName, List[ScientificName]]] = None
     specificepithet: Optional[str] = None
     stateprovince: Optional[Union[str, List[str]]] = None
     typestatus: Optional[str] = None

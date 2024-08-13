@@ -1,7 +1,7 @@
 import idigbio_util
 from chat.conversation import Conversation
 from nlp.agent import Agent
-from schema.idigbio_records_api import LLMQueryOutput
+from schema.idigbio.records_api import LLMQueryOutput
 
 from tools.tool import Tool
 
