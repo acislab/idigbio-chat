@@ -16,12 +16,12 @@ class Message:
     def __init__(self, value: MessageValue):
         self.value = value
 
-    def get_type(self):
+    def get_type(self) -> MessageType:
         pass
 
     def to_dict(self) -> dict:
         return {
-            "type": self.get_type(),
+            "type": self.get_type().value,
             "value": self.value
         }
 
@@ -30,7 +30,7 @@ class Message:
 
 
 class UserMessage(Message):
-    def get_type(self):
+    def get_type(self) -> MessageType:
         return MessageType.user_message
 
     def to_role_and_content(self) -> list[dict]:
@@ -43,7 +43,7 @@ class UserMessage(Message):
 
 
 class AiMessage(Message):
-    def get_type(self):
+    def get_type(self) -> MessageType:
         return MessageType.ai_message
 
     def to_role_and_content(self) -> list[dict]:
@@ -56,7 +56,7 @@ class AiMessage(Message):
 
 
 class ErrorMessage(Message):
-    def get_type(self):
+    def get_type(self) -> MessageType:
         return MessageType.error
 
     def to_role_and_content(self) -> list[dict]:
@@ -90,7 +90,7 @@ class Conversation:
     def append(self, message: Message):
         self.history.append(message)
 
-    def render(self, system_message) -> list[dict]:
+    def render_to_openai(self, system_message) -> list[dict]:
         return [m for m in self.__message_renderer(system_message)]
 
     def __message_renderer(self, system_message):

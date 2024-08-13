@@ -1,5 +1,5 @@
-from chat.agent import Agent
-from chat.conversation import Conversation
+from nlp.agent import Agent
+from chat.conversation import Conversation, AiMessage
 
 from tools.tool import Tool
 
@@ -21,17 +21,11 @@ def ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
     """
     Asks the LLM to answer the user's prompt directly.
     """
-    result = agent.client.user.completions.create(
+    result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=None,
-        messages=conversation
+        messages=conversation.render_to_openai("You are a biodiversity expert.")
     )
 
-    return {
-        "type": "expert",
-        "data": {
-            "source": "LLM",
-            "text": result.choices[0].message.value
-        }
-    }
+    return AiMessage(result.choices[0].message.content)

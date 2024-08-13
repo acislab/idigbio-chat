@@ -4,7 +4,7 @@ import importlib
 from openai.types.chat import ChatCompletionMessageParam
 from os.path import dirname, basename, isfile, join
 
-from chat.agent import Agent
+from nlp.agent import Agent
 
 # Automatically populated with all children of Tool in the "tools" package
 all_tools = []

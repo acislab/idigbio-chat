@@ -2,7 +2,7 @@ import json
 
 import idigbio_util
 import search
-from chat.agent import Agent
+from nlp.agent import Agent
 
 
 def run(agent: Agent, request: dict):

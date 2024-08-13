@@ -1,6 +1,6 @@
 import json
 
-from chat.agent import Agent
+from nlp.agent import Agent
 from search.data_types import Message
 
 SYSTEM_PROMPT = """
@@ -59,7 +59,7 @@ def run(agent: Agent, data: dict) -> Message:
 
 
 def generate_new_input_from_rq(agent, reference_input, rq) -> str:
-    result = agent.client.user.completions.create(
+    result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=None,

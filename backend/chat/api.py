@@ -1,12 +1,18 @@
-from chat.conversation import Conversation, Message, MessageType
+from chat.conversation import Conversation, Message, MessageType, UserMessage, AiMessage
+from chat.plan import create_plan
 from nlp.agent import Agent
+from tools.tool import all_tools
+
+tool_lookup = {t.schema["name"]: t for t in all_tools}
 
 
 def chat(agent: Agent, history: list, user_message: str) -> dict:
     conversation = Conversation(history)
-    conversation.append(Message(MessageType.user, user_message))
+    conversation.append(UserMessage(user_message))
 
-    response = Message(MessageType.system, "This is a test")
+    plan = create_plan(agent, conversation, user_message)
+
+    response = tool_lookup[plan]().call(agent, conversation)
 
     conversation.append(response)
 

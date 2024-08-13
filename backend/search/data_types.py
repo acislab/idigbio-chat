@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from idigbio_records_api_schema import IDBQuerySchema
+from schema.idigbio_records_api import IDBQuerySchema
 
 
 class Result(str, Enum):

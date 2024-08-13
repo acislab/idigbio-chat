@@ -1,6 +1,6 @@
-from chat.agent import Agent
-from fields import fields
-from idigbio_records_api_schema import LLMQueryOutput
+from nlp.agent import Agent
+from schema.fields import fields
+from schema.idigbio_records_api import LLMQueryOutput
 from search.data_types import Message, Result
 
 
@@ -27,7 +27,7 @@ ABORT = {
 
 
 def check_if_user_input_is_on_topic(agent, user_input) -> bool:
-    result = agent.client.user.completions.create(
+    result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=None,
@@ -264,7 +264,7 @@ You: {{
 
 
 def search_species_occurrence_records(agent: Agent, user_input: str) -> Message:
-    result = agent.client.user.completions.create(
+    result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=LLMQueryOutput,

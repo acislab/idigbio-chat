@@ -1,6 +1,6 @@
 # This import statement initializes all defined actions
 # noinspection PyUnresolvedReferences
-from chat.agent import Agent
+from nlp.agent import Agent
 
 from chat.conversation import Conversation
 from tools.tool import all_tools
@@ -9,8 +9,12 @@ procedure_lookup = {t.schema["name"]: t for t in all_tools}
 functions = [p.schema for p in all_tools]
 
 
+def create_plan(agent: Agent, conversation: Conversation, user_message: str):
+    return "ask_an_expert"
+
+
 def ask_llm_to_call_a_function(agent: Agent, conversation: Conversation):
-    result = agent.client.user.completions.create(
+    result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=None,

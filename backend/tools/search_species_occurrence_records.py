@@ -21,7 +21,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
 
 
 def ask_llm_to_generate_search_query(agent: Agent, conversation: Conversation):
-    result = agent.client.user.completions.create(
+    result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=LLMQueryOutput,

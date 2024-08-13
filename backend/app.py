@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request, render_template, session
 from flask_cors import CORS
 from flask_session import Session
 
+import chat
 import search.api
 import search.demo
 from nlp.agent import Agent
@@ -20,7 +21,7 @@ def home():
 
 
 @app.route("/chat", methods=["POST"])
-def chat():
+def chat_api():
     print("REQUEST:", request.json)
     user_message = request.json["message"]
 
