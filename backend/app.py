@@ -4,7 +4,6 @@ from flask_session import Session
 
 import search.api
 import search.demo
-from chat.conversation import Conversation, MessageType
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
@@ -27,7 +26,7 @@ def chat():
 
     history = session.get("history", [])
     agent = Agent()
-    response = chat.api.chat(agent, history)
+    response = chat.api.chat(agent, history, user_message)
 
     session["history"] = history
 

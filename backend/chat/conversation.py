@@ -2,34 +2,85 @@ from enum import Enum
 
 
 class MessageType(Enum):
-    user = "user"
-    system = "system"
+    user_message = "user_message"
+    ai_message = "ai_message"
     error = "error"
 
 
-MessageContent = str | dict | list
+MessageValue = str | dict | list
 
 
 class Message:
-    type: MessageType
-    content: MessageContent
+    value: MessageValue
 
-    def __init__(self, type: MessageType, value: MessageContent):
-        self.type = type
-        self.content = value
+    def __init__(self, value: MessageValue):
+        self.value = value
 
-    def to_dict(self):
+    def get_type(self):
+        pass
+
+    def to_dict(self) -> dict:
         return {
-            "type": self.type,
-            "content": self.content
+            "type": self.get_type(),
+            "value": self.value
         }
 
+    def to_role_and_content(self) -> list[dict]:
+        pass
 
-def _parse_message_from_dict(d: dict):
+
+class UserMessage(Message):
+    def get_type(self):
+        return MessageType.user_message
+
+    def to_role_and_content(self) -> list[dict]:
+        return [
+            {
+                "role": "user",
+                "content": self.value
+            }
+        ]
+
+
+class AiMessage(Message):
+    def get_type(self):
+        return MessageType.ai_message
+
+    def to_role_and_content(self) -> list[dict]:
+        return [
+            {
+                "role": "assistant",
+                "content": self.value
+            }
+        ]
+
+
+class ErrorMessage(Message):
+    def get_type(self):
+        return MessageType.error
+
+    def to_role_and_content(self) -> list[dict]:
+        return [
+            {
+                "role": "error",
+                "content": self.value
+            }
+        ]
+
+
+def _parse_message_from_dict(d: dict) -> Message:
     try:
-        return Message(**d)
+        match MessageType(d["type"]):
+            case MessageType.ai_message:
+                return AiMessage(d["value"])
+            case MessageType.user_message:
+                return UserMessage(d["value"])
+            case MessageType.error:
+                return ErrorMessage(d["value"])
+            case _:
+                raise Exception(f"Undefined message type \"{d['type']}\"")
     except Exception as e:
-        return Message(MessageType.error, f"Malformed data: {d}\n{e}")
+        return ErrorMessage(f"Failed to parse message data: {d}\n{e}")
 
 
 class Conversation:
@@ -38,3 +89,12 @@ class Conversation:
 
     def append(self, message: Message):
         self.history.append(message)
+
+    def render(self, system_message) -> list[dict]:
+        return [m for m in self.__message_renderer(system_message)]
+
+    def __message_renderer(self, system_message):
+        yield {"role": "system", "content": system_message}
+        for message in self.history:
+            for role_and_content in message.to_role_and_content():
+                yield role_and_content

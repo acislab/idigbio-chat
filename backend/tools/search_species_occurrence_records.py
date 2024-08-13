@@ -1,7 +1,7 @@
 import idigbio_util
-from chat.agent import Agent
-from chat.types import Conversation
-from idigbio_records_api_schema import LLMQueryOutput
+from chat.conversation import Conversation
+from nlp.agent import Agent
+from schema.idigbio_records_api import LLMQueryOutput
 
 from tools.tool import Tool
 
@@ -21,11 +21,11 @@ class SearchSpeciesOccurrenceRecords(Tool):
 
 
 def ask_llm_to_generate_search_query(agent: Agent, conversation: Conversation):
-    result = agent.client.chat.completions.create(
+    result = agent.client.user.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=LLMQueryOutput,
-        messages=conversation,
+        messages=conversation.render("TODO"),
     )
 
     params = result.model_dump(exclude_none=True)

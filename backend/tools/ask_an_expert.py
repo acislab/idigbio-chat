@@ -21,7 +21,7 @@ def ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
     """
     Asks the LLM to answer the user's prompt directly.
     """
-    result = agent.client.chat.completions.create(
+    result = agent.client.user.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=None,
@@ -32,6 +32,6 @@ def ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
         "type": "expert",
         "data": {
             "source": "LLM",
-            "text": result.choices[0].message.content
+            "text": result.choices[0].message.value
         }
     }

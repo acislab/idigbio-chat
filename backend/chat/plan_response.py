@@ -1,31 +1,25 @@
 # This import statement initializes all defined actions
 # noinspection PyUnresolvedReferences
-from chat.procedures import *
-
-from chat.procedures.procedure import all_procedures
-from chat.types import Conversation
 from chat.agent import Agent
 
-procedure_lookup = {p.schema["name"]: p for p in all_procedures}
-functions = [p.schema for p in all_procedures]
+from chat.conversation import Conversation
+from tools.tool import all_tools
+
+procedure_lookup = {t.schema["name"]: t for t in all_tools}
+functions = [p.schema for p in all_tools]
 
 
 def ask_llm_to_call_a_function(agent: Agent, conversation: Conversation):
-    result = agent.client.chat.completions.create(
+    result = agent.client.user.completions.create(
         model="gpt-4o",
         temperature=1,
         response_model=None,
         max_tokens=100,
         functions=functions,
-        messages=[
-                     {
-                         "role": "system",
-                         "content": "You call functions to retrieve information that may help answer the user's "
-                                    "biodiversity-related queries. You do not answer queries yourself. If no other "
-                                    "functions match the user's query, call for help from an expert using the "
-                                    "ask_an_expert function."
-                     }
-                 ] + conversation
+        messages=conversation.render("You call functions to retrieve information that may help answer the user's "
+                                     "biodiversity-related queries. You do not answer queries yourself. If no other "
+                                     "functions match the user's query, call for help from an expert using the "
+                                     "ask_an_expert function.")
     )
 
     procedure_name = result.choices[0].message.function_call.name

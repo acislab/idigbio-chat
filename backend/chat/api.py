@@ -1,5 +1,4 @@
 from chat.conversation import Conversation, Message, MessageType
-from chat.plan_response import ask_llm_to_call_a_function
 from nlp.agent import Agent
 
 
@@ -11,4 +10,4 @@ def chat(agent: Agent, history: list, user_message: str) -> dict:
 
     conversation.append(response)
 
-    return response
+    return response.to_dict()
