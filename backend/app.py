@@ -1,13 +1,14 @@
+from typing import Iterator
 from uuid import uuid4
 
-from flask import Flask, jsonify, request, render_template, session
+from flask import Flask, jsonify, request, render_template, session, Response, stream_with_context
 from flask_cors import CORS
 from flask_session import Session
 
 import chat
 import search.api
 import search.demo
-from chat.conversation import Conversation
+from chat.conversation import Conversation, Message
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
@@ -36,6 +37,13 @@ def get_user_info():
     return fake_redis[user_id]
 
 
+def jsonify_stream(message_stream: Iterator[Message]) -> Iterator[str]:
+    for message in message_stream:
+        d = message.to_dict()
+        print(d)
+        yield d
+
+
 @app.route("/", methods=["GET"])
 def home():
     return jsonify({"message": "Hello, World!"})
@@ -50,7 +58,7 @@ def chat_api():
     Returns one or more
     { "type": str, "value": str | dict }
     """
-    print("REQUEST:", request.json)
+    print("REQUEST:", request.json, sep="\n")
     print(request.headers)
     user_message = request.json["message"]
 
@@ -61,10 +69,11 @@ def chat_api():
         return {"clear": True}
     else:
         agent = Agent()
-        response = chat.api.chat(agent, user["history"], user_message)
+        message_stream = chat.api.chat(agent, user["history"], user_message)
+        json_stream = jsonify_stream(message_stream)
 
-        print("RESPONSE:", response)
-        return [m.to_dict() for m in response]
+        print("RESPONSE:")
+        return app.response_class(stream_with_context(json_stream), mimetype="application/json")
 
 
 @app.route("/search/generate_rq", methods=["POST"])

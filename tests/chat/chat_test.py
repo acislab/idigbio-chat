@@ -4,13 +4,21 @@ app.testing = True
 client = app.test_client()
 
 
+def chat(user_message) -> list[dict]:
+    wrapped_response = client.post('/chat', json={
+        "message": user_message
+    }).response
+
+    messages = [m for m in wrapped_response]
+    # noinspection PyTypeChecker
+    return messages
+
+
 def test_simple_idigbio_search():
     """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
-    response = client.post('/chat', json={
-        "message": "Find records for genus Carex"
-    }).json
+    messages = chat("Find records for genus Carex")
 
-    assert response == [
+    assert messages == [
         {
             "type": "ai_message",
             'value': {
@@ -22,33 +30,26 @@ def test_simple_idigbio_search():
 
 def test_expert_opinion():
     """"""
-    response = client.post('/chat', json={
-        "message": "What color are polar bears? Please be brief."
-    }).json
+    messages = chat("What color are polar bears? Please be brief.")
 
-    assert len(response) == 1
+    assert len(messages) == 1
 
-    r = response[0]
-    assert r["type"] == "ai_message"
-    assert "polar bears" in r["value"].lower()
-    assert "white" in r["value"].lower()
+    m = messages[0]
+    assert m["type"] == "ai_message"
+    assert "polar bears" in m["value"].lower()
+    assert "white" in m["value"].lower()
 
 
 def test_conversation():
     """"""
-    client.post('/chat', json={
-        "message": "What color are polar bears? Please be brief."
-    })
+    chat("What color are polar bears? Please be brief.")
+    messages = chat("Where do they live? Please be brief.")
 
-    response = client.post('/chat', json={
-        "message": "Where do they live? Please be brief."
-    }).json
+    assert len(messages) == 1
 
-    assert len(response) == 1
-
-    r = response[0]
-    assert "polar bear" in r["value"].lower()
-    assert "arctic" in r["value"].lower()
+    m = messages[0]
+    assert "polar bear" in m["value"].lower()
+    assert "arctic" in m["value"].lower()
 
 
 def test_recommend_spelling_fix_with_no_matches():
