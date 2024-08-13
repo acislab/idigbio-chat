@@ -1,7 +1,6 @@
-import idigbio_util
 from chat.conversation import Conversation
 from nlp.agent import Agent
-from schema.idigbio.records_api import LLMQueryOutput
+import search
 
 from tools.tool import Tool
 
@@ -16,38 +15,11 @@ class SearchSpeciesOccurrenceRecords(Tool):
                        "geographic distribution."
     }
 
-    def call(self, agent: Agent, conversation: Conversation):
-        return ask_llm_to_generate_search_query(agent, conversation)
+    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None):
+        return ask_llm_to_generate_search_query(agent, request)
 
 
-def ask_llm_to_generate_search_query(agent: Agent, conversation: Conversation):
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=1,
-        response_model=LLMQueryOutput,
-        messages=conversation.render("TODO"),
-    )
-
-    params = result.model_dump(exclude_none=True)
-    url_params = idigbio_util.url_encode_params(params)
-
-    return [
-        {
-            "type": "idigbio-search-parameters",
-            "data": params
-        },
-        {
-            "type": "url",
-            "data": {
-                "name": "iDigBio Portal Search",
-                "url": f"https://beta-portal.idigbio.org/portal/search?{url_params}"
-            }
-        },
-        {
-            "type": "url",
-            "data": {
-                "name": "iDigBio Search API",
-                "url": f"https://search.idigbio.org/v2/search/records?{url_params}"
-            }
-        }
-    ]
+def ask_llm_to_generate_search_query(agent: Agent, request: str):
+    return search.api.generate_rq(agent, {
+        "input": request
+    })

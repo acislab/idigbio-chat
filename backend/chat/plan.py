@@ -30,7 +30,7 @@ def ask_llm_to_call_a_function(agent: Agent, conversation: Conversation):
     if procedure_name is None: procedure_name = "ask_an_expert"
 
     if procedure_name in procedure_lookup:
-        return procedure_lookup[procedure_name].call(agent, conversation)
+        return procedure_lookup[procedure_name].call(agent, conversation, )
     else:
         return {
             "type": "error",

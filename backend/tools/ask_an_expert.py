@@ -1,6 +1,5 @@
-from nlp.agent import Agent
 from chat.conversation import Conversation, AiMessage
-
+from nlp.agent import Agent
 from tools.tool import Tool
 
 
@@ -10,7 +9,7 @@ class AskAnExpert(Tool):
         "description": "If none of the other tools satisfy the user's request, ask an expert for help."
     }
 
-    def call(self, agent: Agent, conversation: Conversation):
+    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None):
         """
         Asks the LLM to answer the user's prompt directly.
         """
