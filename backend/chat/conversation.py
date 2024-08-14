@@ -44,9 +44,22 @@ class UserMessage(Message):
         ]
 
 
-class AiMessage(Message):
+class AiChatMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.ai_text_message
+
+    def to_role_and_content(self) -> list[dict]:
+        return [
+            {
+                "role": "assistant",
+                "content": self.value
+            }
+        ]
+
+
+class AiMapMessage(Message):
+    def get_type(self) -> MessageType:
+        return MessageType.ai_map_message
 
     def to_role_and_content(self) -> list[dict]:
         return [
@@ -74,7 +87,7 @@ def _parse_message_from_dict(d: dict) -> Message:
     try:
         match MessageType(d["type"]):
             case MessageType.ai_text_message:
-                return AiMessage(d["value"])
+                return AiChatMessage(d["value"])
             case MessageType.user_text_message:
                 return UserMessage(d["value"])
             case MessageType.error:

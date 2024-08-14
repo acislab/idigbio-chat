@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from chat.conversation import Conversation, UserMessage, ErrorMessage, Message, AiMessage
+from chat.conversation import Conversation, UserMessage, ErrorMessage, Message, AiChatMessage
 from chat.plan import create_plan
 from chat.tools.tool import all_tools
 from nlp.agent import Agent
@@ -50,6 +50,6 @@ def _make_response(agent: Agent, history: Conversation, user_message: str) -> It
 def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
     match user_message.lower():
         case "help":
-            yield AiMessage("I have access to the following tools...")
+            yield AiChatMessage("I have access to the following tools...")
         case _:
             pass

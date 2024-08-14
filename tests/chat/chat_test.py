@@ -59,7 +59,7 @@ def test_simple_idigbio_search():
     assert len(messages) == 2
     assert messages[0]["value"].startswith("Here is")
     assert messages[1] == {
-        "type": "ai_text_message",
+        "type": "ai_map_message",
         'value': {
             'rq': {'genus': 'Carex'}
         }

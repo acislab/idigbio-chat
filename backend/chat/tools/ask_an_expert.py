@@ -1,7 +1,7 @@
 from typing import Iterator
 
 from chat.chat_util import present_results
-from chat.conversation import Conversation, AiMessage, Message
+from chat.conversation import Conversation, AiChatMessage, Message
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -32,4 +32,4 @@ def _ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
         messages=conversation.render_to_openai("You are a biodiversity expert.")
     )
 
-    return AiMessage(result.choices[0].message.content)
+    return AiChatMessage(result.choices[0].message.content)

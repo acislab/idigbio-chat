@@ -3,7 +3,7 @@ from collections.abc import Iterator
 
 import search
 from chat.chat_util import present_results
-from chat.conversation import Conversation, AiMessage, Message
+from chat.conversation import Conversation, Message, AiMapMessage
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -24,7 +24,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
         api_query = _ask_llm_to_generate_search_query(agent, request)
 
         yield present_results(agent, history, self.verbal_return_type)
-        yield AiMessage(api_query)
+        yield AiMapMessage(api_query)
 
 
 def _ask_llm_to_generate_search_query(agent: Agent, request: str) -> Iterator[str]:

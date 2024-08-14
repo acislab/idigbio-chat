@@ -1,6 +1,6 @@
 from openai import OpenAI
 
-from chat.conversation import AiMessage
+from chat.conversation import AiChatMessage
 
 PRESENT_RESULTS_PROMPT = """
 You are an assistant who announces what information is about to be provided to the user. You do not provide the 
@@ -28,4 +28,4 @@ def present_results(agent, history, type_of_results):
         stream=True,
     )
 
-    return AiMessage(stream_openai(response))
+    return AiChatMessage(stream_openai(response))

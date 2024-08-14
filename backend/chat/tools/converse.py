@@ -1,7 +1,7 @@
 from typing import Iterator
 
 from chat.chat_util import stream_openai
-from chat.conversation import Conversation, AiMessage, Message
+from chat.conversation import Conversation, AiChatMessage, Message
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -33,4 +33,4 @@ def _ask_llm_for_a_friendly_response(agent: Agent, conversation: Conversation):
             "requesting scientific information, apologize and admit that you do not know how to answer their query.")
     )
 
-    return AiMessage(stream_openai(result))
+    return AiChatMessage(stream_openai(result))
