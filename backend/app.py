@@ -1,4 +1,5 @@
-from typing import Iterator
+import json
+from typing import Iterator, Generator
 from uuid import uuid4
 
 from flask import Flask, jsonify, request, render_template, session, Response, stream_with_context
@@ -37,11 +38,21 @@ def get_user_info():
     return fake_redis[user_id]
 
 
-def jsonify_stream(message_stream: Iterator[Message]) -> Iterator[str]:
+def textify_stream(message_stream: Iterator[Message]) -> Iterator[str]:
     for message in message_stream:
         d = message.to_dict()
         print(d)
-        yield d
+
+        message_type = json.dumps(d["type"])
+        message_value = d["value"]
+
+        if isinstance(message_value, Generator):
+            yield f'''{{ "type": {message_type}, "value": "'''
+            for fragment in message_value:
+                yield fragment
+            yield '" }'
+        else:
+            yield f'''{{ "type": {message_type}, "value": {json.dumps(message_value)} }}'''
 
 
 @app.route("/", methods=["GET"])
@@ -58,10 +69,8 @@ def chat_api():
     Returns one or more
     { "type": str, "value": str | dict }
     """
-    print("REQUEST:", request.json, sep="\n")
-    print(request.headers)
+    print("REQUEST:", request.json, dict(session), sep="\n")
     user_message = request.json["message"]
-
     user = get_user_info()
 
     if user_message.lower() == "clear":
@@ -70,10 +79,10 @@ def chat_api():
     else:
         agent = Agent()
         message_stream = chat.api.chat(agent, user["history"], user_message)
-        json_stream = jsonify_stream(message_stream)
+        text_stream = textify_stream(message_stream)
 
         print("RESPONSE:")
-        return app.response_class(stream_with_context(json_stream), mimetype="application/json")
+        return app.response_class(stream_with_context(text_stream), mimetype="application/json")
 
 
 @app.route("/search/generate_rq", methods=["POST"])

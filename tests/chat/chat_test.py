@@ -1,3 +1,8 @@
+import json
+from typing import Iterable
+
+from flask import jsonify
+
 from app import app
 
 app.testing = True
@@ -5,12 +10,11 @@ client = app.test_client()
 
 
 def chat(user_message) -> list[dict]:
-    wrapped_response = client.post('/chat', json={
+    wrapped_response: Iterable[bytes] = client.post('/chat', json={
         "message": user_message
     }).response
 
-    messages = [m for m in wrapped_response]
-    # noinspection PyTypeChecker
+    messages = [json.loads(m.decode("utf-8")) for m in wrapped_response]
     return messages
 
 

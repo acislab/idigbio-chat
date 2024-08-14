@@ -76,3 +76,21 @@ Robot: [reuse search results]
 
 Robot: The top two species by record count are tUrsus marthe poar"lar bearitimus" (the polar bear)a and "Ursus
 arctos)" (the brown bear).
+
+# Validation
+
+## Taxonomy
+
+Given input, extract search parameters. For each field:value X:Y pair:
+
+- Check whether Y appears in input
+    - If not, retry extraction
+- Check whether the user specified its field name
+    - If not, info: "Interpreting 'North America' as type 'continent'"
+- For each search term, count records that match the field-value pair
+- For each search term, perform customized validation (if defined)
+    - Any taxon name:
+        - Parse via globalnames: e.g. https://parser.globalnames.org/?format=json&names=Rattus+rattus&with_details=on
+        - Echo any warnings from globalnames
+    - Find synonyms?
+
