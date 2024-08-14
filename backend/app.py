@@ -73,10 +73,35 @@ def chat_api():
     { "message": str }
 
     Returns one or more
-    { "type": str, "value": str | dict }
+    [{ "type": str, "value": str | dict }]
+    See chat.conversation.MessageType
+    The whole response is streamed. For each response message, "type" is always sent before "value".
+
+    Example:
+        Request:
+        {
+            "type": "user_chat_message",
+            "value": "Show a map of genus Carex"
+        }
+
+        Response:
+        [
+            {
+                "type": "ai_chat_message",
+                "value": "Here is a map of occurrences for the genus Carex"
+            },
+            {
+                "type": "ai_map_message,
+                "value": {
+                    "rq": {
+                        "genus": "Carex"
+                    }
+                }
+            }
+        ]
     """
     print("REQUEST:", request.json, dict(session), sep="\n")
-    user_message = request.json["message"]
+    user_message = request.json["value"]
     user = get_user_info()
 
     if user_message.lower() == "clear":

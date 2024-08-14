@@ -10,17 +10,17 @@ from nlp.agent import Agent
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 
 
-def chat(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
-    history.append(UserMessage(user_message))
+def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
+    history.append(UserMessage(user_text_message))
 
-    response = execute(agent, history, user_message)
+    response = execute(agent, history, user_text_message)
 
     for r in response:
-        history.append(UserMessage(user_message))
+        history.append(UserMessage(user_text_message))
         yield r
 
 
-def execute(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
+def execute(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
     plan = create_plan(agent, history)
     tool_name = plan
 
@@ -29,7 +29,7 @@ def execute(agent: Agent, history: Conversation, user_message: str) -> Iterator[
 
         response = tool.call(
             agent=agent,
-            request=user_message,
+            request=user_text_message,
             history=history,
             state={}
         )

@@ -7,9 +7,10 @@ app.testing = True
 client = app.test_client()
 
 
-def chat(user_message) -> list[dict]:
+def chat(message) -> list[dict]:
     wrapped_response: Iterable[bytes] = client.post('/chat', json={
-        "message": user_message
+        "type": "user_text_message",
+        "value": message
     }).response
 
     text = "".join([m.decode("utf-8") for m in wrapped_response])
@@ -25,7 +26,7 @@ def test_simple_idigbio_search():
     assert len(messages) == 2
     assert messages[0]["value"].startswith("Here is")
     assert messages[1] == {
-        "type": "ai_message",
+        "type": "ai_text_message",
         'value': {
             'rq': {'genus': 'Carex'}
         }
@@ -40,7 +41,7 @@ def test_expert_opinion():
     assert messages[0]["value"].startswith("Here is")
 
     m = messages[1]
-    assert m["type"] == "ai_message"
+    assert m["type"] == "ai_text_message"
     assert "polar bears" in m["value"].lower()
     assert "white" in m["value"].lower()
 
@@ -67,7 +68,7 @@ def test_conversation_history_search_query():
     assert messages[0]["value"].startswith("Here is")
 
     assert messages[1] == {
-        "type": "ai_message",
+        "type": "ai_text_message",
         'value': {
             'rq': {'genus': 'Ursus'}
         }

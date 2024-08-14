@@ -3,8 +3,8 @@ from chat.conversation import Conversation, Message, MessageType
 
 def test_render_for_openai():
     conv = Conversation([
-        {"type": "ai_message", "value": "a1"},
-        {"type": "user_message", "value": "u1"}
+        {"type": "ai_text_message", "value": "a1"},
+        {"type": "user_text_message", "value": "u1"}
     ])
 
     texts = conv.render("This is the system message")

@@ -3,8 +3,9 @@ from typing import Iterator
 
 
 class MessageType(Enum):
-    user_message = "user_message"
-    ai_message = "ai_message"
+    user_text_message = "user_text_message"
+    ai_text_message = "ai_text_message"
+    ai_map_message = "ai_map_message"
     error = "error"
 
 
@@ -32,7 +33,7 @@ class Message:
 
 class UserMessage(Message):
     def get_type(self) -> MessageType:
-        return MessageType.user_message
+        return MessageType.user_text_message
 
     def to_role_and_content(self) -> list[dict]:
         return [
@@ -45,7 +46,7 @@ class UserMessage(Message):
 
 class AiMessage(Message):
     def get_type(self) -> MessageType:
-        return MessageType.ai_message
+        return MessageType.ai_text_message
 
     def to_role_and_content(self) -> list[dict]:
         return [
@@ -72,9 +73,9 @@ class ErrorMessage(Message):
 def _parse_message_from_dict(d: dict) -> Message:
     try:
         match MessageType(d["type"]):
-            case MessageType.ai_message:
+            case MessageType.ai_text_message:
                 return AiMessage(d["value"])
-            case MessageType.user_message:
+            case MessageType.user_text_message:
                 return UserMessage(d["value"])
             case MessageType.error:
                 return ErrorMessage(d["value"])
