@@ -39,20 +39,26 @@ def get_user_info():
 
 
 def textify_stream(message_stream: Iterator[Message]) -> Iterator[str]:
-    for message in message_stream:
+    yield "["
+    for i, message in enumerate(message_stream):
+        if i > 0:
+            yield ","
+
         d = message.to_dict()
         print(d)
 
         message_type = json.dumps(d["type"])
         message_value = d["value"]
 
-        if isinstance(message_value, Generator):
+        if isinstance(message_value, Iterator):
             yield f'''{{ "type": {message_type}, "value": "'''
             for fragment in message_value:
-                yield fragment
+                if fragment is not None:
+                    yield fragment
             yield '" }'
         else:
             yield f'''{{ "type": {message_type}, "value": {json.dumps(message_value)} }}'''
+    yield "]"
 
 
 @app.route("/", methods=["GET"])

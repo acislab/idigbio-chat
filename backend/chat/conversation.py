@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Iterator
 
 
 class MessageType(Enum):
@@ -7,7 +8,7 @@ class MessageType(Enum):
     error = "error"
 
 
-MessageValue = str | dict | list
+MessageValue = str | dict | list | Iterator[str]
 
 
 class Message:
