@@ -1,1 +1,1 @@
-from . import api, data_types, demo
+from . import api, data_types, demo, functions

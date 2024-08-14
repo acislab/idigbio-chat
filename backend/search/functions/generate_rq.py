@@ -9,9 +9,20 @@ def run(agent: Agent, data: dict) -> Message:
     should_parse = check_if_user_input_is_on_topic(agent, user_input)
 
     if should_parse:
-        return search_species_occurrence_records(agent, user_input)
+        params = search_species_occurrence_records(agent, user_input)
+        return Message(
+            input=user_input,
+            rq=params["rq"],
+            result=Result.success,
+            message=""
+        )
     else:
-        return report_failure(agent, user_input)
+        return Message(
+            input=user_input,
+            rq={},
+            result=Result.error,
+            message="Failed to understand user input"
+        )
 
 
 SEARCH = {
@@ -263,7 +274,7 @@ You: {{
 """
 
 
-def search_species_occurrence_records(agent: Agent, user_input: str) -> Message:
+def search_species_occurrence_records(agent: Agent, user_input: str) -> dict:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
@@ -280,19 +291,4 @@ def search_species_occurrence_records(agent: Agent, user_input: str) -> Message:
     )
 
     params = result.model_dump(exclude_none=True)
-
-    return Message(
-        input=user_input,
-        rq=params["rq"],
-        result=Result.success,
-        message=""
-    )
-
-
-def report_failure(agent: Agent, user_input: str) -> Message:
-    return Message(
-        input=user_input,
-        rq={},
-        result=Result.error,
-        message="Failed to understand user input"
-    )
+    return params

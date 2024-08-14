@@ -1,5 +1,6 @@
 from typing import Iterator
 
+from chat.chat_util import stream_openai
 from chat.conversation import Conversation, AiMessage, Message
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -21,10 +22,10 @@ def _ask_llm_for_a_friendly_response(agent: Agent, conversation: Conversation):
     """
     Asks the LLM to continue the conversation without providing scientific data.
     """
-    result = agent.client.chat.completions.create(
+    result = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
-        response_model=None,
+        stream=True,
         messages=conversation.render_to_openai(
             "You are a friendly artificial intelligence assistant that makes use of biodiversity information "
             "aggregated by iDigBio. You do not provide scientific data or knowledge directly, but call on "
@@ -32,4 +33,4 @@ def _ask_llm_for_a_friendly_response(agent: Agent, conversation: Conversation):
             "requesting scientific information, apologize and admit that you do not know how to answer their query.")
     )
 
-    return AiMessage(result.choices[0].message.content)
+    return AiMessage(stream_openai(result))

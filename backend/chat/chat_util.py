@@ -14,8 +14,10 @@ client = OpenAI()
 
 
 def stream_openai(response):
+    yield '"'
     for chunk in response:
         yield chunk.choices[0].delta.content
+    yield '"'
 
 
 def present_results(agent, history, type_of_results):

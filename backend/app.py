@@ -51,11 +51,11 @@ def textify_stream(message_stream: Iterator[Message]) -> Iterator[str]:
         message_value = d["value"]
 
         if isinstance(message_value, Iterator):
-            yield f'''{{ "type": {message_type}, "value": "'''
+            yield f'''{{ "type": {message_type}, "value": '''
             for fragment in message_value:
                 if fragment is not None:
                     yield fragment
-            yield '" }'
+            yield f' }}'
         else:
             yield f'''{{ "type": {message_type}, "value": {json.dumps(message_value)} }}'''
     yield "]"
