@@ -1,8 +1,6 @@
 from collections.abc import Iterator
 
-from openai import OpenAI
-
-from chat.conversation import Conversation, UserMessage, ErrorMessage, Message
+from chat.conversation import Conversation, UserMessage, ErrorMessage, Message, AiMessage
 from chat.plan import create_plan
 from chat.tools.tool import all_tools
 from nlp.agent import Agent
@@ -13,15 +11,24 @@ tool_lookup = {t.schema["name"]: t for t in all_tools}
 def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
 
-    response = execute(agent, history, user_text_message)
+    response = _make_response(agent, history, user_text_message)
 
     for r in response:
         history.append(UserMessage(user_text_message))
         yield r
 
 
-def execute(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
-    plan = create_plan(agent, history)
+def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
+    baked_response = _get_baked_response(agent, history, user_message)
+    if baked_response is not None:
+        i = 0
+        for message in baked_response:
+            i += 1
+            yield message
+        if i > 0:
+            return
+
+    plan = create_plan(agent, history, user_message)
     tool_name = plan
 
     if tool_name in tool_lookup:
@@ -29,7 +36,7 @@ def execute(agent: Agent, history: Conversation, user_text_message: str) -> Iter
 
         response = tool.call(
             agent=agent,
-            request=user_text_message,
+            request=user_message,
             history=history,
             state={}
         )
@@ -38,3 +45,11 @@ def execute(agent: Agent, history: Conversation, user_text_message: str) -> Iter
             yield message
     else:
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
+
+
+def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
+    match user_message.lower():
+        case "help":
+            yield AiMessage("I have access to the following tools...")
+        case _:
+            pass
