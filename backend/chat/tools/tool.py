@@ -1,6 +1,7 @@
 import glob
 import importlib
 from os.path import dirname, basename, isfile, join
+from typing import Iterator
 
 from chat.conversation import Conversation, Message
 from nlp.agent import Agent
@@ -16,7 +17,7 @@ class Tool:
     schema: dict
     verbal_return_type: str
 
-    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None) -> [Message]:
+    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None) -> Iterator[Message]:
         pass
 
 

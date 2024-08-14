@@ -18,10 +18,10 @@ class AskAnExpert(Tool):
         Asks the LLM to answer the user's prompt directly.
         """
         yield present_results(agent, history, self.verbal_return_type)
-        yield ask_llm_for_expert_opinion(agent, history)
+        yield _ask_llm_for_expert_opinion(agent, history)
 
 
-def ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
+def _ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
     """
     Asks the LLM to answer the user's prompt directly.
     """
