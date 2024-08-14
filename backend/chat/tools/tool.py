@@ -14,6 +14,7 @@ class Tool:
     Implements all the logic needed to generate an appropriate response to a user query.
     """
     schema: dict
+    verbal_return_type: str
 
     def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None) -> [Message]:
         pass

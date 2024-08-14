@@ -58,6 +58,22 @@ def test_conversation_history():
     assert "arctic" in m["value"].lower()
 
 
+def test_conversation_history_search_query():
+    """"""
+    chat("I want to talk about genus Ursus")
+    messages = chat("Find records")
+
+    assert len(messages) == 2
+    assert messages[0]["value"].startswith("Here is")
+
+    assert messages[1] == {
+        "type": "ai_message",
+        'value': {
+            'rq': {'genus': 'Ursus'}
+        }
+    }
+
+
 def test_recommend_spelling_fix_with_no_matches():
     """
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations
@@ -75,4 +91,10 @@ def test_recommend_spelling_fix_with_some_matches():
 def test_generate_a_checklist():
     """
     Query ElasticSearch for unique species at a given location
+    """
+
+
+def test_generate_a_query():
+    """
+    User only wants to know how to generate a query, not necessarily execute it.
     """

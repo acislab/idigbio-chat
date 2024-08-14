@@ -1,4 +1,5 @@
 import search
+from chat.chat_util import present_results
 from chat.conversation import Conversation, AiMessage
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -14,12 +15,16 @@ class SearchSpeciesOccurrenceRecords(Tool):
                        "geographic distribution."
     }
 
-    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None):
-        res = ask_llm_to_generate_search_query(agent, request)
-        return [AiMessage({"rq": res["rq"]})]
+    verbal_return_type = "a list of records"
+
+    def call(self, agent: Agent, request: str, history=Conversation([]), state=None):
+        yield present_results(agent, history, self.verbal_return_type)
+
+        res = _ask_llm_to_generate_search_query(agent, request)
+        yield AiMessage({"rq": res["rq"]})
 
 
-def ask_llm_to_generate_search_query(agent: Agent, request: str):
+def _ask_llm_to_generate_search_query(agent: Agent, request: str):
     return search.api.generate_rq(agent, {
         "input": request
     })
