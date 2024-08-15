@@ -1,6 +1,6 @@
 from typing import Iterator
 
-from chat.chat_util import present_results
+from chat.chat_util import present_results, stream_openai
 from chat.conversation import Conversation, AiChatMessage, Message
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -25,11 +25,11 @@ def _ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
     """
     Asks the LLM to answer the user's prompt directly.
     """
-    result = agent.client.chat.completions.create(
+    response = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
-        response_model=None,
+        stream=True,
         messages=conversation.render_to_openai("You are a biodiversity expert.")
     )
 
-    return AiChatMessage(result.choices[0].message.content)
+    return AiChatMessage(stream_openai(response))
