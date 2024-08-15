@@ -3,7 +3,8 @@ from collections.abc import Iterator
 
 import search
 from chat.chat_util import present_results
-from chat.conversation import Conversation, Message, AiMapMessage
+from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage
+from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -21,8 +22,9 @@ class SearchSpeciesOccurrenceRecords(Tool):
     verbal_return_type = "a list of records"
 
     def call(self, agent: Agent, request: str, history=Conversation([]), state=None) -> Iterator[Message]:
-        api_query = _ask_llm_to_generate_search_query(agent, request)
+        api_query = StreamedString(_ask_llm_to_generate_search_query(agent, request))
 
+        yield AiProcessingMessage("Searching for records...", api_query)
         yield present_results(agent, history, self.verbal_return_type)
         yield AiMapMessage(api_query)
 

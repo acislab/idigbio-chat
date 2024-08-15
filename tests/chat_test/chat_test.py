@@ -40,9 +40,14 @@ def test_simple_idigbio_search():
     """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("Find records for genus Carex")
 
-    assert len(messages) == 2
-    assert messages[0]["value"].startswith("Here is")
-    assert messages[1] == {
+    assert len(messages) == 3
+    assert messages[0] == {
+        'type': 'ai_processing_message',
+        'value': {'summary': 'Searching for records...',
+                  'content': {'rq': {'genus': 'Carex'}}}
+    }
+    assert messages[1]["value"].startswith("Here is")
+    assert messages[2] == {
         "type": "ai_map_message",
         'value': {
             'rq': {'genus': 'Carex'}
@@ -81,10 +86,15 @@ def test_conversation_history_search_query():
     chat("I want to talk about genus Ursus")
     messages = chat("Find records")
 
-    assert len(messages) == 2
-    assert messages[0]["type"] == "ai_text_message"
-    assert messages[0]["value"].startswith("Here is")
-    assert messages[1] == {
+    assert len(messages) == 3
+    assert messages[0] == {
+        'type': 'ai_processing_message',
+        'value': {'summary': 'Searching for records...',
+                  'content': {'rq': {'genus': 'Ursus'}}}
+    }
+    assert messages[1]["type"] == "ai_text_message"
+    assert messages[1]["value"].startswith("Here is")
+    assert messages[2] == {
         "type": "ai_text_message",
         'value': {
             'rq': {'genus': 'Ursus'}

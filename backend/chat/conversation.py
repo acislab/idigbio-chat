@@ -1,15 +1,17 @@
 from enum import Enum
-from typing import Iterator
+
+from chat.stream_util import StreamedString
 
 
 class MessageType(Enum):
     user_text_message = "user_text_message"
     ai_text_message = "ai_text_message"
     ai_map_message = "ai_map_message"
+    ai_processing_message = "ai_processing_message"
     error = "error"
 
 
-MessageValue = str | dict | list | Iterator[str]
+MessageValue = str | dict | list | StreamedString
 
 
 class Message:
@@ -20,12 +22,6 @@ class Message:
 
     def get_type(self) -> MessageType:
         pass
-
-    def to_dict(self) -> dict:
-        return {
-            "type": self.get_type().value,
-            "value": self.value
-        }
 
     def to_role_and_content(self) -> list[dict]:
         pass
@@ -60,6 +56,22 @@ class AiChatMessage(Message):
 class AiMapMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.ai_map_message
+
+    def to_role_and_content(self) -> list[dict]:
+        return [
+            {
+                "role": "assistant",
+                "content": "This is a map of species occurrences around the globe."
+            }
+        ]
+
+
+class AiProcessingMessage(Message):
+    def __init__(self, summary: MessageValue, content: MessageValue):
+        super().__init__({"summary": summary, "content": content})
+
+    def get_type(self) -> MessageType:
+        return MessageType.ai_processing_message
 
     def to_role_and_content(self) -> list[dict]:
         return [

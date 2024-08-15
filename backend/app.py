@@ -1,15 +1,14 @@
-import json
-from typing import Iterator, Generator
 from uuid import uuid4
 
-from flask import Flask, jsonify, request, render_template, session, Response, stream_with_context
+from flask import Flask, jsonify, request, render_template, session, stream_with_context
 from flask_cors import CORS
 from flask_session import Session
 
 import chat
 import search.api
 import search.demo
-from chat.conversation import Conversation, Message
+from chat.chat_util import stream_response_as_text
+from chat.conversation import Conversation
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
@@ -36,29 +35,6 @@ def get_user_info():
         }
 
     return fake_redis[user_id]
-
-
-def textify_stream(message_stream: Iterator[Message]) -> Iterator[str]:
-    yield "["
-    for i, message in enumerate(message_stream):
-        if i > 0:
-            yield ","
-
-        d = message.to_dict()
-        print(d)
-
-        message_type = json.dumps(d["type"])
-        message_value = d["value"]
-
-        if isinstance(message_value, Iterator):
-            yield f'''{{ "type": {message_type}, "value": '''
-            for fragment in message_value:
-                if fragment is not None:
-                    yield fragment
-            yield f' }}'
-        else:
-            yield f'''{{ "type": {message_type}, "value": {json.dumps(message_value)} }}'''
-    yield "]"
 
 
 @app.route("/", methods=["GET"])
@@ -110,7 +86,7 @@ def chat_api():
     else:
         agent = Agent()
         message_stream = chat.api.chat(agent, user["history"], user_message)
-        text_stream = textify_stream(message_stream)
+        text_stream = stream_response_as_text(message_stream)
 
         print("RESPONSE:")
         return app.response_class(stream_with_context(text_stream), mimetype="application/json")

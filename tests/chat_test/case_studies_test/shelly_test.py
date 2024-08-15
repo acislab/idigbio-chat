@@ -34,20 +34,20 @@ def test_list_record_id_fields():
     """
     "uuid","data.dwc:occurrenceID"
     """
-    messages = chat("What fields can I use to identify records?")
+    messages = chat("What fields are used in recordset 2c00c297-9ebd-498a-b701-d3ebde4b49f3?")
 
     assert False
 
 
 def test_the_whole_shebang():
-    chat("I want to find records using iDigBio's records API")
+    chat("What fields are used in recordset 2c00c297-9ebd-498a-b701-d3ebde4b49f3?")
     chat("What fields can I use to identify records?")
     chat("What fields describe how the observation was made?")
     chat("What fields contain collection date information?")
     chat("What fields describe who made the observation and/or collected the specimen?")
     chat("What fields describe location information?")
     messages = chat(
-        "Generate a query that finds the recordset 2c00c297-9ebd-498a-b701-d3ebde4b49f3 and returns all fields that I "
-        "just asked for.")
+        "Generate a search query that finds the recordset  and returns all "
+        "fields that I just asked for.")
 
     assert False
