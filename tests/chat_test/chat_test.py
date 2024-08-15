@@ -1,23 +1,4 @@
-import json
-from typing import Iterable
-
-from app import app
-from chat.conversation import MessageType
-
-app.testing = True
-client = app.test_client()
-
-
-def chat(message) -> list[dict]:
-    wrapped_response: Iterable[bytes] = client.post('/chat', json={
-        "type": "user_text_message",
-        "value": message
-    }).response
-
-    text = "".join([m.decode("utf-8") for m in wrapped_response])
-
-    messages = json.loads(text)
-    return messages
+from .chat_test_util import chat
 
 
 def test_be_friendly():
@@ -25,7 +6,7 @@ def test_be_friendly():
     messages = chat("Hi!")
 
     assert len(messages) == 1
-    assert messages[0]["type"] == MessageType.ai_text_message
+    assert messages[0]["type"] == "ai_text_message"
 
 
 def test_describe_self():
@@ -33,7 +14,7 @@ def test_describe_self():
     messages = chat("What can you do?")
 
     assert len(messages) == 1
-    assert messages[0]["type"] == MessageType.ai_text_message
+    assert messages[0]["type"] == "ai_text_message"
 
 
 def test_off_topic():
@@ -41,7 +22,7 @@ def test_off_topic():
     messages = chat("How's the weather?")
 
     assert len(messages) == 1
-    assert messages[0]["type"] == MessageType.ai_text_message
+    assert messages[0]["type"] == "ai_text_message"
 
 
 def test_help():
@@ -101,7 +82,7 @@ def test_conversation_history_search_query():
     messages = chat("Find records")
 
     assert len(messages) == 2
-    assert messages[0]["type"] == MessageType.ai_text_message
+    assert messages[0]["type"] == "ai_text_message"
     assert messages[0]["value"].startswith("Here is")
     assert messages[1] == {
         "type": "ai_text_message",

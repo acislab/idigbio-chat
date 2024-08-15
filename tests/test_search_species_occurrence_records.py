@@ -1,5 +1,5 @@
 from nlp.agent import Agent
-from chat.tools.search_species_occurrence_records import SearchSpeciesOccurrenceRecords
+from chat_test.tools.search_species_occurrence_records import SearchSpeciesOccurrenceRecords
 
 
 def test_call():
