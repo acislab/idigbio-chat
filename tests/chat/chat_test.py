@@ -2,6 +2,7 @@ import json
 from typing import Iterable
 
 from app import app
+from chat.conversation import MessageType
 
 app.testing = True
 client = app.test_client()
@@ -24,6 +25,7 @@ def test_be_friendly():
     messages = chat("Hi!")
 
     assert len(messages) == 1
+    assert messages[0]["type"] == MessageType.ai_text_message
 
 
 def test_describe_self():
@@ -31,6 +33,7 @@ def test_describe_self():
     messages = chat("What can you do?")
 
     assert len(messages) == 1
+    assert messages[0]["type"] == MessageType.ai_text_message
 
 
 def test_off_topic():
@@ -38,6 +41,7 @@ def test_off_topic():
     messages = chat("How's the weather?")
 
     assert len(messages) == 1
+    assert messages[0]["type"] == MessageType.ai_text_message
 
 
 def test_help():
@@ -45,7 +49,6 @@ def test_help():
     messages = chat("help")
 
     assert len(messages) == 1
-
     assert messages[0] == {
         "type": "ai_text_message",
         "value": "I have access to the following tools..."
@@ -98,8 +101,8 @@ def test_conversation_history_search_query():
     messages = chat("Find records")
 
     assert len(messages) == 2
+    assert messages[0]["type"] == MessageType.ai_text_message
     assert messages[0]["value"].startswith("Here is")
-
     assert messages[1] == {
         "type": "ai_text_message",
         'value': {
@@ -113,6 +116,9 @@ def test_recommend_spelling_fix_with_no_matches():
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations
     e.g. "Did you mean X?"
     """
+    # Trigger if zero matches in iDigBio?
+    # Check GlobalNames parser to see if it's a valid name?
+    # Check for synonyms?
 
 
 def test_recommend_spelling_fix_with_some_matches():
@@ -122,13 +128,19 @@ def test_recommend_spelling_fix_with_some_matches():
     """
 
 
-def test_generate_a_checklist():
+def test_records_field_lookup():
     """
-    Query ElasticSearch for unique species at a given location
+    Tell the user which field to use in their search.
     """
+    messages = chat(
+        "I want to use iDigBio's records API. What fields will return location information for collection events?")
+    assert False
 
 
-def test_generate_a_query():
+def test_explain_difference_between_data_and_index_fields():
     """
-    User only wants to know how to generate a query, not necessarily execute it.
+    Tell the user which field to use in their search.
     """
+    messages = chat(
+        "I want to use iDigBio's records API. What fields will return location information for collection events?")
+    assert False
