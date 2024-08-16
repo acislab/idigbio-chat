@@ -8,7 +8,7 @@ import chat
 import search.api
 import search.demo
 from chat.chat_util import stream_response_as_text
-from chat.conversation import Conversation
+from chat.conversation import Conversation, AiProcessingMessage
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
@@ -19,6 +19,8 @@ app.config["SESSION_TYPE"] = "filesystem"
 Session(app)
 
 fake_redis = {}
+
+SHOW_PROCESSING_MESSAGES = False
 
 
 def get_user_info():
@@ -86,6 +88,10 @@ def chat_api():
     else:
         agent = Agent()
         message_stream = chat.api.chat(agent, user["history"], user_message)
+
+        if not SHOW_PROCESSING_MESSAGES:
+            message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
+
         text_stream = stream_response_as_text(message_stream)
 
         print("RESPONSE:")
