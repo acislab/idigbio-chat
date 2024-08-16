@@ -12,7 +12,7 @@ from chat.conversation import Conversation, AiProcessingMessage
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
-CORS(app)
+CORS(app, supports_credentials=True)
 
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
