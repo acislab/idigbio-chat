@@ -16,8 +16,8 @@ class SearchSpeciesOccurrenceRecords(Tool):
     """
     schema = {
         "name": "search_species_occurrence_records",
-        "description": "Shows an interactive list of species occurrence records in iDigBio and a map of their "
-                       "geographic distribution."
+        "description": "Shows a list of species occurrence records in iDigBio Portal and through the iDigBio records "
+                       "API."
     }
 
     verbal_return_type = "a list of records"

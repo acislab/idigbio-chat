@@ -15,8 +15,7 @@ class ShowMapOfSpeciesOccurrences(Tool):
     """
     schema = {
         "name": "show_map_of_species_occurrences",
-        "description": "Shows an interactive list of species occurrence records in iDigBio and a map of their "
-                       "geographic distribution."
+        "description": "Shows an interactive map of species occurrences described in records from iDigBio."
     }
 
     verbal_return_type = "a map of recorded species occurrences"
