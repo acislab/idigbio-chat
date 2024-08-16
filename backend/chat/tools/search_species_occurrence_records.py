@@ -31,7 +31,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
         url_params = idigbio_util.url_encode_params(query_params.get())
 
         yield AiChatMessage(f"[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?{url_params})")
-        yield AiChatMessage(f"[iDigBio API search](https://search.idigbio.org/v2/search/records?{url_params})")
+        yield AiChatMessage(f"[iDigBio records API search](https://search.idigbio.org/v2/search/records?{url_params})")
 
 
 def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation):
