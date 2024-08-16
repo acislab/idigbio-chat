@@ -51,11 +51,11 @@ def test_simple_idigbio_search():
     }
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {'type': 'ai_text_message',
-                           'value': '[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?rq={'
-                                    '"genus":"Carex"})'}
+                           'value': '[iDigBio portal search]('
+                                    'https://beta-portal.idigbio.org/portal/search?rq=%28%22genus%22:%22Carex%22%29)'}
     assert messages[3] == {'type': 'ai_text_message',
-                           'value': '[iDigBio API search](https://search.idigbio.org/v2/search/records?rq={'
-                                    '"genus":"Carex"})'}
+                           'value': '[iDigBio records API search]('
+                                    'https://search.idigbio.org/v2/search?rq=%28%22genus%22:%22Carex%22%29)'}
 
 
 def test_simple_idigbio_map():
@@ -136,11 +136,11 @@ def test_conversation_history_search_query():
     }
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {'type': 'ai_text_message',
-                           'value': '[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?rq={'
-                                    '"genus":"Carex"})'}
+                           'value': '[iDigBio portal search]('
+                                    'https://beta-portal.idigbio.org/portal/search?rq=%28%22genus%22:%22Carex%22%29)'}
     assert messages[3] == {'type': 'ai_text_message',
-                           'value': '[iDigBio API search](https://search.idigbio.org/v2/search/records?rq={'
-                                    '"genus":"Carex"})'}
+                           'value': '[iDigBio records API search]('
+                                    'https://search.idigbio.org/v2/search?rq=%28%22genus%22:%22Carex%22%29)'}
 
 
 def test_count_records():
