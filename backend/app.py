@@ -16,6 +16,7 @@ CORS(app, supports_credentials=True)
 
 app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
+app.config["SESSION_COOKIE_SAMESITE"] = "None"
 Session(app)
 
 fake_redis = {}
