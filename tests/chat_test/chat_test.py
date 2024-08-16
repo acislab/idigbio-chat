@@ -143,6 +143,20 @@ def test_conversation_history_search_query():
                                     '"genus":"Carex"})'}
 
 
+def test_count_records():
+    messages = chat("How many records for genus Carex?")
+
+    assert len(messages) == 3
+    assert messages[0] == {
+        'type': 'ai_processing_message',
+        'value': {'summary': 'Searching for records...',
+                  'content': {'rq': {'genus': 'Carex'}}}
+    }
+    assert messages[1]["value"].startswith("Here is")
+    assert messages[2]["type"] == "ai_text_message"
+    assert messages[2]["value"].startswith("Record count")
+
+
 def test_recommend_spelling_fix_with_no_matches():
     """
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations
