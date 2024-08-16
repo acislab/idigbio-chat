@@ -31,7 +31,7 @@ class CountSpeciesOccurrenceRecords(Tool):
         params = api_query.get()
         if "rq" in params:
             url, count = _get_record_count(params["rq"])
-            yield AiChatMessage(f"Record count: {count}\\n([According to iDigBio]({url}))")
+            yield AiChatMessage(f"There are {count} matching records [in iDigBio]({url})")
         else:
             yield AiChatMessage("I couldn't find what you are looking for, please try again.")
 
