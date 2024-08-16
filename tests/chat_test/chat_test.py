@@ -95,7 +95,7 @@ def test_conversation_history_search_query():
     assert messages[1]["type"] == "ai_text_message"
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {
-        "type": "ai_text_message",
+        "type": "ai_map_message",
         'value': {
             'rq': {'genus': 'Ursus'}
         }

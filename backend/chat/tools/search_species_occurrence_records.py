@@ -22,12 +22,13 @@ class SearchSpeciesOccurrenceRecords(Tool):
     verbal_return_type = "a list of records"
 
     def call(self, agent: Agent, request: str, history=Conversation([]), state=None) -> Iterator[Message]:
-        api_query = StreamedString(_ask_llm_to_generate_search_query(agent, request))
+        api_query = StreamedString(_ask_llm_to_generate_search_query(agent, history, request))
 
         yield AiProcessingMessage("Searching for records...", api_query)
         yield present_results(agent, history, self.verbal_return_type)
         yield AiMapMessage(api_query)
 
 
-def _ask_llm_to_generate_search_query(agent: Agent, request: str) -> Iterator[str]:
-    yield json.dumps(search.functions.generate_rq.search_species_occurrence_records(agent, request))
+def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[str]:
+    rq = search.functions.generate_rq.search_species_occurrence_records(agent, history.render_to_openai())
+    yield json.dumps(rq)

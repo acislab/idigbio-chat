@@ -9,7 +9,11 @@ def run(agent: Agent, data: dict) -> Message:
     should_parse = check_if_user_input_is_on_topic(agent, user_input)
 
     if should_parse:
-        params = search_species_occurrence_records(agent, user_input)
+        params = search_species_occurrence_records(agent, [{
+            "role": "user",
+            "content": user_input
+        }])
+
         return Message(
             input=user_input,
             rq=params["rq"],
@@ -274,20 +278,17 @@ You: {{
 """
 
 
-def search_species_occurrence_records(agent: Agent, user_input: str) -> dict:
+def search_species_occurrence_records(agent: Agent, messages: list[dict]) -> dict:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=LLMQueryOutput,
         messages=[
-            {
-                "role": "system",
-                "content": SYSTEM_PROMPT
-            }, {
-                "role": "user",
-                "content": user_input
-            }
-        ],
+                     {
+                         "role": "system",
+                         "content": SYSTEM_PROMPT
+                     }
+                 ] + messages,
     )
 
     params = result.model_dump(exclude_none=True)

@@ -29,7 +29,8 @@ def _ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation):
         model="gpt-4o",
         temperature=1,
         stream=True,
-        messages=conversation.render_to_openai("You are a biodiversity expert.")
+        messages=conversation.render_to_openai(
+            "You are a biodiversity expert. You write in the style of an encyclopedia.")
     )
 
     return AiChatMessage(stream_openai(response))

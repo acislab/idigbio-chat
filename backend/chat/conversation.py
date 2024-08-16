@@ -123,11 +123,13 @@ class Conversation:
         else:
             self.history.append(message)
 
-    def render_to_openai(self, system_message) -> list[dict]:
+    def render_to_openai(self, system_message=None) -> list[dict]:
         return [m for m in self.__message_renderer(system_message)]
 
     def __message_renderer(self, system_message):
-        yield {"role": "system", "content": system_message}
+        if system_message is not None:
+            yield {"role": "system", "content": system_message}
+            
         for message in self.history:
             for role_and_content in message.to_role_and_content():
                 yield role_and_content
