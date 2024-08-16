@@ -1,6 +1,6 @@
 from chat.chat_util import stream_value_as_text, stream_response_as_text
 from chat.conversation import UserMessage, AiChatMessage, AiProcessingMessage
-from chat.stream_util import StreamedString
+from chat.stream_util import StreamedContent
 
 
 def test_stream_response_as_text():

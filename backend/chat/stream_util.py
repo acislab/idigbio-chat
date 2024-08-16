@@ -1,24 +1,49 @@
 import itertools
-from typing import Iterator, Iterable
+from typing import Iterator, Iterable, Callable
+
+Content = str | dict
 
 
-class StreamedString:
-    __string: str
-    __stream: Iterator[str]
+class StreamedContent():
+    __content: Content
+    __stream: Iterator[Content]
+    __reducer: Callable[[Content, Content], Content]
 
-    def __init__(self, stream: Iterable[str]):
-        self.__string = ""
+    def __init__(self, stream: Iterable[Content], reducer):
+        self.__content = ""
         self.__stream = self.__gobble(stream)
+        self.__reducer = reducer
 
-    def __iter__(self) -> Iterator[str]:
-        return itertools.chain(iter([self.__string]), self.__stream)
+    def __iter__(self) -> Iterator[Content]:
+        return itertools.chain(iter([self.__content]), self.__stream)
 
-    def __gobble(self, stream) -> Iterator[str]:
-        for x in stream:
-            self.__string += x
-            yield x
+    def __gobble(self, stream) -> Iterator[Content]:
+        for delta in stream:
+            self.__content = self.__reducer(self.__content, delta)
+            yield delta
 
-    def get_string(self) -> str:
-        for _ in self:
+    def get(self) -> Content:
+        for _ in self.__stream:
             pass
-        return self.__string
+        return self.__content
+
+
+def _add_strings(a: str, b: str) -> str:
+    return a + b
+
+
+class StreamedString(StreamedContent):
+    def __init__(self, stream: Iterable[Content]):
+        super().__init__(stream, _add_strings)
+
+
+def _take_last(a, b):
+    return b
+
+
+class StreamedLast(StreamedContent):
+    def __init__(self, stream: Iterable[Content]):
+        super().__init__(stream, _take_last)
+
+    def __iter__(self) -> Iterator[Content]:
+        return iter([self.get()])

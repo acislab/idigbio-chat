@@ -3,6 +3,7 @@ from typing import Iterator
 from openai import OpenAI
 
 from chat.conversation import AiChatMessage, Message
+from chat.stream_util import StreamedContent
 
 PRESENT_RESULTS_PROMPT = """
 You are an assistant who announces what information is about to be provided to the user. You do not provide the 
@@ -25,23 +26,30 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     yield "]"
 
 
+def quote(s):
+    return '"' + s.replace('"', r'\"') + '"'
+
+
 def stream_value_as_text(value):
     if isinstance(value, str):
-        yield f'"{value}"'
+        yield quote(value)
     elif isinstance(value, dict):
         yield "{"
         for i, (k, v) in enumerate(value.items()):
             if i > 0:
                 yield ","
-            yield f'"{k}":'
+            yield f'{quote(k)}:'
             for fragment in stream_value_as_text(v):
                 if fragment is not None:
                     yield fragment
         yield "}"
     else:
         for fragment in value:
-            if fragment is not None:
+            if isinstance(fragment, str):
                 yield fragment
+            elif fragment is not None:
+                for v in stream_value_as_text(fragment):
+                    yield v
 
 
 def stream_openai(response):

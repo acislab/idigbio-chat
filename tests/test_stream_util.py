@@ -1,14 +1,14 @@
 from chat.conversation import AiMapMessage
-from chat.stream_util import StreamedString
+from chat.stream_util import StreamedContent
 
 
 def test_streamed_string_from_string():
-    ss = StreamedString("Just another string")
-    ss.get_string()  # Empty the stream
-    assert ss.get_string() == "Just another string"
+    ss = StreamedContent("Just another string")
+    ss.get()  # Empty the stream
+    assert ss.get() == "Just another string"
 
 
 def test_streamed_string_from_stream():
-    ss = StreamedString(iter("Just another string"))
-    ss.get_string()  # Empty the stream
-    assert ss.get_string() == "Just another string"
+    ss = StreamedContent(iter("Just another string"))
+    ss.get()  # Empty the stream
+    assert ss.get() == "Just another string"

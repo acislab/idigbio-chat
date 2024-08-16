@@ -1,4 +1,7 @@
+import app
 from .chat_test_util import chat
+
+app.SHOW_PROCESSING_MESSAGES = True
 
 
 def test_be_friendly():
@@ -39,6 +42,25 @@ def test_help():
 def test_simple_idigbio_search():
     """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("Find records for genus Carex")
+
+    assert len(messages) == 4
+    assert messages[0] == {
+        'type': 'ai_processing_message',
+        'value': {'summary': 'Searching for records...',
+                  'content': {'rq': {'genus': 'Carex'}}}
+    }
+    assert messages[1]["value"].startswith("Here is")
+    assert messages[2] == {'type': 'ai_text_message',
+                           'value': '[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?rq={'
+                                    '"genus":"Carex"})'}
+    assert messages[3] == {'type': 'ai_text_message',
+                           'value': '[iDigBio API search](https://search.idigbio.org/v2/search/records?rq={'
+                                    '"genus":"Carex"})'}
+
+
+def test_simple_idigbio_map():
+    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
+    messages = chat("Show a map of genus Carex")
 
     assert len(messages) == 3
     assert messages[0] == {
@@ -81,25 +103,44 @@ def test_conversation_history():
     assert "arctic" in m["value"].lower()
 
 
-def test_conversation_history_search_query():
+def test_conversation_history_map_query():
     """"""
-    chat("I want to talk about genus Ursus")
-    messages = chat("Find records")
+    chat("I want to talk about genus Carex")
+    messages = chat("Show a map")
 
     assert len(messages) == 3
     assert messages[0] == {
         'type': 'ai_processing_message',
         'value': {'summary': 'Searching for records...',
-                  'content': {'rq': {'genus': 'Ursus'}}}
+                  'content': {'rq': {'genus': 'Carex'}}}
     }
-    assert messages[1]["type"] == "ai_text_message"
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {
         "type": "ai_map_message",
         'value': {
-            'rq': {'genus': 'Ursus'}
+            'rq': {'genus': 'Carex'}
         }
     }
+
+
+def test_conversation_history_search_query():
+    """"""
+    chat("I want to talk about genus Carex")
+    messages = chat("Find records")
+
+    assert len(messages) == 4
+    assert messages[0] == {
+        'type': 'ai_processing_message',
+        'value': {'summary': 'Searching for records...',
+                  'content': {'rq': {'genus': 'Carex'}}}
+    }
+    assert messages[1]["value"].startswith("Here is")
+    assert messages[2] == {'type': 'ai_text_message',
+                           'value': '[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?rq={'
+                                    '"genus":"Carex"})'}
+    assert messages[3] == {'type': 'ai_text_message',
+                           'value': '[iDigBio API search](https://search.idigbio.org/v2/search/records?rq={'
+                                    '"genus":"Carex"})'}
 
 
 def test_recommend_spelling_fix_with_no_matches():

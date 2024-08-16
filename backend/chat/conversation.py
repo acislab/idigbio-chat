@@ -1,6 +1,6 @@
 from enum import Enum
 
-from chat.stream_util import StreamedString
+from chat.stream_util import StreamedContent
 
 
 class MessageType(Enum):
@@ -11,7 +11,7 @@ class MessageType(Enum):
     error = "error"
 
 
-MessageValue = str | dict | list | StreamedString
+MessageValue = str | dict | list | StreamedContent
 
 
 class Message:
@@ -129,7 +129,7 @@ class Conversation:
     def __message_renderer(self, system_message):
         if system_message is not None:
             yield {"role": "system", "content": system_message}
-            
+
         for message in self.history:
             for role_and_content in message.to_role_and_content():
                 yield role_and_content

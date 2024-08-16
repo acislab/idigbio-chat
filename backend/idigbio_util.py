@@ -14,5 +14,5 @@ def url_encode_inner(x):
         return str(x)
 
 
-def url_encode_params(d):
+def url_encode_params(d: dict) -> str:
     return "&".join([f"{k}={url_encode_inner(v)}" for k, v in d.items()])
