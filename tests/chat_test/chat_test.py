@@ -52,10 +52,10 @@ def test_simple_idigbio_search():
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {'type': 'ai_text_message',
                            'value': '[iDigBio portal search]('
-                                    'https://beta-portal.idigbio.org/portal/search?rq=%28%22genus%22:%22Carex%22%29)'}
+                                    'https://beta-portal.idigbio.org/portal/search?rq=%7B%22genus%22:%22Carex%22%7D)'}
     assert messages[3] == {'type': 'ai_text_message',
                            'value': '[iDigBio records API search]('
-                                    'https://search.idigbio.org/v2/search?rq=%28%22genus%22:%22Carex%22%29)'}
+                                    'https://search.idigbio.org/v2/search/records?rq=%7B%22genus%22:%22Carex%22%7D)'}
 
 
 def test_simple_idigbio_map():
@@ -137,10 +137,10 @@ def test_conversation_history_search_query():
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {'type': 'ai_text_message',
                            'value': '[iDigBio portal search]('
-                                    'https://beta-portal.idigbio.org/portal/search?rq=%28%22genus%22:%22Carex%22%29)'}
+                                    'https://beta-portal.idigbio.org/portal/search?rq=%7B%22genus%22:%22Carex%22%7D)'}
     assert messages[3] == {'type': 'ai_text_message',
                            'value': '[iDigBio records API search]('
-                                    'https://search.idigbio.org/v2/search?rq=%28%22genus%22:%22Carex%22%29)'}
+                                    'https://search.idigbio.org/v2/search/records?rq=%7B%22genus%22:%22Carex%22%7D)'}
 
 
 def test_count_records():
@@ -154,7 +154,7 @@ def test_count_records():
     }
     assert messages[1]["value"].startswith("Here is")
     assert messages[2]["type"] == "ai_text_message"
-    assert messages[2]["value"].startswith("Record count")
+    assert messages[2]["value"].startswith("There are")
 
 
 def test_recommend_spelling_fix_with_no_matches():
