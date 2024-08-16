@@ -43,6 +43,6 @@ def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, reque
 
 def _get_record_count(rq: dict) -> (str, int):
     url_params = idigbio_util.url_encode_params({"rq": rq, "count": 1})
-    query_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params})"
+    query_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
     res = requests.get(query_url)
     return query_url, res.json()["itemCount"]
