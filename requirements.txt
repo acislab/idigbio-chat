@@ -6,4 +6,5 @@ flask~=3.0.3
 flask-cors~=4.0.1
 flask-session~=0.8.0
 pydantic~=2.8.2
+pyopenssl~=24.2.1
 langgraph~=0.1.19
