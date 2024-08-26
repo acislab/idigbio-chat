@@ -22,7 +22,7 @@ Session(app)
 
 fake_redis = {}
 
-SHOW_PROCESSING_MESSAGES = False
+SHOW_PROCESSING_MESSAGES = True
 
 
 def get_user_info():
