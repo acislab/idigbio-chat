@@ -77,11 +77,4 @@ in Florida"]
 
 
 def _break_down_message_into_smaller_requests(agent: Agent, history: Conversation, user_message: str) -> Iterator[str]:
-    response = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=1,
-        messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(type_of_results)),
-        stream=True,
-    )
-
-    return AiChatMessage(stream_openai(response))
+    yield [user_message]
