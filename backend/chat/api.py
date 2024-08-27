@@ -28,23 +28,30 @@ def _make_response(agent: Agent, history: Conversation, user_message: str) -> It
         if i > 0:
             return
 
-    plan = create_plan(agent, history, user_message)
-    tool_name = plan
+    requests = _break_down_message_into_smaller_requests(agent, history, user_message)
 
-    if tool_name in tool_lookup:
-        tool = tool_lookup[tool_name]()
-
-        response = tool.call(
-            agent=agent,
-            request=user_message,
-            history=history,
-            state={}
-        )
-
-        for message in response:
-            yield message
+    if len(requests) == 0:
+        pass
+        # TODO: Respond directly
     else:
-        yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
+        for request in requests:
+            plan = create_plan(agent, history, user_message)
+            tool_name = plan
+
+            if tool_name in tool_lookup:
+                tool = tool_lookup[tool_name]()
+
+                response = tool.call(
+                    agent=agent,
+                    request=user_message,
+                    history=history,
+                    state={}
+                )
+
+                for message in response:
+                    yield message
+            else:
+                yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
 def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
@@ -53,3 +60,28 @@ def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
             yield AiChatMessage("I have access to the following tools...")
         case _:
             pass
+
+
+BREAK_DOWN_PROMPT = """
+You identify what a user wants. If the user requests multiple things, you break them up into a list of individual 
+requests. Each item in the list should fully describe each individual request, even if it is redundant with the other 
+items in the list. If the user only wants one thing, represent it as a list with one item. Format lists as JSON 
+arrays. If the user is not requesting any specific information, create an empty array.
+
+Here's an example of breaking down a user's request.
+
+User: I want to know what plant species are present in Florida and how many records iDigBio has for each species
+Assistant: ["what plant species are present in Florida", "how many records does iDigBio have for each species present 
+in Florida"]
+"""
+
+
+def _break_down_message_into_smaller_requests(agent: Agent, history: Conversation, user_message: str) -> Iterator[str]:
+    response = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=1,
+        messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(type_of_results)),
+        stream=True,
+    )
+
+    return AiChatMessage(stream_openai(response))
