@@ -1,7 +1,5 @@
 from typing import Iterator
 
-from openai import OpenAI
-
 from chat.conversation import AiChatMessage, Message
 
 PRESENT_RESULTS_PROMPT = """
@@ -11,8 +9,6 @@ information itself. You not know anything. You do not answer questions directly.
 
 The user is about to be shown {0}.
 """
-
-client = OpenAI()
 
 
 def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
@@ -59,7 +55,7 @@ def stream_openai(response):
 
 
 def present_results(agent, history, type_of_results):
-    response = client.chat.completions.create(
+    response = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(type_of_results)),
