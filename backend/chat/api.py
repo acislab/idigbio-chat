@@ -76,5 +76,5 @@ in Florida"]
 """
 
 
-def _break_down_message_into_smaller_requests(agent: Agent, history: Conversation, user_message: str) -> Iterator[str]:
-    yield [user_message]
+def _break_down_message_into_smaller_requests(agent: Agent, history: Conversation, user_message: str) -> [str]:
+    return [user_message]

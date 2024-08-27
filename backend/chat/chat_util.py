@@ -55,7 +55,7 @@ def stream_openai(response):
 
 
 def present_results(agent, history, type_of_results):
-    response = agent.client.chat.completions.create(
+    response = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(type_of_results)),
