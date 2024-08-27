@@ -3,7 +3,6 @@ from typing import Iterator
 from openai import OpenAI
 
 from chat.conversation import AiChatMessage, Message
-from chat.stream_util import StreamedContent
 
 PRESENT_RESULTS_PROMPT = """
 You are an assistant who announces what information is about to be provided to the user. You do not provide the 

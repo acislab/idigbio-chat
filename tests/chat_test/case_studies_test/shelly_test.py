@@ -26,6 +26,20 @@ Return (almost) only data.dwc fields
     "data.dwc:occurrenceRemarks","data.dwc:verbatimLocality","data.dwc:decimalLatitude",
     "data.dwc:verbatimLatitude","data.dwc:decimalLongitude","data.dwc:verbatimLongitude","geopoint",
     "data.dwc:coordinateUncertaintyInMeters"
+
+For the following recordsets (that exceed 100,000 records):
++-------------------------------------------------------------------------------+--------------------------------------+
+| institutionCode	                                                            | recordset
++-------------------------------------------------------------------------------+--------------------------------------+
+| UT	                                                                        | 2c00c297-9ebd-498a-b701-d3ebde4b49f3
+| University of New Hampshire                                                   | 7644703a-ce24-4f7b-b800-66ddf8812f86
+| UCMS                                                                      	| 8919571f-205a-4aed-b9f2-96ccd0108e4c
+| IND	                                                                        | 0dab1fc7-ca99-456b-9985-76edbac003e0
+| MNA	                                                                        | 49153f74-2969-4a6a-a145-309fcb970308
+| C.A. Triplehorn Insect Collection, Ohio State University, Columbus, OH (OSUC)	| fc628e53-5fdf-4436-9782-bf637d812b48
+| WIS	                                                                        | 58402fe3-37c1-4d15-9e07-0ff1c4c9fb11
+| University of Central Florida Collection of Arthopods (UCFC)                  | 84006c59-fead-4b84-b3b5-cedf28f67ea9
++-------------------------------------------------------------------------------+--------------------------------------+
 """
 from chat_test.chat_test_util import chat
 
