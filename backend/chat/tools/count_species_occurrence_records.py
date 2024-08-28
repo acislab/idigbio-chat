@@ -23,12 +23,12 @@ class CountSpeciesOccurrenceRecords(Tool):
     verbal_return_type = "the number of species occurrence records that match the user's search criteria"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        api_query = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
+        async_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", api_query)
+        yield AiProcessingMessage("Searching for records...", async_params)
         yield present_results(agent, history, self.verbal_return_type)
 
-        params = api_query.get()
+        params = async_params.get()
         if "rq" in params:
             url, count = _get_record_count(params["rq"])
             yield AiChatMessage(f"There are {count} matching records [in iDigBio]({url})")

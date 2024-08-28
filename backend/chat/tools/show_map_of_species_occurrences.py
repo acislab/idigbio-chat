@@ -20,11 +20,11 @@ class ShowMapOfSpeciesOccurrences(Tool):
     verbal_return_type = "a map of recorded species occurrences"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        api_query = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
+        async_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", api_query)
+        yield AiProcessingMessage("Searching for records...", async_params)
         yield present_results(agent, history, self.verbal_return_type)
-        yield AiMapMessage(api_query)
+        yield AiMapMessage(async_params)
 
 
 def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[str]:

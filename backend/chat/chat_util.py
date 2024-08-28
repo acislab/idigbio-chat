@@ -1,3 +1,4 @@
+import json
 from typing import Iterator
 
 from chat.conversation import AiChatMessage, Message
@@ -63,3 +64,7 @@ def present_results(agent, history, type_of_results):
     )
 
     return AiChatMessage(stream_openai(response))
+
+
+def json_to_markdown(data: dict):
+    return "```json\n" + json.dumps(data, indent=4, separators=(",", ": ")) + "\n```\n"

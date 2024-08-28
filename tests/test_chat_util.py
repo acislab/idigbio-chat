@@ -1,6 +1,5 @@
-from chat.chat_util import stream_value_as_text, stream_response_as_text
+from chat.chat_util import stream_value_as_text, stream_response_as_text, json_to_markdown
 from chat.conversation import UserMessage, AiChatMessage, AiProcessingMessage
-from chat.stream_util import StreamedContent
 
 
 def test_stream_response_as_text():
@@ -46,3 +45,25 @@ def test_stream_another_stream_as_text():
     text = "".join(stream_value_as_text(d))
 
     assert text == """{"type":hotdog,"value":{"dog":Ball Park Frank,"condiment":ketchup}}"""
+
+
+def test_json_to_markdown():
+    md = json_to_markdown({
+        "rq": {
+            "family": "Ursidae",
+            "country": "Taiwan"
+        },
+        "limit": 10
+    })
+
+    assert md == """\
+```json
+{
+    "rq": {
+        "family": "Ursidae",
+        "country": "Taiwan"
+    },
+    "limit": 10
+}
+```
+"""

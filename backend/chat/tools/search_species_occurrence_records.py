@@ -22,12 +22,12 @@ class SearchSpeciesOccurrenceRecords(Tool):
     verbal_return_type = "a list of records"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        query_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
+        async_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", query_params)
+        yield AiProcessingMessage("Searching for records...", async_params)
         yield present_results(agent, history, self.verbal_return_type)
 
-        url_params = idigbio_util.url_encode_params(query_params.get())
+        url_params = idigbio_util.url_encode_params(async_params.get())
 
         yield AiChatMessage(f"[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?{url_params})")
         yield AiChatMessage(f"[iDigBio records API search](https://search.idigbio.org/v2/search/records?{url_params})")

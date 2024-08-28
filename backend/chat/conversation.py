@@ -1,3 +1,5 @@
+import typing
+from collections.abc import Callable
 from enum import Enum
 
 from chat.stream_util import StreamedContent
@@ -67,8 +69,11 @@ class AiMapMessage(Message):
 
 
 class AiProcessingMessage(Message):
-    def __init__(self, summary: MessageValue, content: MessageValue):
+    content_formatter: Callable[[typing.Any], str]
+
+    def __init__(self, summary: MessageValue, content: MessageValue, content_formatter=None):
         super().__init__({"summary": summary, "content": content})
+        self.content_formatter = content_formatter
 
     def get_type(self) -> MessageType:
         return MessageType.ai_processing_message
