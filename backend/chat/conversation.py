@@ -74,29 +74,18 @@ class AiMapMessage(Message):
 
 
 class AiProcessingMessage(Message):
-    content_formatter: Callable[[typing.Any], str]
-
-    def __init__(self, summary: MessageValue, content: MessageValue, content_formatter=None):
+    def __init__(self, summary: MessageValue, content: MessageValue):
         super().__init__({"summary": summary, "content": content})
-        self.content_formatter = content_formatter
 
     def get_type(self) -> MessageType:
         return MessageType.ai_processing_message
-
-    def get_value(self) -> MessageValue:
-        if isinstance(self.value, StreamedContent):
-            self.value = self.value.get()
-
-        if type(self.value) == dict:
-            self.value = json_to_markdown(self.value)
-
-        return self.value
 
     def to_role_and_content(self) -> list[dict]:
         return [
             {
                 "role": "assistant",
-                "content": self.get_value()
+                "content": self.get_value()["summary"] + "\n\n" + "".join(
+                    stream_value_as_text(self.get_value()["content"]))
             }
         ]
 

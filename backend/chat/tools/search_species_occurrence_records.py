@@ -2,6 +2,7 @@ from collections.abc import Iterator
 
 import idigbio_util
 import search
+from chat.chat_util import json_to_markdown
 from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage, present_results
 from chat.stream_util import StreamedLast
 from chat.tools.tool import Tool
@@ -21,18 +22,18 @@ class SearchSpeciesOccurrenceRecords(Tool):
     verbal_return_type = "a list of records"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        async_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
+        params = next(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", async_params)
+        yield AiProcessingMessage("Searching for records...", json_to_markdown(params))
         yield present_results(agent, history, self.verbal_return_type)
 
-        url_params = idigbio_util.url_encode_params(async_params.get())
+        url_params = idigbio_util.url_encode_params(params)
 
         yield AiChatMessage(f"[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?{url_params})")
         yield AiChatMessage(f"[iDigBio records API search](https://search.idigbio.org/v2/search/records?{url_params})")
 
 
-def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[str]:
+def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[dict]:
     params = search.functions.generate_rq.search_species_occurrence_records(agent,
                                                                             history.render_to_openai(request=request))
     yield params

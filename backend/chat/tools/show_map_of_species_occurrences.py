@@ -1,6 +1,7 @@
 from collections.abc import Iterator
 
 import search
+from chat.chat_util import json_to_markdown
 from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage, present_results
 from chat.stream_util import StreamedLast
 from chat.tools.tool import Tool
@@ -19,14 +20,14 @@ class ShowMapOfSpeciesOccurrences(Tool):
     verbal_return_type = "a map of recorded species occurrences"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        async_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
+        params = next(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", async_params)
+        yield AiProcessingMessage("Searching for records...", json_to_markdown(params))
         yield present_results(agent, history, self.verbal_return_type)
-        yield AiMapMessage(async_params)
+        yield AiMapMessage(params)
 
 
-def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[str]:
+def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[dict]:
     params = search.functions.generate_rq.search_species_occurrence_records(agent,
                                                                             history.render_to_openai(request=request))
     yield params
