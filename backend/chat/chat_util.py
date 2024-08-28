@@ -48,4 +48,4 @@ def stream_openai(response):
 def json_to_markdown(data: dict):
     as_text = "".join(stream_value_as_text(data))
     as_dict = json.loads(as_text)
-    return "```json\n" + json.dumps(as_dict, indent=4, separators=(",", ": ")) + "\n```\n"
+    return ("```json\n" + json.dumps(as_dict, indent=4, separators=(",", ": ")) + "\n```\n").replace("\n", "\\n")

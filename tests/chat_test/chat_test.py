@@ -45,8 +45,9 @@ def test_simple_idigbio_search():
 
     assert len(messages) == 4
     assert messages[0] == {'type': 'ai_processing_message', 'value': {'summary': 'Searching for records...',
-                                                                      'content': '```json\n{\n    "rq": {\n        '
-                                                                                 '"genus": "Carex"\n    }\n}\n```\n'}}
+                                                                      'content': '```json\\n{\\n    "rq": {\\n        '
+                                                                                 '"genus": "Carex"\\n    '
+                                                                                 '}\\n}\\n```\\n'}}
     assert messages[1]["value"].startswith("Here is")
     assert messages[2] == {'type': 'ai_text_message',
                            'value': '[iDigBio portal search]('
