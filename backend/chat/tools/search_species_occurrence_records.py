@@ -2,8 +2,7 @@ from collections.abc import Iterator
 
 import idigbio_util
 import search
-from chat.chat_util import present_results
-from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage
+from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage, present_results
 from chat.stream_util import StreamedLast
 from chat.tools.tool import Tool
 from nlp.agent import Agent

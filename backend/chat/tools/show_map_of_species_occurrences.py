@@ -1,8 +1,7 @@
 from collections.abc import Iterator
 
 import search
-from chat.chat_util import present_results
-from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage
+from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage, present_results
 from chat.stream_util import StreamedLast
 from chat.tools.tool import Tool
 from nlp.agent import Agent

@@ -1,7 +1,9 @@
 import typing
 from collections.abc import Callable
 from enum import Enum
+from typing import Iterator
 
+from chat.chat_util import PRESENT_RESULTS_PROMPT, stream_openai, stream_value_as_text, json_to_markdown
 from chat.stream_util import StreamedContent
 
 
@@ -25,6 +27,9 @@ class Message:
     def get_type(self) -> MessageType:
         pass
 
+    def get_value(self) -> MessageValue:
+        return self.value
+
     def to_role_and_content(self) -> list[dict]:
         pass
 
@@ -37,7 +42,7 @@ class UserMessage(Message):
         return [
             {
                 "role": "user",
-                "content": self.value
+                "content": self.get_value()
             }
         ]
 
@@ -50,7 +55,7 @@ class AiChatMessage(Message):
         return [
             {
                 "role": "assistant",
-                "content": self.value
+                "content": self.get_value()
             }
         ]
 
@@ -78,11 +83,20 @@ class AiProcessingMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.ai_processing_message
 
+    def get_value(self) -> MessageValue:
+        if isinstance(self.value, StreamedContent):
+            self.value = self.value.get()
+
+        if type(self.value) == dict:
+            self.value = json_to_markdown(self.value)
+
+        return self.value
+
     def to_role_and_content(self) -> list[dict]:
         return [
             {
                 "role": "assistant",
-                "content": self.value
+                "content": self.get_value()
             }
         ]
 
@@ -95,7 +109,7 @@ class ErrorMessage(Message):
         return [
             {
                 "role": "error",
-                "content": self.value
+                "content": self.get_value()
             }
         ]
 
@@ -143,3 +157,24 @@ class Conversation:
             for role_and_content in UserMessage(
                     f"First address the following request: {request}").to_role_and_content():
                 yield role_and_content
+
+
+def present_results(agent, history, type_of_results):
+    response = agent.openai.chat.completions.create(
+        model="gpt-4o",
+        temperature=1,
+        messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(type_of_results)),
+        stream=True,
+    )
+
+    return AiChatMessage(stream_openai(response))
+
+
+def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
+    yield "["
+    for i, message in enumerate(message_stream):
+        if i > 0:
+            yield ","
+        for fragment in stream_value_as_text({"type": message.get_type().value, "value": message.get_value()}):
+            yield fragment
+    yield "]"

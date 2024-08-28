@@ -1,5 +1,5 @@
-from chat.chat_util import stream_value_as_text, stream_response_as_text, json_to_markdown
-from chat.conversation import UserMessage, AiChatMessage, AiProcessingMessage
+from chat.chat_util import stream_value_as_text, json_to_markdown
+from chat.conversation import UserMessage, AiChatMessage, AiProcessingMessage, stream_response_as_text
 
 
 def test_stream_response_as_text():
@@ -26,7 +26,7 @@ def test_stream_dict_as_text():
 
     text = "".join(stream_value_as_text(d))
 
-    assert text == """{"type":hotdog,"value":{"dog":Ball Park Frank,"condiment":relish}}"""
+    assert text == """{"type":"hotdog","value":{"dog":"Ball Park Frank","condiment":"relish"}}"""
 
 
 def test_stream_another_stream_as_text():
@@ -44,7 +44,15 @@ def test_stream_another_stream_as_text():
 
     text = "".join(stream_value_as_text(d))
 
-    assert text == """{"type":hotdog,"value":{"dog":Ball Park Frank,"condiment":ketchup}}"""
+    assert text == """{"type":"hotdog","value":{"dog":"Ball Park Frank","condiment":"ketchup"}}"""
+
+
+def test_stream_containing_quotes():
+    pass
+
+
+def test_stream_containing_newlines():
+    pass
 
 
 def test_json_to_markdown():

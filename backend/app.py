@@ -7,8 +7,7 @@ from flask_session import Session
 import chat
 import search.api
 import search.demo
-from chat.chat_util import stream_response_as_text
-from chat.conversation import Conversation, AiProcessingMessage
+from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text
 from nlp.agent import Agent
 
 app = Flask(__name__, template_folder="templates")
