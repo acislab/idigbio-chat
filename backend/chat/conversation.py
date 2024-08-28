@@ -77,7 +77,7 @@ class AiProcessingMessage(Message):
         return [
             {
                 "role": "assistant",
-                "content": "".join(str(self.value))
+                "content": self.value
             }
         ]
 
