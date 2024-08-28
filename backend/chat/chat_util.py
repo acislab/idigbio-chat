@@ -28,14 +28,12 @@ def stream_value_as_text(value):
                     yield fragment
         yield "}"
     elif isinstance(value, Iterable):
-        yield '"'
         for fragment in value:
             if isinstance(fragment, str):
                 yield fragment
             elif fragment is not None:
                 for v in stream_value_as_text(fragment):
                     yield v
-        yield '"'
     else:
         yield str(value)
 

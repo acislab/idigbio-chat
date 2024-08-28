@@ -6,13 +6,14 @@ from nlp.agent import Agent
 def test__break_down_message_into_smaller_requests():
     agent = Agent()
 
+    user_message = ("How many records are there for polar bears in Florida collected by Orville Redenbacher? Show them "
+                    "on a map.")
     conv = Conversation([
         {"type": "user_text_message",
-         "value": "How many records are there for polar bears in Florida collected by Orville Redenbacher? Show them "
-                  "on a map."}
+         "value": user_message}
     ])
 
-    requests = chat.api._break_down_message_into_smaller_requests(agent, conv)
+    requests = chat.api._break_down_message_into_smaller_requests(agent, conv, user_message)
 
     assert requests == [
         "how many records are there for polar bears in Florida collected by Orville Redenbacher",
