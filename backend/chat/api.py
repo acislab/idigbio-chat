@@ -71,7 +71,7 @@ def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
 
 
 def _respond_conversationally(agent, history):
-    tool = tool_lookup["converse"]
+    tool = tool_lookup["converse"]()
     response = tool.call(
         agent=agent,
         history=history,
