@@ -18,6 +18,14 @@ class Tool:
     verbal_return_type: str
 
     def call(self, agent: Agent, conversation=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+        """
+        :param agent: An interface for using LLMs.
+        :param conversation: Stores all user- and AI-generated messages.
+        :param request: The user request currently being addressed. Note that complicated user messages are broken
+        down into multiple requests.
+        :param state: TODO: A place to keep persistent data (not implemented)
+        :return:
+        """
         pass
 
 
