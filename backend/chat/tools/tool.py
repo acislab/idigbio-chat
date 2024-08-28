@@ -17,7 +17,7 @@ class Tool:
     schema: dict
     verbal_return_type: str
 
-    def call(self, agent: Agent, request: str, conversation=Conversation([]), state=None) -> Iterator[Message]:
+    def call(self, agent: Agent, conversation=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         pass
 
 

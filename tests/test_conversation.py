@@ -1,4 +1,4 @@
-from chat_test.conversation import Conversation, Message, MessageType
+from chat.conversation import Conversation
 
 
 def test_render_for_openai():

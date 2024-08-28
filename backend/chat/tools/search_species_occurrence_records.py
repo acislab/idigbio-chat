@@ -21,8 +21,8 @@ class SearchSpeciesOccurrenceRecords(Tool):
 
     verbal_return_type = "a list of records"
 
-    def call(self, agent: Agent, request: str, history=Conversation([]), state=None) -> Iterator[Message]:
-        query_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history))
+    def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+        query_params = StreamedLast(_ask_llm_to_generate_search_query(agent, history, request))
 
         yield AiProcessingMessage("Searching for records...", query_params)
         yield present_results(agent, history, self.verbal_return_type)
@@ -33,6 +33,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
         yield AiChatMessage(f"[iDigBio records API search](https://search.idigbio.org/v2/search/records?{url_params})")
 
 
-def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation):
-    params = search.functions.generate_rq.search_species_occurrence_records(agent, history.render_to_openai())
+def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[str]:
+    params = search.functions.generate_rq.search_species_occurrence_records(agent,
+                                                                            history.render_to_openai(request=request))
     yield params

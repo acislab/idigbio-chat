@@ -1,4 +1,4 @@
-from chat.conversation import Conversation
+from chat.conversation import Conversation, UserMessage
 from chat.tools.tool import all_tools
 from nlp.agent import Agent
 
@@ -6,8 +6,8 @@ tool_lookup = {t.schema["name"]: t for t in all_tools}
 function_definitions = [p.schema for p in all_tools]
 
 
-def create_plan(agent: Agent, history: Conversation, user_message: str):
-    tool_name = _pick_a_tool(agent, history)
+def create_plan(agent: Agent, history: Conversation, request: str):
+    tool_name = _pick_a_tool(agent, history, request)
     return tool_name
 
 
@@ -38,14 +38,14 @@ You: converse
 """
 
 
-def _pick_a_tool(agent: Agent, history: Conversation) -> str:
+def _pick_a_tool(agent: Agent, history: Conversation, request: str) -> str:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=None,
         max_tokens=100,
         functions=function_definitions,
-        messages=history.render_to_openai(_PICK_A_TOOL_PROMPT)
+        messages=history.render_to_openai(_PICK_A_TOOL_PROMPT, request)
     )
 
     fn_call = result.choices[0].message.function_call

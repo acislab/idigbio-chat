@@ -1,4 +1,7 @@
 from collections.abc import Iterator
+from typing import List
+
+from pydantic import BaseModel, Field
 
 from chat.conversation import Conversation, UserMessage, ErrorMessage, Message, AiChatMessage
 from chat.plan import create_plan
@@ -13,9 +16,29 @@ def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterato
 
     response = _make_response(agent, history, user_text_message)
 
-    for r in response:
-        history.append(UserMessage(user_text_message))
-        yield r
+    for ai_message in response:
+        history.append(ai_message)
+        yield ai_message
+
+
+def _handle_individual_request(agent, history, request):
+    plan = create_plan(agent, history, request)
+    tool_name = plan
+
+    if tool_name in tool_lookup:
+        tool = tool_lookup[tool_name]()
+
+        response = tool.call(
+            agent=agent,
+            request=request,
+            history=history,
+            state={}
+        )
+
+        for message in response:
+            yield message
+    else:
+        yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
 def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
@@ -31,27 +54,12 @@ def _make_response(agent: Agent, history: Conversation, user_message: str) -> It
     requests = _break_down_message_into_smaller_requests(agent, history, user_message)
 
     if len(requests) == 0:
-        pass
-        # TODO: Respond directly
+        for message in _respond_conversationally(agent, history):
+            yield message
     else:
         for request in requests:
-            plan = create_plan(agent, history, user_message)
-            tool_name = plan
-
-            if tool_name in tool_lookup:
-                tool = tool_lookup[tool_name]()
-
-                response = tool.call(
-                    agent=agent,
-                    request=user_message,
-                    history=history,
-                    state={}
-                )
-
-                for message in response:
-                    yield message
-            else:
-                yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
+            for message in _handle_individual_request(agent, history, request):
+                yield message
 
 
 def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
@@ -62,19 +70,54 @@ def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
             pass
 
 
+def _respond_conversationally(agent, history):
+    tool = tool_lookup["converse"]
+    response = tool.call(
+        agent=agent,
+        history=history,
+        state={}
+    )
+
+    for message in response:
+        yield message
+
+
 BREAK_DOWN_PROMPT = """
 You identify what a user wants. If the user requests multiple things, you break them up into a list of individual 
 requests. Each item in the list should fully describe each individual request, even if it is redundant with the other 
 items in the list. If the user only wants one thing, represent it as a list with one item. Format lists as JSON 
-arrays. If the user is not requesting any specific information, create an empty array.
+arrays. If the user is not requesting any specific information, create an empty array. Only break down the user's 
+last message. Do not repeat requests that have already been addressed.
 
 Here's an example of breaking down a user's request.
 
 User: I want to know what plant species are present in Florida and how many records iDigBio has for each species
 Assistant: ["what plant species are present in Florida", "how many records does iDigBio have for each species present 
 in Florida"]
+
+The user's last message was the following:
+
+{0}
 """
 
 
+class RequestBreakdown(BaseModel):
+    """
+    This schema represents a list of individual requests extracted from a user message.
+    """
+    requests: List[str] = Field(...,
+                                description="This is an array of individual requests like \"show a map of Homo "
+                                            "sapiens\" or "
+                                            "\"count the number of records for Homo Sapiens in iDigBio\".")
+
+
 def _break_down_message_into_smaller_requests(agent: Agent, history: Conversation, user_message: str) -> [str]:
-    return [user_message]
+    response = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        max_retries=5,
+        response_model=RequestBreakdown,
+        messages=history.render_to_openai(BREAK_DOWN_PROMPT.format(user_message)),
+    )
+
+    return response.requests

@@ -157,6 +157,18 @@ def test_count_records():
     assert messages[2]["value"].startswith("There are")
 
 
+def test_composite_request():
+    messages = chat("How many records of Ursus arctos are there in iDigBio and where are they on a map?")
+
+    assert len(messages) == 6
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[1]["value"].startswith("Here is")
+    assert messages[2]["value"].startswith("There are")
+    assert messages[3]["type"] == "ai_processing_message"
+    assert messages[4]["value"].startswith("Here is")
+    assert messages[5]["type"] == "ai_map_message"
+
+
 def test_recommend_spelling_fix_with_no_matches():
     """
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations

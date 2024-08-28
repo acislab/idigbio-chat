@@ -14,6 +14,7 @@ def chat(message) -> list[dict]:
     }).response
 
     text = "".join([m.decode("utf-8") for m in wrapped_response])
+    text = text.replace("\n", "\\n")
 
     messages = json.loads(text)
     return messages
