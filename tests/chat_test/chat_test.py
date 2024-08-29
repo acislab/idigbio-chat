@@ -12,8 +12,16 @@ def test_be_friendly():
     assert messages[0]["type"] == "ai_text_message"
 
 
+def test_echo():
+    """Make the LLM say something predictable so we can check if its response is correctly transmitted."""
+    messages = chat("Repeat after me: Toast.")
+
+    assert len(messages) == 1
+    assert messages[0]["type"] == "ai_text_message"
+    assert messages[0]["value"] == "Toast."
+
+
 def test_describe_self():
-    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("What can you do?")
 
     assert len(messages) == 1
@@ -21,7 +29,6 @@ def test_describe_self():
 
 
 def test_off_topic():
-    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("How's the weather?")
 
     assert len(messages) == 1
@@ -29,7 +36,6 @@ def test_off_topic():
 
 
 def test_help():
-    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("help")
 
     assert len(messages) == 1
@@ -40,7 +46,6 @@ def test_help():
 
 
 def test_simple_idigbio_search():
-    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("Find records for genus Carex")
 
     assert len(messages) == 3
@@ -52,7 +57,6 @@ def test_simple_idigbio_search():
 
 
 def test_simple_idigbio_map():
-    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("Show a map of genus Carex")
 
     assert len(messages) == 3

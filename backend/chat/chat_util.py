@@ -42,10 +42,8 @@ def stream_as_json(value):
 
 
 def stream_openai(response):
-    yield '"'
     for chunk in response:
         yield chunk.choices[0].delta.content
-    yield '"'
 
 
 def make_pretty_json_string(data: dict):

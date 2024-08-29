@@ -10,9 +10,8 @@ class Converse(Tool):
     schema = {
         "name": "converse",
         "description": "If the user is not requesting information or is requesting information that you cannot "
-                       "provide, address their request in a friendly manner."
+                       "provide, this function will address their request in a friendly manner."
     }
-    verbal_return_type = "a friendly conversational response"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         yield _ask_llm_for_a_friendly_response(agent, history, request)
