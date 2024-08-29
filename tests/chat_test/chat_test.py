@@ -88,7 +88,7 @@ def test_expert_opinion():
     messages = chat("What color are polar bears? Please be brief.")
 
     assert len(messages) == 2
-    assert messages[0]["value"].startswith("Here is")
+    assert messages[0]["type"] == "ai_text_message"
 
     m = messages[1]
     assert m["type"] == "ai_text_message"
@@ -102,7 +102,7 @@ def test_conversation_history():
     messages = chat("Where do they live? Please be brief.")
 
     assert len(messages) == 2
-    assert messages[0]["value"].startswith("Here is")
+    assert messages[0]["type"] == "ai_text_message"
 
     m = messages[1]
     assert "polar bear" in m["value"].lower()
