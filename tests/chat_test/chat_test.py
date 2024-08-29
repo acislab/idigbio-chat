@@ -43,18 +43,12 @@ def test_simple_idigbio_search():
     """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("Find records for genus Carex")
 
-    assert len(messages) == 4
+    assert len(messages) == 3
     assert messages[0] == {'type': 'ai_processing_message', 'value': {'summary': 'Searching for records...',
                                                                       'content': '```json\\n{\\n    "rq": {\\n        '
                                                                                  '"genus": "Carex"\\n    '
                                                                                  '}\\n}\\n```\\n'}}
-    assert messages[1]["value"].startswith("Here is")
-    assert messages[2] == {'type': 'ai_text_message',
-                           'value': '[iDigBio portal search]('
-                                    'https://beta-portal.idigbio.org/portal/search?rq=%7B%22genus%22:%22Carex%22%7D)'}
-    assert messages[3] == {'type': 'ai_text_message',
-                           'value': '[iDigBio records API search]('
-                                    'https://search.idigbio.org/v2/search/records?rq=%7B%22genus%22:%22Carex%22%7D)'}
+    assert messages[1]["type"] == "ai_text_message"
 
 
 def test_simple_idigbio_map():
@@ -127,45 +121,42 @@ def test_conversation_history_search_query():
     chat("I want to talk about genus Carex")
     messages = chat("Find records")
 
-    assert len(messages) == 4
-    assert messages[0] == {
-        'type': 'ai_processing_message',
-        'value': {'summary': 'Searching for records...',
-                  'content': {'rq': {'genus': 'Carex'}}}
-    }
-    assert messages[1]["value"].startswith("Here is")
-    assert messages[2] == {'type': 'ai_text_message',
-                           'value': '[iDigBio portal search]('
-                                    'https://beta-portal.idigbio.org/portal/search?rq=%7B%22genus%22:%22Carex%22%7D)'}
-    assert messages[3] == {'type': 'ai_text_message',
-                           'value': '[iDigBio records API search]('
-                                    'https://search.idigbio.org/v2/search/records?rq=%7B%22genus%22:%22Carex%22%7D)'}
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[1]["type"] == "ai_text_message"
+    assert "Carex" in messages[2]["value"]
 
 
 def test_count_records():
     messages = chat("How many records for genus Carex?")
 
-    assert len(messages) == 3
-    assert messages[0] == {
-        'type': 'ai_processing_message',
-        'value': {'summary': 'Searching for records...',
-                  'content': {'rq': {'genus': 'Carex'}}}
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[0]["value"]["summary"] == "Searching for records..."
+
+    content = messages[0]["value"]["content"]
+    assert content.startswith("""\
+```json
+{
+    "rq": {
+        "genus": "Carex"
     }
-    assert messages[1]["value"].startswith("Here is")
-    assert messages[2]["type"] == "ai_text_message"
-    assert messages[2]["value"].startswith("There are")
+}
+```\
+""")
+    assert ("Link to record counts found by the iDigBio records API: "
+            "https://search.idigbio.org/v2/summary/top/records") in content
+    assert "Total number of matching records:" in content
 
 
 def test_composite_request():
     messages = chat("How many records of Ursus arctos are there in iDigBio and where are they on a map?")
 
-    assert len(messages) == 6
+    assert len(messages) == 4
     assert messages[0]["type"] == "ai_processing_message"
-    assert messages[1]["value"].startswith("Here is")
-    assert messages[2]["value"].startswith("There are")
-    assert messages[3]["type"] == "ai_processing_message"
-    assert messages[4]["value"].startswith("Here is")
-    assert messages[5]["type"] == "ai_map_message"
+    assert messages[1]["type"] == "ai_text_message"
+    assert messages[2]["type"] == "ai_processing_message"
+    assert messages[3]["type"] == "ai_map_message"
 
 
 def test_recommend_spelling_fix_with_no_matches():

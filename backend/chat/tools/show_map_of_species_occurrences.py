@@ -1,29 +1,23 @@
 from collections.abc import Iterator
 
 import search
-from chat.chat_util import json_to_markdown
+from chat.chat_util import make_pretty_json_string
 from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage, present_results
-from chat.stream_util import StreamedLast
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
 
 class ShowMapOfSpeciesOccurrences(Tool):
-    """
-    Responds with links to call the iDigBio Records API and to the iDigBio Search Portal.
-    """
     schema = {
         "name": "show_map_of_species_occurrences",
-        "description": "Shows an interactive map of species occurrences described in records from iDigBio."
+        "description": "Shows an interactive map of species occurrences described in records served by iDigBio. The "
+                       "map is visualized using the Leaflet JavaScript library (https://leafletjs.com/)."
     }
-
-    verbal_return_type = "a map of recorded species occurrences"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         params = next(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", json_to_markdown(params))
-        yield present_results(agent, history, self.verbal_return_type)
+        yield AiProcessingMessage("Searching for records...", make_pretty_json_string(params))
         yield AiMapMessage(params)
 
 

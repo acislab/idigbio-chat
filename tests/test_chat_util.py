@@ -1,8 +1,8 @@
-from chat.chat_util import stream_value_as_text, json_to_markdown
+from chat.chat_util import stream_as_json, make_pretty_json_string
 from chat.conversation import UserMessage, AiChatMessage, AiProcessingMessage, stream_response_as_text
 
 
-def test_stream_response_as_text():
+def test_stream_response_as_json():
     def weather_forecast():
         yield UserMessage("What's the weather tomorrow?")
         yield AiProcessingMessage("Fetching the weather...", "Hurricane")
@@ -15,21 +15,27 @@ def test_stream_response_as_text():
                    """"content":"Hurricane"}},{"type":"ai_text_message","value":"You don\'t wanna know"}]"""
 
 
-def test_stream_dict_as_text():
+def test_stream_dict_as_json():
     d = {
         "type": "hotdog",
         "value": {
             "dog": "Ball Park Frank",
-            "condiment": "relish"
+            "condiments": ["relish", "onions"],
+            "count": 1,
+            "cook": {
+                "name": "Chip",
+                "age": 10
+            }
         }
     }
 
-    text = "".join(stream_value_as_text(d))
+    text = "".join(stream_as_json(d))
 
-    assert text == """{"type":"hotdog","value":{"dog":"Ball Park Frank","condiment":"relish"}}"""
+    assert text == ('{"type":"hotdog","value":{"dog":"Ball Park Frank","condiments":["relish","onions"],"count":1,'
+                    '"cook":{"name":"Chip","age":10}}}')
 
 
-def test_stream_another_stream_as_text():
+def test_stream_another_stream_as_json():
     def stream_ketchup():
         for c in "ketchup":
             yield c
@@ -42,7 +48,7 @@ def test_stream_another_stream_as_text():
         }
     }
 
-    text = "".join(stream_value_as_text(d))
+    text = "".join(stream_as_json(d))
 
     assert text == """{"type":"hotdog","value":{"dog":"Ball Park Frank","condiment":"ketchup"}}"""
 
@@ -56,7 +62,7 @@ def test_stream_containing_newlines():
 
 
 def test_json_to_markdown():
-    md = json_to_markdown({
+    md = make_pretty_json_string({
         "rq": {
             "family": "Ursidae",
             "country": "Taiwan"
@@ -65,13 +71,11 @@ def test_json_to_markdown():
     })
 
     assert md == """\
-```json
 {
     "rq": {
         "family": "Ursidae",
         "country": "Taiwan"
     },
     "limit": 10
-}
-```
+}\
 """

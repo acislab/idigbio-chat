@@ -17,8 +17,8 @@ def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterato
     response = _make_response(agent, history, user_text_message)
 
     for ai_message in response:
-        history.append(ai_message)
         yield ai_message
+        history.append(ai_message)
 
 
 def _handle_individual_request(agent, history, request):

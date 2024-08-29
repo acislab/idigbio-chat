@@ -4,7 +4,7 @@ from typing import Iterator, Iterable, Callable
 Content = str | dict
 
 
-class StreamedContent():
+class StreamedContent:
     __content: Content
     __stream: Iterator[Content]
     __reducer: Callable[[Content, Content], Content]
@@ -37,8 +37,8 @@ class StreamedString(StreamedContent):
         super().__init__(stream, _add_strings)
 
 
-def _take_last(a, b):
-    return b
+def _take_last(old, new):
+    return new
 
 
 class StreamedLast(StreamedContent):

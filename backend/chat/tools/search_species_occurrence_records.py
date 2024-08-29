@@ -2,30 +2,24 @@ from collections.abc import Iterator
 
 import idigbio_util
 import search
-from chat.chat_util import json_to_markdown
-from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage, present_results
-from chat.stream_util import StreamedLast
+from chat.chat_util import make_pretty_json_string
+from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
 
 class SearchSpeciesOccurrenceRecords(Tool):
-    """
-    Responds with links to call the iDigBio Records API and to the iDigBio Search Portal.
-    """
     schema = {
         "name": "search_species_occurrence_records",
-        "description": "Shows a list of species occurrence records in iDigBio Portal and through the iDigBio records "
-                       "API."
+        "description": """Searches for species occurrence records using the iDigBio Portal or the iDigBio records 
+        API. Returns the total number of records that were found, the URL used to call the iDigBio Records API to 
+        perform the search, and a URL to view the results in the iDigBio Search Portal."""
     }
-
-    verbal_return_type = "a list of records"
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         params = next(_ask_llm_to_generate_search_query(agent, history, request))
 
-        yield AiProcessingMessage("Searching for records...", json_to_markdown(params))
-        yield present_results(agent, history, self.verbal_return_type)
+        yield AiProcessingMessage("Searching for records...", make_pretty_json_string(params))
 
         url_params = idigbio_util.url_encode_params(params)
 

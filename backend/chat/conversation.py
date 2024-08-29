@@ -1,10 +1,11 @@
-import typing
-from collections.abc import Callable
 from enum import Enum
-from typing import Iterator
+from typing import Iterator, Iterable
 
-from chat.chat_util import PRESENT_RESULTS_PROMPT, stream_openai, stream_value_as_text, json_to_markdown
+from markupsafe import Markup
+
+from chat.chat_util import stream_openai, stream_as_json
 from chat.stream_util import StreamedContent
+from nlp.agent import Agent
 
 
 class MessageType(Enum):
@@ -27,11 +28,11 @@ class Message:
     def get_type(self) -> MessageType:
         pass
 
-    def get_value(self) -> MessageValue:
-        return self.value
-
     def to_role_and_content(self) -> list[dict]:
         pass
+
+    def stream_type_and_value(self) -> Iterable[str]:
+        return stream_as_json({"type": self.get_type().value, "value": self.value})
 
 
 class UserMessage(Message):
@@ -42,7 +43,7 @@ class UserMessage(Message):
         return [
             {
                 "role": "user",
-                "content": self.get_value()
+                "content": self.value
             }
         ]
 
@@ -55,7 +56,7 @@ class AiChatMessage(Message):
         return [
             {
                 "role": "assistant",
-                "content": self.get_value()
+                "content": self.value
             }
         ]
 
@@ -84,8 +85,11 @@ class AiProcessingMessage(Message):
         return [
             {
                 "role": "assistant",
-                "content": self.get_value()["summary"] + "\n\n" + "".join(
-                    stream_value_as_text(self.get_value()["content"]))
+                "content": self.value["summary"]
+            },
+            {
+                "role": "assistant",
+                "content": "".join(self.value["content"])
             }
         ]
 
@@ -98,7 +102,7 @@ class ErrorMessage(Message):
         return [
             {
                 "role": "error",
-                "content": self.get_value()
+                "content": self.value
             }
         ]
 
@@ -148,11 +152,23 @@ class Conversation:
                 yield role_and_content
 
 
-def present_results(agent, history, type_of_results):
+PRESENT_RESULTS_PROMPT = """
+You are an assistant who relays information to the user. You do not come up with the information itself. You not know 
+anything. You only use what information has been provided to you.
+
+Use the following context information to try to answer the request: {context}
+
+If the provided context information does not contain an answer to the user's request, only apologize that you could 
+not answer 
+their request and do not provide the requested information.
+"""
+
+
+def present_results(agent: Agent, history: Conversation, request: str, results: str):
     response = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
-        messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(type_of_results)),
+        messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(request=request, context=results), request),
         stream=True,
     )
 
@@ -164,6 +180,6 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     for i, message in enumerate(message_stream):
         if i > 0:
             yield ","
-        for fragment in stream_value_as_text({"type": message.get_type().value, "value": message.get_value()}):
+        for fragment in message.stream_type_and_value():
             yield fragment
     yield "]"
