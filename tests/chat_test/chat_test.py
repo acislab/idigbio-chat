@@ -61,14 +61,11 @@ def test_simple_idigbio_search():
 def test_simple_idigbio_map():
     messages = chat("Show a map of genus Carex")
 
-    assert len(messages) == 3
-    assert messages[0] == {
-        'type': 'ai_processing_message',
-        'value': {'summary': 'Searching for records...',
-                  'content': {'rq': {'genus': 'Carex'}}}
-    }
-    assert messages[1]["value"].startswith("Here is")
-    assert messages[2] == {
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert "Carex" in messages[0]["value"]["content"]
+    
+    assert messages[1] == {
         "type": "ai_map_message",
         'value': {
             'rq': {'genus': 'Carex'}

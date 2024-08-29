@@ -1,7 +1,8 @@
 from collections.abc import Iterator
 
 from chat import conversation
-from chat.conversation import Conversation, Message, AiProcessingMessage, present_results
+from chat.conversation import Conversation, Message, AiProcessingMessage, present_results, \
+    ask_llm_to_generate_search_query
 from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -16,6 +17,11 @@ class SearchSpeciesOccurrenceRecords(Tool):
     }
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        results = StreamedString(conversation.stream_summary_of_idigbio_search_results(agent, history, request))
+        def get_results():
+            params = ask_llm_to_generate_search_query(agent, history, request)
+            return (s for s in conversation.stream_summary_of_idigbio_search_results(params))
+
+        results = StreamedString(get_results())
+
         yield AiProcessingMessage("Searching for records...", results)
         yield present_results(agent, history, request, results)

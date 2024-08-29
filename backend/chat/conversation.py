@@ -189,8 +189,7 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     yield "]"
 
 
-def stream_summary_of_idigbio_search_results(agent, history, request) -> Iterable[str]:
-    params = ask_llm_to_generate_search_query(agent, history, request)
+def stream_summary_of_idigbio_search_results(params) -> Iterable[str]:
     yield f"```json\n{make_pretty_json_string(params)}\n```"
 
     url_params = idigbio_util.url_encode_params(params | {"count": 10})

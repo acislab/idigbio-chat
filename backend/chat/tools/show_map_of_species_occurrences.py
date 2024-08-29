@@ -1,8 +1,12 @@
 from collections.abc import Iterator
 
+import idigbio_util
 import search
+from chat import conversation
 from chat.chat_util import make_pretty_json_string
-from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage, present_results
+from chat.conversation import Conversation, Message, AiMapMessage, AiProcessingMessage, \
+    ask_llm_to_generate_search_query, get_record_count
+from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -15,13 +19,14 @@ class ShowMapOfSpeciesOccurrences(Tool):
     }
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        params = next(_ask_llm_to_generate_search_query(agent, history, request))
+        params_box = [{}]
 
-        yield AiProcessingMessage("Searching for records...", make_pretty_json_string(params))
-        yield AiMapMessage(params)
+        def get_results():
+            params = ask_llm_to_generate_search_query(agent, history, request)
+            params_box[0] = params
+            return (s for s in conversation.stream_summary_of_idigbio_search_results(params))
 
+        results = StreamedString(get_results())
 
-def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[dict]:
-    params = search.functions.generate_rq.search_species_occurrence_records(agent,
-                                                                            history.render_to_openai(request=request))
-    yield params
+        yield AiProcessingMessage("Searching for records...", results)
+        yield AiMapMessage(params_box[0])
