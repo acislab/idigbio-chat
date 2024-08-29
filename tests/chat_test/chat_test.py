@@ -64,13 +64,23 @@ def test_simple_idigbio_map():
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
     assert "Carex" in messages[0]["value"]["content"]
-    
+
     assert messages[1] == {
         "type": "ai_map_message",
         'value': {
             'rq': {'genus': 'Carex'}
         }
     }
+
+
+def test_map_for_no_records():
+    messages = chat("Show a map of genus Jabberwock")
+
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert "Jabberwock" in messages[0]["value"]["content"]
+
+    assert messages[1]["type"] == "ai_text_message"
 
 
 def test_expert_opinion():

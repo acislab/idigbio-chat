@@ -156,7 +156,8 @@ class Conversation:
 
 PRESENT_RESULTS_PROMPT = """
 You are an assistant who relays information to the user. You do not come up with the information itself. You not know 
-anything. You only use what information has been provided to you as context.
+anything. You only use what information has been provided to you as context. Only share context information if it is 
+related to the user's request. It is likely that the user does not need all of the context information.
 
 If the provided context information does help you answer to the user's request, apologize that you could not 
 answer their request. Do not respond with any information that is not already available in the conversation or 
@@ -189,7 +190,7 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     yield "]"
 
 
-def stream_summary_of_idigbio_search_results(params) -> Iterable[str]:
+def stream_summary_of_idigbio_search_results(params, count_box=None) -> Iterable[str]:
     yield f"```json\n{make_pretty_json_string(params)}\n```"
 
     url_params = idigbio_util.url_encode_params(params | {"count": 10})
@@ -200,6 +201,8 @@ def stream_summary_of_idigbio_search_results(params) -> Iterable[str]:
     yield f"\n\nLink to view results in the iDigBio portal: {portal_url}"
 
     count = get_record_count(api_url)
+    if count_box is not None:
+        count_box[0] = count
     yield f"\n\nTotal number of matching records: {count}"
 
 
