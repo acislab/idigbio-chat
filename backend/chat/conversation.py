@@ -1,10 +1,8 @@
 from enum import Enum
 from typing import Iterator, Iterable
 
-from markupsafe import Markup
-
 from chat.chat_util import stream_openai, stream_as_json
-from chat.stream_util import StreamedContent
+from chat.stream_util import StreamedContent, StreamedString
 from nlp.agent import Agent
 
 
@@ -154,17 +152,19 @@ class Conversation:
 
 PRESENT_RESULTS_PROMPT = """
 You are an assistant who relays information to the user. You do not come up with the information itself. You not know 
-anything. You only use what information has been provided to you.
+anything. You only use what information has been provided to you as context.
 
-Use the following context information to try to answer the request: {context}
+If the provided context information does help you answer to the user's request, apologize that you could not 
+answer their request. Do not respond with any information that is not already available in the conversation or 
+provided context.
 
-If the provided context information does not contain an answer to the user's request, only apologize that you could 
-not answer 
-their request and do not provide the requested information.
+Use the context information below:
+
+{context}
 """
 
 
-def present_results(agent: Agent, history: Conversation, request: str, results: str):
+def present_results(agent: Agent, history: Conversation, request: str, results: str | StreamedString):
     response = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,

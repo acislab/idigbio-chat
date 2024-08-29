@@ -1,9 +1,12 @@
 from collections.abc import Iterator
 
+import requests
+
 import idigbio_util
 import search
 from chat.chat_util import make_pretty_json_string
-from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage
+from chat.conversation import Conversation, Message, AiProcessingMessage, AiChatMessage, present_results
+from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -17,17 +20,31 @@ class SearchSpeciesOccurrenceRecords(Tool):
     }
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        params = next(_ask_llm_to_generate_search_query(agent, history, request))
+        def get_results():
+            params = _ask_llm_to_generate_search_query(agent, history, request)
+            yield f"```json\n{make_pretty_json_string(params)}\n```"
 
-        yield AiProcessingMessage("Searching for records...", make_pretty_json_string(params))
+            url_params = idigbio_util.url_encode_params(params | {"count": 10})
+            api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
+            yield f"\n\nLink to record counts found by the iDigBio records API: {api_url}"
 
-        url_params = idigbio_util.url_encode_params(params)
+            portal_url = f"https://beta-portal.idigbio.org/portal/search?{url_params}"
+            yield f"\n\nLink to view results in the iDigBio portal: {portal_url}"
 
-        yield AiChatMessage(f"[iDigBio portal search](https://beta-portal.idigbio.org/portal/search?{url_params})")
-        yield AiChatMessage(f"[iDigBio records API search](https://search.idigbio.org/v2/search/records?{url_params})")
+            count = _get_record_count(api_url)
+            yield f"\n\nTotal number of matching records: {count}"
+
+        results = StreamedString(get_results())
+        yield AiProcessingMessage("Searching for records...", results)
+        yield present_results(agent, history, request, results)
 
 
-def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> Iterator[dict]:
+def _ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> dict:
     params = search.functions.generate_rq.search_species_occurrence_records(agent,
                                                                             history.render_to_openai(request=request))
-    yield params
+    return params
+
+
+def _get_record_count(query_url: str) -> (str, int):
+    res = requests.get(query_url)
+    return res.json()["itemCount"]

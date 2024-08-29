@@ -48,11 +48,13 @@ def test_help():
 def test_simple_idigbio_search():
     messages = chat("Find records for genus Carex")
 
-    assert len(messages) == 3
-    assert messages[0] == {'type': 'ai_processing_message', 'value': {'summary': 'Searching for records...',
-                                                                      'content': '```json\\n{\\n    "rq": {\\n        '
-                                                                                 '"genus": "Carex"\\n    '
-                                                                                 '}\\n}\\n```\\n'}}
+    assert len(messages) == 2
+
+    assert messages[0]["type"] == "ai_processing_message"
+    content = messages[0]["value"]["content"]
+    assert "```json" in content
+    assert "https://search.idigbio.org/v2/summary/top/records" in content
+
     assert messages[1]["type"] == "ai_text_message"
 
 

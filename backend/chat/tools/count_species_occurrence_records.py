@@ -31,9 +31,7 @@ class CountSpeciesOccurrenceRecords(Tool):
             yield f"\n\nTotal number of matching records: {count}"
 
         results = StreamedString(get_results())
-
         yield AiProcessingMessage("Searching for records...", results)
-
         yield present_results(agent, history, request, results)
 
 
