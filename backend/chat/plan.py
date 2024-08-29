@@ -1,4 +1,4 @@
-from chat.conversation import Conversation, UserMessage
+from chat.conversation import Conversation
 from chat.tools.tool import all_tools
 from nlp.agent import Agent
 
