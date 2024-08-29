@@ -87,13 +87,16 @@ You identify what a user wants. If the user requests multiple things, you break 
 requests. Each item in the list should fully describe each individual request, even if it is redundant with the other 
 items in the list. If the user only wants one thing, represent it as a list with one item. Format lists as JSON 
 arrays. If the user is not requesting any specific information, create an empty array. Only break down the user's 
-last message. Do not repeat requests that have already been addressed.
+last message. Do not repeat requests that have already been addressed, unless the user's latest message is a 
+follow-up to an earlier request. For example, if the user provides additional information to refine an earlier request.
 
-Here's an example of breaking down a user's request.
+Here are some examples of breaking down user request.
 
-User: I want to know what plant species are present in Florida and how many records iDigBio has for each species
-Assistant: ["what plant species are present in Florida", "how many records does iDigBio have for each species present 
-in Florida"]
+EXAMPLE 1
+
+- User: I want to know what plant species are present in Florida and how many records iDigBio has for each species
+- Assistant: ["what plant species are present in Florida", "how many records does iDigBio have for each species present 
+in Florida"] 
 
 The user's last message was the following:
 

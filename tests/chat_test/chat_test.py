@@ -131,6 +131,15 @@ def test_conversation_history_search_query():
     assert "Carex" in messages[2]["value"]
 
 
+def test_follow_up_question_for_search_query():
+    messages = chat("How many records for Ursus arctos are there")
+    messages += chat("What URL did you use to call the iDigBio API?")
+
+    last_message = messages[-1]["value"]
+    url = "https://search.idigbio.org/v2/search/records"
+    assert url in last_message
+
+
 def test_count_records():
     messages = chat("How many records for genus Carex?")
 

@@ -36,15 +36,11 @@ def test_stream_dict_as_json():
 
 
 def test_stream_another_stream_as_json():
-    def stream_ketchup():
-        for c in "ketchup":
-            yield c
-
     d = {
         "type": "hotdog",
         "value": {
             "dog": "Ball Park Frank",
-            "condiment": stream_ketchup()
+            "condiment": (c for c in "ketchup")
         }
     }
 
