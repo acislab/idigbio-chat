@@ -1,7 +1,11 @@
 from enum import Enum
 from typing import Iterator, Iterable
 
-from chat.chat_util import stream_openai, stream_as_json
+import requests
+
+import idigbio_util
+import search
+from chat.chat_util import stream_openai, stream_as_json, make_pretty_json_string
 from chat.stream_util import StreamedContent, StreamedString
 from nlp.agent import Agent
 
@@ -183,3 +187,29 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
         for fragment in message.stream_type_and_value():
             yield fragment
     yield "]"
+
+
+def stream_summary_of_idigbio_search_results(agent, history, request) -> Iterable[str]:
+    params = ask_llm_to_generate_search_query(agent, history, request)
+    yield f"```json\n{make_pretty_json_string(params)}\n```"
+
+    url_params = idigbio_util.url_encode_params(params | {"count": 10})
+    api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
+    yield f"\n\nLink to record counts found by the iDigBio records API: {api_url}"
+
+    portal_url = f"https://beta-portal.idigbio.org/portal/search?{url_params}"
+    yield f"\n\nLink to view results in the iDigBio portal: {portal_url}"
+
+    count = get_record_count(api_url)
+    yield f"\n\nTotal number of matching records: {count}"
+
+
+def ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> dict:
+    params = search.functions.generate_rq.search_species_occurrence_records(agent,
+                                                                            history.render_to_openai(request=request))
+    return params
+
+
+def get_record_count(query_url: str) -> (str, int):
+    res = requests.get(query_url)
+    return res.json()["itemCount"]
