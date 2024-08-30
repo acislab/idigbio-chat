@@ -33,7 +33,7 @@ class ShowMapOfSpeciesOccurrences(Tool):
             portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
             yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
 
-            count = get_record_count(api_url)
+            count, _ = get_record_count(api_url)
             count_box[0] = count
             yield f"\n\nTotal number of matching records: {count}"
 

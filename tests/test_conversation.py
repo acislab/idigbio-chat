@@ -1,4 +1,6 @@
-from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text
+from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text, get_record_count, \
+    stream_record_counts_as_markdown_table
+from idigbio_util import url_encode_params
 
 
 def test_render_for_openai():
@@ -58,3 +60,23 @@ def test_ai_processing_message_with_dict():
 ```
 "}]\
 """
+
+
+def test_get_record_counts_as_markdown_table():
+    params = {
+        "rq": {
+            "country": "Canada",
+            "family": "Ursidae"
+        },
+        "top_fields": "genus",
+        "count": 5
+    }
+
+    url_params = url_encode_params(params)
+    total, counts = get_record_count(f"https://search.idigbio.org/v2/summary/top/records?{url_params}")
+
+    table = "".join(stream_record_counts_as_markdown_table(counts))
+
+    assert table.startswith("|")
+    assert len(table.splitlines()) == 5
+    assert table.endswith("\n")

@@ -199,6 +199,15 @@ def ask_llm_to_generate_search_query(agent: Agent, history: Conversation, reques
     return params
 
 
-def get_record_count(query_url: str) -> (str, int):
+def get_record_count(query_url: str) -> (int, dict):
     res = requests.get(query_url)
-    return res.json()["itemCount"]
+    return res.json()["itemCount"], res.json()
+
+
+def stream_record_counts_as_markdown_table(counts) -> str:
+    top_field = [x for x in counts if x != "itemCount"][0]
+
+    yield f"| {top_field} | count |\n"
+    yield "|-|-|\n"
+    for row in (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items()):
+        yield row
