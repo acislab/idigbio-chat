@@ -103,10 +103,27 @@ class IDBQuerySchema(BaseModel):
     waterbody: Optional[str] = None
 
 
-class LLMQueryOutput(BaseModel):
+class IDigBioRecordsApiParameters(BaseModel):
     """
     This schema represents the output containing the LLM-generated iDigBio query. 
     """
     rq: IDBQuerySchema = Field(...,
                                description="This is the iDigBio Query format and should contain the query generated "
                                            "from the user's plain text input.")
+    limit: Optional[int] = Field(...,
+                                 description="The maximum number of records to return. Must be a positive integer.")
+
+
+class IDigBioSummaryApiParameters(BaseModel):
+    """
+    This schema represents the output containing the LLM-generated iDigBio query.
+    """
+    rq: IDBQuerySchema = Field(...,
+                               description="This is the iDigBio Query format and should contain the query generated "
+                                           "from the user's plain text input.")
+    top_fields: Optional[str] = Field(...,
+                                      description="The field to break down record counts by. Defaults to "
+                                                  "\"scientificname\". For example, if top_fields is \"country\", "
+                                                  "the iDigBio API will find the 10 countries with the most records "
+                                                  "matching the search parameters. Only one top field may be "
+                                                  "specified.")

@@ -3,7 +3,7 @@ import openai
 import requests
 from dotenv import load_dotenv
 
-from backend.schema.idigbio.records_api import LLMQueryOutput
+from backend.schema.idigbio.records_api import IDigBioRecordsApiParameters
 from tests.test_util import repeat
 
 load_dotenv()  # Load API key and patch the instructor client
@@ -12,11 +12,11 @@ client = instructor.from_openai(openai.OpenAI())
 SAMPLE_SIZE = 1
 
 
-def ask_llm_to_generate_search_query(prompt: str) -> LLMQueryOutput:
+def ask_llm_to_generate_search_query(prompt: str) -> IDigBioRecordsApiParameters:
     return client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
-        response_model=LLMQueryOutput,
+        response_model=IDigBioRecordsApiParameters,
         messages=[
             {
                 "role": "system",

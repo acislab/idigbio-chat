@@ -1,6 +1,6 @@
 from nlp.agent import Agent
 from schema.idigbio.fields import fields
-from schema.idigbio.records_api import LLMQueryOutput
+from schema.idigbio.records_api import IDigBioRecordsApiParameters
 from search.data_types import Message, Result
 
 
@@ -282,7 +282,7 @@ def search_species_occurrence_records(agent: Agent, messages: list[dict]) -> dic
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
-        response_model=LLMQueryOutput,
+        response_model=IDigBioRecordsApiParameters,
         messages=[
                      {
                          "role": "system",

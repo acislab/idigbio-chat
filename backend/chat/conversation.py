@@ -8,6 +8,7 @@ import search
 from chat.chat_util import stream_openai, stream_as_json, make_pretty_json_string
 from chat.stream_util import StreamedContent, StreamedString
 from nlp.agent import Agent
+from schema.idigbio.records_api import IDigBioRecordsApiParameters, IDigBioSummaryApiParameters
 
 
 class MessageType(Enum):
@@ -193,9 +194,27 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     yield "]"
 
 
-def ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> dict:
-    params = search.functions.generate_rq.search_species_occurrence_records(agent,
-                                                                            history.render_to_openai(request=request))
+def generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        response_model=IDigBioRecordsApiParameters,
+        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
+    )
+
+    params = result.model_dump(exclude_none=True)
+    return params
+
+
+def generate_records_summary_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        response_model=IDigBioSummaryApiParameters,
+        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
+    )
+
+    params = result.model_dump(exclude_none=True)
     return params
 
 

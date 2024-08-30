@@ -137,7 +137,7 @@ def test_conversation_history_search_query():
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
     assert messages[1]["type"] == "ai_text_message"
-    assert "Carex" in messages[2]["value"]
+    assert "Carex" in messages[1]["value"]
 
 
 def test_follow_up_question_for_search_query():
@@ -159,6 +159,16 @@ def test_count_records():
     content = messages[0]["value"]["content"]
     assert '"genus": "Carex"' in content
 
+    assert messages[1]["type"] == "ai_text_message"
+    assert len(messages[1]["value"].splitlines()) == 1
+
+
+def test_break_down_record_counts():
+    messages = chat("What 10 species have the most records in the United States?")
+
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[0]["value"]["summary"] == "Searching for records..."
     assert messages[1]["type"] == "ai_text_message"
 
 

@@ -3,7 +3,7 @@ from collections.abc import Iterator
 import idigbio_util
 from chat.chat_util import make_pretty_json_string
 from chat.conversation import Conversation, Message, AiProcessingMessage, present_results, \
-    ask_llm_to_generate_search_query, get_record_count, stream_record_counts_as_markdown_table
+    generate_records_summary_parameters, get_record_count, stream_record_counts_as_markdown_table
 from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -36,27 +36,27 @@ class CountSpeciesOccurrenceRecords(Tool):
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         def get_results():
-            params = ask_llm_to_generate_search_query(agent, history, request)
+            params = generate_records_summary_parameters(agent, history, request)
 
             if "top_fields" not in params:
                 params |= {"top_fields": "scientificname"}
-
-            if "count" not in params:
-                params |= {"count": 10}
-            elif params["count"] > 100:
-                yield "\n\nWarning: only showing the top 100 counts"
 
             yield f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```"
 
             url_params = idigbio_util.url_encode_params(params)
             api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
-            yield f"\n\nSee record counts using the iDigBio records API [here]({api_url})"
+            yield f"\n\nSee record counts using the iDigBio summary API [here]({api_url})"
 
             portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
             yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
 
             count, all_counts = get_record_count(api_url)
             yield f"\n\nTotal number of matching records: {count}"
+
+            if "count" not in params:
+                params |= {"count": 10}
+            elif params["count"] > 100:
+                yield "\n\nWarning: only showing the top 100 counts"
 
             yield f"\n\nBreakdown of counts by {params['top_fields']} in descending order\n\n"
             for line in stream_record_counts_as_markdown_table(all_counts):
