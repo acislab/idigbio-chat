@@ -5,7 +5,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional, List, Union, Literal
 
-from pydantic import Field, BaseModel
+from pydantic import Field, BaseModel, EmailStr
 
 from .fields import fields
 
@@ -130,3 +130,13 @@ class IDigBioSummaryApiParameters(BaseModel):
     count: Optional[int] = Field(...,
                                  description="The maximum number of categories to use for the counts breakdown. For "
                                              "example, to find 10 species, set \"count\" to 10.")
+
+
+class IDigBioDownloadApiParameters(IDigBioRecordsApiParameters):
+    """
+    This schema represents the output containing the LLM-generated iDigBio query.
+    """
+    email: EmailStr = Field(...,
+                            description="The email address to send the results of the search to. The email will "
+                                        "contain a link to download the results packaged as a DarwinCore Archive zip "
+                                        "file.")

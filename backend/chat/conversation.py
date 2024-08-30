@@ -7,7 +7,7 @@ import search
 from chat.chat_util import stream_openai, stream_as_json
 from chat.stream_util import StreamedContent, StreamedString
 from nlp.agent import Agent
-from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioSummaryApiParameters
+from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioSummaryApiParameters, IDigBioDownloadApiParameters
 
 
 class MessageType(Enum):
@@ -214,6 +214,18 @@ def generate_records_summary_parameters(agent: Agent, history: Conversation, req
         model="gpt-4o",
         temperature=0,
         response_model=IDigBioSummaryApiParameters,
+        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
+    )
+
+    params = result.model_dump(exclude_none=True)
+    return params
+
+
+def generate_records_download_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        response_model=IDigBioDownloadApiParameters,
         messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
     )
 

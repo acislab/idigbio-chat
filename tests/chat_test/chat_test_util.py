@@ -1,5 +1,5 @@
 import json
-from typing import Iterable
+from typing import Iterable, Iterator
 
 from app import app
 
@@ -13,8 +13,14 @@ def chat(message) -> list[dict]:
         "value": message
     }).response
 
-    text = "".join([m.decode("utf-8") for m in wrapped_response])
-    text = text.replace("\n", "\\n")
+    return parse_response_stream(wrapped_response)
 
-    messages = json.loads(text)
-    return messages
+
+def parse_response_stream(response) -> dict:
+    if isinstance(response, str):
+        text = response
+    else:
+        text = "".join([m.decode("utf-8") for m in response])
+        
+    text = text.replace("\n", "\\n")
+    return json.loads(text)
