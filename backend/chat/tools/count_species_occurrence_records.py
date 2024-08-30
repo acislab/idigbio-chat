@@ -26,10 +26,10 @@ class CountSpeciesOccurrenceRecords(Tool):
 
             url_params = idigbio_util.url_encode_params(params)
             api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
-            yield f"\n\n[See record counts using the iDigBio records API]({api_url})"
+            yield f"\n\nSee record counts using the iDigBio records API [here]({api_url})"
 
             portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
-            yield f"\n\n[View results in the iDigBio portal]({portal_url})"
+            yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
 
             count = get_record_count(api_url)
             yield f"\n\nTotal number of matching records: {count}"

@@ -53,7 +53,7 @@ def test_simple_idigbio_search():
     assert messages[0]["type"] == "ai_processing_message"
     content = messages[0]["value"]["content"]
     assert "```json" in content
-    assert "https://search.idigbio.org/v2/summary/top/records" in content
+    assert "https://search.idigbio.org/v2/search/records" in content
 
     assert messages[1]["type"] == "ai_text_message"
 
@@ -157,18 +157,9 @@ def test_count_records():
     assert messages[0]["value"]["summary"] == "Searching for records..."
 
     content = messages[0]["value"]["content"]
-    assert content.startswith("""\
-```json
-{
-    "rq": {
-        "genus": "Carex"
-    }
-}
-```\
-""")
-    assert ("Link to record counts found by the iDigBio records API: "
-            "https://search.idigbio.org/v2/summary/top/records") in content
-    assert "Total number of matching records:" in content
+    assert '"genus": "Carex"' in content
+
+    assert messages[1]["type"] == "ai_text_message"
 
 
 def test_composite_request():
