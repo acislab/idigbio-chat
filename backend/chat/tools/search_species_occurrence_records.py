@@ -30,7 +30,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
             yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
 
             count, _ = get_record_count(api_url)
-            yield f"\n\nTotal number of matching records: {count}"
+            yield f"\n\nTotal number of matching records in iDigBio: {count}"
 
         results = StreamedString(get_results())
 

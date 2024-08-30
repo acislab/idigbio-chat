@@ -51,14 +51,14 @@ class CountSpeciesOccurrenceRecords(Tool):
             yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
 
             count, all_counts = get_record_count(api_url)
-            yield f"\n\nTotal number of matching records: {count}"
+            yield f"\n\nTotal number of matching records in iDigBio: {count}"
 
             if "count" not in params:
                 params |= {"count": 10}
             elif params["count"] > 100:
-                yield "\n\nWarning: only showing the top 100 counts"
+                yield "\n\nWarning: only showing the top 100 counts."
 
-            yield f"\n\nBreakdown of counts by {params['top_fields']} in descending order\n\n"
+            yield f"\n\nBreakdown of counts by {params['top_fields']} in descending order:\n\n"
             yield "".join(stream_record_counts_as_markdown_table(all_counts))
 
         results = StreamedString(get_results())

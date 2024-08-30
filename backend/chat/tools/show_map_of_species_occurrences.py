@@ -35,7 +35,7 @@ class ShowMapOfSpeciesOccurrences(Tool):
 
             count, _ = get_record_count(api_url)
             count_box[0] = count
-            yield f"\n\nTotal number of matching records: {count}"
+            yield f"\n\nTotal number of matching records in iDigBio: {count}"
 
         results = StreamedString(get_results())
 
