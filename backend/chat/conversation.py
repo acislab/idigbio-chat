@@ -3,9 +3,8 @@ from typing import Iterator, Iterable
 
 import requests
 
-import idigbio_util
 import search
-from chat.chat_util import stream_openai, stream_as_json, make_pretty_json_string
+from chat.chat_util import stream_openai, stream_as_json
 from chat.stream_util import StreamedContent, StreamedString
 from nlp.agent import Agent
 from schema.idigbio.records_api import IDigBioRecordsApiParameters, IDigBioSummaryApiParameters
@@ -24,9 +23,11 @@ MessageValue = str | dict | list | StreamedContent
 
 class Message:
     value: MessageValue
+    tool_name: str
 
     def __init__(self, value: MessageValue):
         self.value = value
+        self.tool_name = ""
 
     def get_type(self) -> MessageType:
         pass
@@ -87,11 +88,13 @@ class AiProcessingMessage(Message):
     def to_role_and_content(self) -> list[dict]:
         return [
             {
-                "role": "assistant",
+                "role": "function",
+                "name": self.tool_name,
                 "content": self.value["summary"]
             },
             {
-                "role": "assistant",
+                "role": "function",
+                "name": self.tool_name,
                 "content": "".join(self.value["content"])
             }
         ]

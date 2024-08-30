@@ -36,6 +36,7 @@ def _handle_individual_request(agent, history, request):
         )
 
         for message in response:
+            message.tool_name = tool_name
             yield message
     else:
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
