@@ -1,6 +1,6 @@
 from nlp.agent import Agent
 from schema.idigbio.fields import fields
-from schema.idigbio.records_api import IDigBioRecordsApiParameters
+from schema.idigbio.api import IDigBioRecordsApiParameters
 from search.data_types import Message, Result
 
 

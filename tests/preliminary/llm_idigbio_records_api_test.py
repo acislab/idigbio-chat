@@ -3,7 +3,7 @@ import openai
 import requests
 from dotenv import load_dotenv
 
-from backend.schema.idigbio.records_api import IDigBioRecordsApiParameters
+from backend.schema.idigbio.api import IDigBioRecordsApiParameters
 from tests.test_util import repeat
 
 load_dotenv()  # Load API key and patch the instructor client

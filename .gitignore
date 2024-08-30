@@ -2,3 +2,4 @@
 venv
 
 tests/flask_session
+backend/flask_session
