@@ -127,3 +127,6 @@ class IDigBioSummaryApiParameters(BaseModel):
                                                   "the iDigBio API will find the 10 countries with the most records "
                                                   "matching the search parameters. Only one top field may be "
                                                   "specified.")
+    count: Optional[int] = Field(...,
+                                 description="The maximum number of categories to use for the counts breakdown. For "
+                                             "example, to find 10 species, set \"count\" to 10.")

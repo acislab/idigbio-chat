@@ -1,6 +1,7 @@
 from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text, get_record_count, \
-    stream_record_counts_as_markdown_table
+    stream_record_counts_as_markdown_table, generate_records_summary_parameters
 from idigbio_util import url_encode_params
+from nlp.agent import Agent
 
 
 def test_render_for_openai():
@@ -80,3 +81,15 @@ def test_get_record_counts_as_markdown_table():
     assert table.startswith("|")
     assert len(table.splitlines()) == 5
     assert table.endswith("\n")
+
+
+def test_generate_records_summary_parameters():
+    params = generate_records_summary_parameters(Agent(), Conversation(),
+                                                 "What are 3 species of Ursidae in Costa Rica?")
+
+    assert "count" in params
+    assert params["count"] == 3
+    assert params["rq"] == {
+        "family": "Ursidae",
+        "country": "Costa Rica"
+    }
