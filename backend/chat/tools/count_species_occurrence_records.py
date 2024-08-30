@@ -59,8 +59,7 @@ class CountSpeciesOccurrenceRecords(Tool):
                 yield "\n\nWarning: only showing the top 100 counts"
 
             yield f"\n\nBreakdown of counts by {params['top_fields']} in descending order\n\n"
-            for line in stream_record_counts_as_markdown_table(all_counts):
-                yield line
+            yield "".join(stream_record_counts_as_markdown_table(all_counts))
 
         results = StreamedString(get_results())
 
