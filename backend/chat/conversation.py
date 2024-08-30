@@ -190,22 +190,6 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     yield "]"
 
 
-def stream_summary_of_idigbio_search_results(params, count_box=None) -> Iterable[str]:
-    yield f"```json\n{make_pretty_json_string(params)}\n```"
-
-    url_params = idigbio_util.url_encode_params(params | {"count": 10})
-    api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
-    yield f"\n\nLink to record counts found by the iDigBio records API: {api_url}"
-
-    portal_url = f"https://beta-portal.idigbio.org/portal/search?{url_params}"
-    yield f"\n\nLink to view results in the iDigBio portal: {portal_url}"
-
-    count = get_record_count(api_url)
-    if count_box is not None:
-        count_box[0] = count
-    yield f"\n\nTotal number of matching records: {count}"
-
-
 def ask_llm_to_generate_search_query(agent: Agent, history: Conversation, request: str) -> dict:
     params = search.functions.generate_rq.search_species_occurrence_records(agent,
                                                                             history.render_to_openai(request=request))

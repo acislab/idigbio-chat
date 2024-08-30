@@ -1,8 +1,10 @@
 from collections.abc import Iterator
 
+import idigbio_util
 from chat import conversation
+from chat.chat_util import make_pretty_json_string
 from chat.conversation import Conversation, Message, AiProcessingMessage, present_results, \
-    ask_llm_to_generate_search_query
+    ask_llm_to_generate_search_query, get_record_count
 from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -19,7 +21,17 @@ class SearchSpeciesOccurrenceRecords(Tool):
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         def get_results():
             params = ask_llm_to_generate_search_query(agent, history, request)
-            return (s for s in conversation.stream_summary_of_idigbio_search_results(params))
+            yield f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```"
+
+            url_params = idigbio_util.url_encode_params(params)
+            api_url = f"https://search.idigbio.org/v2/search/records?{url_params}"
+            yield f"\n\n[Retrieve records using the iDigBio records API]({api_url})"
+
+            portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
+            yield f"\n\n[View results in the iDigBio portal]({portal_url})"
+
+            count = get_record_count(api_url)
+            yield f"\n\nTotal number of matching records: {count}"
 
         results = StreamedString(get_results())
 
