@@ -23,8 +23,7 @@ class ShowMapOfSpeciesOccurrences(Tool):
         def get_results():
             params = generate_records_search_parameters(agent, history, request)
             params_box[0] = params
-
-            yield f"```Generated search parameters:\njson\n{make_pretty_json_string(params)}\n```"
+            yield f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```"
 
             url_params = idigbio_util.url_encode_params(params)
             api_url = f"https://search.idigbio.org/v2/search/records?{url_params}"
@@ -49,3 +48,4 @@ class ShowMapOfSpeciesOccurrences(Tool):
                 f"\n\nPlease explain to the user that because no records were found, no map will be "
                 f"shown. Be as concise as possible.")
             yield present_results(agent, history, request, results)
+
