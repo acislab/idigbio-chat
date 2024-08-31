@@ -1,6 +1,6 @@
-from collections.abc import Iterator
-from typing import List
+from typing import List, Iterable
 
+from langgraph.graph.message import Messages
 from pydantic import BaseModel, Field
 
 from chat.conversation import Conversation, UserMessage, ErrorMessage, Message, AiChatMessage
@@ -11,7 +11,23 @@ from nlp.agent import Agent
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 
 
-def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
+def are_you_a_robot() -> Iterable[Message]:
+    response = [
+        AiChatMessage(
+            "Hi! Before you can chat with me, please confirm you are a real person by entering \"I am not a robot\" "
+            "into the text box at the bottom of the screen.")
+    ]
+
+    for ai_message in response:
+        yield ai_message
+
+
+def greet(agent: Agent, history: Conversation, user_text_message: str) -> Iterable[Messages]:
+    history.append(UserMessage(user_text_message))
+    return _respond_conversationally(agent, history)
+
+
+def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterable[Message]:
     history.append(UserMessage(user_text_message))
 
     response = _make_response(agent, history, user_text_message)
@@ -21,7 +37,7 @@ def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterato
         history.append(ai_message)
 
 
-def _handle_individual_request(agent, history, request):
+def _handle_individual_request(agent, history, request) -> Iterable[Message]:
     plan = create_plan(agent, history, request)
     tool_name = plan
 
@@ -42,7 +58,7 @@ def _handle_individual_request(agent, history, request):
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
-def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
+def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterable[Message]:
     baked_response = _get_baked_response(agent, history, user_message)
     if baked_response is not None:
         i = 0
@@ -63,7 +79,7 @@ def _make_response(agent: Agent, history: Conversation, user_message: str) -> It
                 yield message
 
 
-def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
+def _get_baked_response(agent, history, user_message) -> Iterable[Message]:
     match user_message.lower():
         case "help":
             yield AiChatMessage(

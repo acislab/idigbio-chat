@@ -111,7 +111,8 @@ class IDigBioRecordsApiParameters(BaseModel):
                                description="This is the iDigBio Query format and should contain the query generated "
                                            "from the user's plain text input.")
     limit: Optional[int] = Field(...,
-                                 description="The maximum number of records to return. Must be a positive integer.")
+                                 description="The maximum number of records to return. Only set this field if the "
+                                             "user specifically requests a record limit.")
 
 
 class IDigBioSummaryApiParameters(BaseModel):
