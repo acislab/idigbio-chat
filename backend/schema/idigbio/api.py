@@ -10,14 +10,15 @@ from pydantic import Field, BaseModel, EmailStr
 from .fields import fields
 
 # Field values
-DateField = Field(pattern=r"^[0-9]{4}-[0,1][0-9]-[0-3][0-9]$")
-
+DateField = Field(pattern=r"^[0-9]{4}-[0,1][0-9]-[0-3][0-9]$", description="YYYY-MM-DD", examples=["1900-12-31", "2024-09-08"])
 
 class DateRange(BaseModel):
     type: Literal["range"]
-    gte: str = DateField
-    lte: str = DateField
+    gte: date = DateField
+    lte: date = DateField
 
+
+Date = Union[date, DateRange]
 
 class ExistenceEnum(str, Enum):
     exists = "exists"
@@ -62,11 +63,11 @@ class IDBQuerySchema(BaseModel):
     continent: Optional[str] = None
     country: Optional[str] = None
     county: Optional[str] = None
-    datecollected: Optional[date] = None
-    datemodified: Optional[date] = None
+    datecollected: Optional[Date] = DateField
+    datemodified: Optional[Date] = DateField
     earliestperiodorlowestsystem: Optional[str] = None
     etag: Optional[str] = None
-    eventdate: Optional[str] = None
+    eventdate: Optional[Date] = DateField
     family: Optional[str] = None
     fieldnumber: Optional[str] = None
     genus: Optional[str] = None
