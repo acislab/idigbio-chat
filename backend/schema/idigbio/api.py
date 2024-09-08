@@ -20,8 +20,8 @@ class DateRange(BaseModel):
 
 
 class ExistenceEnum(str, Enum):
-    exists: "exists"
-    missing: "missing"
+    exists = "exists"
+    missing = "missing"
 
 
 class Existence(BaseModel):
