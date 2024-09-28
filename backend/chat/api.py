@@ -79,19 +79,28 @@ def _make_response(agent: Agent, history: Conversation, user_message: str) -> It
                 yield message
 
 
+HELP_MESSAGE = """\
+This is a prototype chatbot that intelligently uses the iDigBio portal to find and discover species
+occurrence records and their media.
+
+Here are some examples of questions this chatbot can answer:
+
+* "How many records does iDigBio have for occurrences in Canada?"
+* "Find records of *Acer saccharum* that have images in iDigBio"
+* "Show a map of *Ursus arctos* occurrences"
+* "What species has the most reported occurrences in Okinawa, Japan?"
+
+If you'd like to provide feedback or want to know more about this service, you can reach the
+developers at https://github.com/acislab/idigbio-chat/issues.
+
+Type "help" to repeat this message.
+"""
+
+
 def _get_baked_response(agent, history, user_message) -> Iterable[Message]:
     match user_message.lower():
         case "help":
-            yield AiChatMessage(
-                "This is a prototype chatbot that has some capabilities for retrieving information from iDigBio APIs. "
-                "If you'd like to provide feedback or are looking for more information, you can reach out to the "
-                "developers at https://github.com/acislab/idigbio-chat/issues. Here are some examples of what it can "
-                "do:\n\n"
-                "\n* \"How many records does iDigBio have for occurrences in Canada?\""
-                "\n* \"Find records of *Acer saccharum* that have images in iDigBio\""
-                "\n* \"Show a map of *Ursus arctos* occurrences\""
-                "\n* \"What species has the most reported occurrences in Okinawa, Japan?\""
-            )
+            yield AiChatMessage(HELP_MESSAGE)
         case _:
             pass
 
