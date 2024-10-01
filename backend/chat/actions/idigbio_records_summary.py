@@ -16,48 +16,13 @@ DEFAULT_NUM_TOP_COUNTS = 10
 MAX_NUM_TOP_COUNTS = 100
 
 
-def _query_summary_api(query_url: str) -> (int, dict):
-    res = requests.get(query_url)
-    return res.json()["itemCount"], res.json()
-
-
-def _generate_records_summary_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioSummaryApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
-
-    params = result.model_dump(exclude_none=True)
-    return params
-
-
-def _stream_record_counts_as_markdown_table(counts) -> Iterable[str]:
-    top_field = [x for x in counts if x != "itemCount"][0]
-
-    yield f"| {top_field} | count |\n"
-    yield "|-|-|\n"
-    for row in (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items()):
-        yield row
-
-
 @dataclass
-class IDigBioRecordsSummaryResults(dict):
+class Results(dict):
     params: dict
     total_count: int
     top_counts: dict
     full_summary_api_url: str
     limited_summary_api_url: str
-
-
-SUMMARY = """\
-Querying the iDigBio summary API with URL {summary_api_url} returned a total of {total_count} matching records.
-
-Breakdown of counts by {top_fields} in descending order:
-
-{counts_table}\
-"""
 
 
 class IDigBioRecordsSummary(Action):
@@ -95,10 +60,36 @@ class IDigBioRecordsSummary(Action):
         counts_table = "".join(_stream_record_counts_as_markdown_table(top_counts))
         self.note(f"Breakdown of counts by {top_fields} in descending order:\n\n{counts_table}")
 
-        self.__results = IDigBioRecordsSummaryResults(
+        self.set_results(Results(
             params=params,
             total_count=total_count,
             top_counts=top_counts,
             full_summary_api_url=full_summary_api_url,
             limited_summary_api_url=limited_summary_api_url
-        )
+        ))
+
+
+def _query_summary_api(query_url: str) -> (int, dict):
+    res = requests.get(query_url)
+    return res.json()["itemCount"], res.json()
+
+
+def _generate_records_summary_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        response_model=IDigBioSummaryApiParameters,
+        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
+    )
+
+    params = result.model_dump(exclude_none=True)
+    return params
+
+
+def _stream_record_counts_as_markdown_table(counts) -> Iterable[str]:
+    top_field = [x for x in counts if x != "itemCount"][0]
+
+    yield f"| {top_field} | count |\n"
+    yield "|-|-|\n"
+    for row in (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items()):
+        yield row

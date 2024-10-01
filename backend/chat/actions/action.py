@@ -17,6 +17,9 @@ class Action:
         self.__content.get()
         return self.__results
 
+    def set_results(self, results):
+        self.__results = results
+
     def note(self, text: str):
         self.__notes += [text.strip()]
         return text

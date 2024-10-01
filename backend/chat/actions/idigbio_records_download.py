@@ -5,12 +5,52 @@ import idigbio_util
 import search
 from chat.actions.action import Action
 from chat.chat_util import make_pretty_json_string
-from chat.conversation import Message, Conversation, AiProcessingMessage
+from chat.conversation import Conversation
 from chat.stream_util import StreamedString
 from nlp.agent import Agent
 from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioDownloadApiParameters
 
 live = True
+
+
+@dataclass
+class Results(dict):
+    params: dict
+    download_api_url: str
+    success: bool
+
+
+class IDigBioRecordsDownload(Action):
+    process_summary = "Generating download request..."
+
+    def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
+        params = _generate_records_download_parameters(agent, history, request)
+        yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```\n\n")
+
+        self.note(f"Sending download request...")
+        url_params = idigbio_util.url_encode_params(params)
+        download_api_url = f"https://search.idigbio.org/v2/download?{url_params}"
+        if live:
+            response_code, success = _send_download_request(download_api_url)
+        else:
+            response_code, success = 200, True
+
+        yield self.note(f"Response code: {response_code}")
+
+        if success:
+            yield " (success)"
+            self.note(f"\n\nRequested records download link to be sent to {params['email']}!")
+        else:
+            yield " (error)"
+            self.note(f"\n\nError! Something went wrong.")
+
+        yield f" | [Resend request]({download_api_url})"
+
+        self.set_results(Results(
+            params=params,
+            download_api_url=download_api_url,
+            success=success
+        ))
 
 
 def _generate_records_download_parameters(agent: Agent, history: Conversation, request: str) -> dict:
@@ -45,46 +85,3 @@ def _generate_records_search_parameters(agent: Agent, history: Conversation, req
 
     params = result.model_dump(exclude_none=True)
     return params
-
-
-@dataclass
-class IDigBioRecordsDownloadResults(dict):
-    params: dict
-    download_api_url: str
-    success: bool
-
-
-class IDigBioRecordsDownload(Action):
-    process_summary = "Generating download request..."
-    __results: IDigBioRecordsDownloadResults
-    __content: StreamedString
-    __notes: list[str] = []
-
-    def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
-        params = _generate_records_download_parameters(agent, history, request)
-        yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```\n\n")
-
-        self.note(f"Sending download request...")
-        url_params = idigbio_util.url_encode_params(params)
-        download_api_url = f"https://search.idigbio.org/v2/download?{url_params}"
-        if live:
-            response_code, success = _send_download_request(download_api_url)
-        else:
-            response_code, success = 200, True
-
-        yield self.note(f"Response code: {response_code}")
-
-        if success:
-            yield " (success)"
-            self.note(f"\n\nRequested records download link to be sent to {params['email']}!")
-        else:
-            yield " (error)"
-            self.note(f"\n\nError! Something went wrong.")
-
-        yield f" | [Resend request]({download_api_url})"
-
-        self.__results = IDigBioRecordsDownloadResults(
-            params=params,
-            download_api_url=download_api_url,
-            success=success
-        )

@@ -11,25 +11,8 @@ from nlp.agent import Agent
 from schema.idigbio.api import IDigBioRecordsApiParameters
 
 
-def _query_search_api(query_url: str) -> (int, dict):
-    res = requests.get(query_url)
-    return res.json()["itemCount"]
-
-
-def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioRecordsApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
-
-    params = result.model_dump(exclude_none=True)
-    return params
-
-
 @dataclass
-class IDigBioRecordsSearchResults(dict):
+class Results(dict):
     params: dict
     record_count: int
     records_api_url: str
@@ -56,9 +39,26 @@ class IDigBioRecordsSearch(Action):
             f"The records can be viewed in the iDigBio portal at {portal_url}. The portal shows the records in an "
             f"interactive list and plots them on a map.")
 
-        self.__results = IDigBioRecordsSearchResults(
+        self.set_results(Results(
             params=params,
             record_count=record_count,
             records_api_url=records_api_url,
             portal_url=portal_url
-        )
+        ))
+
+
+def _query_search_api(query_url: str) -> (int, dict):
+    res = requests.get(query_url)
+    return res.json()["itemCount"]
+
+
+def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        response_model=IDigBioRecordsApiParameters,
+        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
+    )
+
+    params = result.model_dump(exclude_none=True)
+    return params
