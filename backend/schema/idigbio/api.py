@@ -12,9 +12,9 @@ from .fields import fields
 
 class DateRange(BaseModel):
     type: Literal["range"]
-    gte: date = Field(default=None, description="The start date of the range",
+    gte: date = Field(None, description="The start date of the range",
                       examples=["1900-3-14", "2024-01-01"])
-    lte: date = Field(default=None, description="The end date of the range.",
+    lte: date = Field(None, description="The end date of the range.",
                       examples=["1900-12-20", "2024-02-01"])
 
 
@@ -117,7 +117,7 @@ class IDigBioRecordsApiParameters(BaseModel):
     rq: IDBQuerySchema = Field(...,
                                description="This is the iDigBio Query format and should contain the query generated "
                                            "from the user's plain text input.")
-    limit: Optional[int] = Field(...,
+    limit: Optional[int] = Field(None,
                                  description="The maximum number of records to return. Only set this field if the "
                                              "user specifically requests a record limit.")
 
@@ -135,7 +135,7 @@ class IDigBioSummaryApiParameters(BaseModel):
                                                   "the iDigBio API will find the 10 countries with the most records "
                                                   "matching the search parameters. Only one top field may be "
                                                   "specified.")
-    count: Optional[int] = Field(...,
+    count: Optional[int] = Field(None,
                                  description="The maximum number of categories to use for the counts breakdown. For "
                                              "example, to find 10 species, set \"count\" to 10.")
 
