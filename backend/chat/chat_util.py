@@ -48,7 +48,23 @@ def stream_openai(response):
         yield chunk.choices[0].delta.content
 
 
-def make_pretty_json_string(data: dict):
+JSON_INDENT = 4
+
+
+def __unindent__(s: str):
+    return s[JSON_INDENT:]
+
+
+def __not_blank__(s: str):
+    return len(s) > 0
+
+
+def __peel_pretty_json__(js: str):
+    return "\n".join(filter(__not_blank__, map(__unindent__, js.split("\n"))))
+
+
+def make_pretty_json_string(data: dict, peel: bool = True):
     as_text = "".join(stream_as_json(data))
     as_dict = json.loads(as_text)
-    return json.dumps(as_dict, indent=4, separators=(",", ": "))
+    s = json.dumps(as_dict, indent=JSON_INDENT, separators=(",", ": "))
+    return __peel_pretty_json__(s) if peel else s
