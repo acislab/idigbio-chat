@@ -4,7 +4,7 @@ def url_encode_inner(x):
     elif type(x) == str:
         return f'"{x}"'
     else:
-        return str(x)
+        return f'"{str(x)}"'
 
 
 def url_encode_params(d: dict) -> str:

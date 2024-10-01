@@ -9,20 +9,21 @@ from pydantic import Field, BaseModel, EmailStr
 
 from .fields import fields
 
-# Field values
-DateField = Field(pattern=r"^[0-9]{4}-[0,1][0-9]-[0-3][0-9]$", description="YYYY-MM-DD", examples=["1900-12-31", "2024-09-08"])
 
 class DateRange(BaseModel):
     type: Literal["range"]
-    gte: date = DateField
-    lte: date = DateField
+    gte: date = Field(default=None, description="The start date of the range",
+                      examples=["1900-3-14", "2024-01-01"])
+    lte: date = Field(default=None, description="The end date of the range.",
+                      examples=["1900-12-20", "2024-02-01"])
 
 
 Date = Union[date, DateRange]
 
+
 class ExistenceEnum(str, Enum):
-    exists = "exists"
-    missing = "missing"
+    exists: "exists"
+    missing: "missing"
 
 
 class Existence(BaseModel):
@@ -63,11 +64,11 @@ class IDBQuerySchema(BaseModel):
     continent: Optional[str] = None
     country: Optional[str] = None
     county: Optional[str] = None
-    datecollected: Optional[Date] = DateField
-    datemodified: Optional[Date] = DateField
+    datecollected: Optional[Date] = None
+    datemodified: Optional[Date] = None
     earliestperiodorlowestsystem: Optional[str] = None
     etag: Optional[str] = None
-    eventdate: Optional[Date] = DateField
+    eventdate: Optional[Date] = None
     family: Optional[str] = None
     fieldnumber: Optional[str] = None
     genus: Optional[str] = None
@@ -102,6 +103,11 @@ class IDBQuerySchema(BaseModel):
     verbatimlocality: Optional[str] = None
     version: Optional[int] = None
     waterbody: Optional[str] = None
+
+    class Config:
+        json_encoders = {
+            date: date.isoformat
+        }
 
 
 class IDigBioRecordsApiParameters(BaseModel):

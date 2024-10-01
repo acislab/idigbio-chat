@@ -38,7 +38,9 @@ def stream_as_json(value):
                     yield v
         yield '"'
     else:
+        yield '"'
         yield str(value)
+        yield '"'
 
 
 def stream_openai(response):

@@ -201,6 +201,15 @@ def test_composite_request():
     assert messages[3]["type"] == "ai_map_message"
 
 
+def test_search_by_date():
+    messages = chat("Find records between 1999 and 2020")
+
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[0]["value"]["summary"] == "Searching for records..."
+    assert messages[1]["type"] == "ai_text_message"
+
+
 def test_recommend_spelling_fix_with_no_matches():
     """
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations
