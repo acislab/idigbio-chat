@@ -1,10 +1,7 @@
 from collections.abc import Iterator
 
-import idigbio_util
-from chat.chat_util import make_pretty_json_string
-from chat.conversation import Conversation, Message, AiProcessingMessage, present_results, \
-    generate_records_summary_parameters, get_record_count, stream_record_counts_as_markdown_table
-from chat.stream_util import StreamedString
+from chat.actions.idigbio_records_summary import IDigBioRecordsSummary
+from chat.conversation import Conversation, Message, present_results
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -16,8 +13,8 @@ field values that were matched. Counts can be broken down by any of iDigBio's qu
 
 Here are some examples of building top-N lists:
 - List the 10 species that have the most records in a country
-- List the 10 countries that have the most records of a species
-- List the 10 collectors who have recorded the most occurrences of a species
+- List the 5 countries that have the most records of a species
+- List the 3 collectors who have recorded the most occurrences of a species
 
 Here are some examples of finding unique values in matching records:
 - List the continents that a species occurs in
@@ -35,35 +32,6 @@ class CountSpeciesOccurrenceRecords(Tool):
     }
 
     def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        def get_results():
-            params = generate_records_summary_parameters(agent, history, request)
-
-            if "top_fields" not in params:
-                params |= {"top_fields": "scientificname"}
-
-            yield f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```"
-
-            url_params = idigbio_util.url_encode_params(params)
-            api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
-            yield f"\n\nSee record counts using the iDigBio summary API [here]({api_url})"
-
-            portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
-            yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
-
-            count, all_counts = get_record_count(api_url)
-            yield f"\n\nTotal number of matching records in iDigBio: {count}"
-
-            if "count" not in params:
-                params |= {"count": 10}
-                yield "\n\nWarning: count not specified, only showing the top 10 counts."
-            elif params["count"] > 100:
-                params["count"] = 100
-                yield "\n\nWarning: count only showing the top 100 counts."
-
-            yield f"\n\nBreakdown of counts by {params['top_fields']} in descending order:\n\n"
-            yield "".join(stream_record_counts_as_markdown_table(all_counts))
-
-        results = StreamedString(get_results())
-
-        yield AiProcessingMessage("Searching for records...", results)
-        yield present_results(agent, history, request, results)
+        search = IDigBioRecordsSummary(agent, history, request)
+        yield search.make_message()
+        yield present_results(agent, history, request, search.summarize())
