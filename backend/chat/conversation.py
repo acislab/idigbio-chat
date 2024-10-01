@@ -81,7 +81,9 @@ class AiMapMessage(Message):
 
 
 class AiProcessingMessage(Message):
-    def __init__(self, summary: MessageValue, content: MessageValue, show_user: bool = True):
+    def __init__(self, summary: MessageValue, content: MessageValue, thoughts: MessageValue = None,
+                 show_user: bool = True):
+        self.thoughts = content if thoughts is None else thoughts
         super().__init__({"summary": summary, "content": content}, show_user)
 
     def get_type(self) -> MessageType:
@@ -97,7 +99,7 @@ class AiProcessingMessage(Message):
             {
                 "role": "function",
                 "name": self.tool_name,
-                "content": "".join(self.value["content"])
+                "content": "".join(self.thoughts)
             }
         ]
 

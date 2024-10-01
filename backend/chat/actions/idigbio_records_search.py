@@ -55,7 +55,10 @@ class IDigBioRecordsSearch:
         self.__content = StreamedString(self.__run__(agent, history, request))
 
     def make_message(self) -> Message:
-        return AiProcessingMessage("Searching for records...", self.__content)
+        def think():
+            yield self.summarize()
+
+        return AiProcessingMessage("Searching for records...", self.__content, StreamedString(think()))
 
     def summarize(self) -> str:
         r = self.results

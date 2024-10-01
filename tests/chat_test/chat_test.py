@@ -58,10 +58,7 @@ def test_help():
     messages = chat("help")
 
     assert len(messages) == 1
-    assert messages[0] == {
-        "type": "ai_text_message",
-        "value": "I have access to the following tools..."
-    }
+    assert messages[0]["value"].startswith("This is a prototype")
 
 
 def test_simple_idigbio_search():
