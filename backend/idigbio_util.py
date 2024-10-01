@@ -3,6 +3,8 @@ def url_encode_inner(x):
         return "{" + ",".join([f'"{k}":{url_encode_inner(v)}' for k, v in x.items()]) + "}"
     elif type(x) == str:
         return f'"{x}"'
+    elif type(x) == int:
+        return str(x)
     else:
         return f'"{str(x)}"'
 
