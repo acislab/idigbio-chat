@@ -106,26 +106,18 @@ def test_expert_opinion():
     """"""
     messages = chat("What color are polar bears? Please be brief.")
 
-    assert len(messages) == 2
+    assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
-
-    m = messages[1]
-    assert m["type"] == "ai_text_message"
-    assert "polar bears" in m["value"].lower()
-    assert "white" in m["value"].lower()
 
 
 def test_conversation_history():
     """"""
-    chat("What color are polar bears? Please be brief.")
-    messages = chat("Where do they live? Please be brief.")
+    chat("My name is Ruth.")
+    messages = chat("What is my name?")
 
-    assert len(messages) == 2
+    assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
-
-    m = messages[1]
-    assert "polar bear" in m["value"].lower()
-    assert "arctic" in m["value"].lower()
+    assert "Ruth" in messages[0]["value"]
 
 
 def test_conversation_history_map_query():

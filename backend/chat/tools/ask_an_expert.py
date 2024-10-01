@@ -1,7 +1,7 @@
 from typing import Iterator
 
 from chat.chat_util import stream_openai
-from chat.conversation import Conversation, AiChatMessage, Message
+from chat.conversation import Conversation, AiChatMessage, Message, AiProcessingMessage, present_results
 from chat.tools.tool import Tool
 from nlp.agent import Agent
 
@@ -18,20 +18,8 @@ class AskAnExpert(Tool):
         Asks the LLM to answer the user's prompt directly.
         """
 
-        yield AiChatMessage("GPT-4o generated the following information:")
-        yield _ask_llm_for_expert_opinion(agent, history, request)
-
-
-def _ask_llm_for_expert_opinion(agent: Agent, conversation: Conversation, request: str):
-    """
-    Asks the LLM to answer the user's prompt directly.
-    """
-    response = agent.openai.chat.completions.create(
-        model="gpt-4o",
-        temperature=1,
-        stream=True,
-        messages=conversation.render_to_openai(
-            system_message="You are a biodiversity expert. You write in the style of an encyclopedia.", request=request)
-    )
-
-    return AiChatMessage(stream_openai(response))
+        result = (
+            "Something went wrong. The system either failed to understand the user's request or is incapable of "
+            "handling it.")
+        yield AiProcessingMessage("Thinking...", result, show_user=False)
+        yield present_results(agent, history, request, result + "\n\nPlease apologize.")

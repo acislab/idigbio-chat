@@ -24,10 +24,12 @@ MessageValue = str | dict | list | StreamedContent
 class Message:
     value: MessageValue
     tool_name: str
+    show_user: bool = True
 
-    def __init__(self, value: MessageValue):
+    def __init__(self, value: MessageValue, show_user: bool = True):
         self.value = value
         self.tool_name = ""
+        self.show_user = show_user
 
     def get_type(self) -> MessageType:
         pass
@@ -36,7 +38,7 @@ class Message:
         pass
 
     def stream_type_and_value(self) -> Iterable[str]:
-        return stream_as_json({"type": self.get_type().value, "value": self.value})
+        return stream_as_json({"type": self.get_type().value, "value": self.value}) if self.show_user else []
 
 
 class UserMessage(Message):
@@ -79,8 +81,8 @@ class AiMapMessage(Message):
 
 
 class AiProcessingMessage(Message):
-    def __init__(self, summary: MessageValue, content: MessageValue):
-        super().__init__({"summary": summary, "content": content})
+    def __init__(self, summary: MessageValue, content: MessageValue, show_user: bool = True):
+        super().__init__({"summary": summary, "content": content}, show_user)
 
     def get_type(self) -> MessageType:
         return MessageType.ai_processing_message
@@ -188,12 +190,14 @@ def present_results(agent: Agent, history: Conversation, request: str, results: 
 
 
 def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
+    nonempty = False
     yield "["
     for i, message in enumerate(message_stream):
-        if i > 0:
+        if nonempty:
             yield ","
         for fragment in message.stream_type_and_value():
             yield fragment
+            nonempty = True
     yield "]"
 
 
