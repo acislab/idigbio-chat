@@ -5,24 +5,12 @@ from attr import dataclass
 
 import idigbio_util
 import search
+from chat.actions.action import Action
 from chat.chat_util import make_pretty_json_string
-from chat.conversation import Message, Conversation, AiProcessingMessage
+from chat.conversation import Conversation
 from chat.stream_util import StreamedString
 from nlp.agent import Agent
 from schema.idigbio.api import IDigBioSummaryApiParameters
-
-SUMMARY = """\
-Generated the following search parameters to count species occurrence records in iDigBio:
-```json
-{pretty_params}
-```
-
-Querying the iDigBio summary API with URL {summary_api_url} returned a total of {total_count} matching records.
-
-Breakdown of counts by {top_fields} in descending order:
-
-{counts_table}\
-"""
 
 DEFAULT_NUM_TOP_COUNTS = 10
 MAX_NUM_TOP_COUNTS = 100
@@ -55,7 +43,7 @@ def _stream_record_counts_as_markdown_table(counts) -> Iterable[str]:
 
 
 @dataclass
-class IDigBioRecordsSummaryResults:
+class IDigBioRecordsSummaryResults(dict):
     params: dict
     total_count: int
     top_counts: dict
@@ -63,22 +51,26 @@ class IDigBioRecordsSummaryResults:
     limited_summary_api_url: str
 
 
-class IDigBioRecordsSummary:
-    __results: IDigBioRecordsSummaryResults
-    __content: StreamedString
+SUMMARY = """\
+Querying the iDigBio summary API with URL {summary_api_url} returned a total of {total_count} matching records.
 
-    @property
-    def results(self):
-        self.__content.get()
-        return self.__results
+Breakdown of counts by {top_fields} in descending order:
+
+{counts_table}\
+"""
+
+
+class IDigBioRecordsSummary(Action):
+    process_summary = "Searching for records..."
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
         params = _generate_records_summary_parameters(agent, history, request)
 
         if "top_fields" not in params:
             params |= {"top_fields": "scientificname"}
+        top_fields = params["top_fields"]
 
-        yield f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```"
+        yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
         url_params = idigbio_util.url_encode_params(params)
         full_summary_api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
@@ -90,8 +82,18 @@ class IDigBioRecordsSummary:
             test_params["count"] = MAX_NUM_TOP_COUNTS
         limited_summary_api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
 
+        self.note(f"Querying the iDigBio summary API with URL {full_summary_api_url}")
+        if "count" not in params:
+            self.note(f"Warning: count not specified, only checking the top {DEFAULT_NUM_TOP_COUNTS} counts.")
+        elif params["count"] > MAX_NUM_TOP_COUNTS:
+            self.note(f"\nWarning: only checking the top {MAX_NUM_TOP_COUNTS} counts.")
+
         total_count, top_counts = _query_summary_api(limited_summary_api_url)
         yield f"\n\n[View summary of {total_count} records]({full_summary_api_url})"
+        self.note(f"The API query matched {total_count} total records in iDigBio")
+
+        counts_table = "".join(_stream_record_counts_as_markdown_table(top_counts))
+        self.note(f"Breakdown of counts by {top_fields} in descending order:\n\n{counts_table}")
 
         self.__results = IDigBioRecordsSummaryResults(
             params=params,
@@ -100,30 +102,3 @@ class IDigBioRecordsSummary:
             full_summary_api_url=full_summary_api_url,
             limited_summary_api_url=limited_summary_api_url
         )
-
-    def __init__(self, agent: Agent, history=Conversation([]), request: str = None):
-        self.__content = StreamedString(self.__run__(agent, history, request))
-
-    def make_message(self) -> Message:
-        def think():
-            yield self.summarize()
-
-        return AiProcessingMessage("Searching for records...", self.__content, StreamedString(think()))
-
-    def summarize(self) -> str:
-        r = self.results
-        counts_table = "".join(_stream_record_counts_as_markdown_table(r.top_counts))
-        summary = SUMMARY.format(
-            pretty_params=make_pretty_json_string(r.params),
-            summary_api_url=r.full_summary_api_url,
-            total_count=r.total_count,
-            top_fields=r.params["top_fields"],
-            counts_table=counts_table
-        )
-
-        if "count" not in r.params:
-            summary += f"\nWarning: count not specified, only checking the top {DEFAULT_NUM_TOP_COUNTS} counts."
-        elif r.params["count"] > MAX_NUM_TOP_COUNTS:
-            summary += f"\nWarning: only checking the top {MAX_NUM_TOP_COUNTS} counts."
-
-        return summary
