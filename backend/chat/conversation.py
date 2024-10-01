@@ -1,13 +1,11 @@
 from enum import Enum
 from typing import Iterator, Iterable
 
-import requests
-
 import search
 from chat.chat_util import stream_openai, stream_as_json
 from chat.stream_util import StreamedContent, StreamedString
 from nlp.agent import Agent
-from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioSummaryApiParameters, IDigBioDownloadApiParameters
+from schema.idigbio.api import IDigBioDownloadApiParameters
 
 
 class MessageType(Enum):
@@ -203,30 +201,6 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
     yield "]"
 
 
-def generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioRecordsApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
-
-    params = result.model_dump(exclude_none=True)
-    return params
-
-
-def generate_records_summary_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioSummaryApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
-
-    params = result.model_dump(exclude_none=True)
-    return params
-
-
 def generate_records_download_parameters(agent: Agent, history: Conversation, request: str) -> dict:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
@@ -237,17 +211,3 @@ def generate_records_download_parameters(agent: Agent, history: Conversation, re
 
     params = result.model_dump(exclude_none=True)
     return params
-
-
-def get_record_count(query_url: str) -> (int, dict):
-    res = requests.get(query_url)
-    return res.json()["itemCount"], res.json()
-
-
-def stream_record_counts_as_markdown_table(counts) -> str:
-    top_field = [x for x in counts if x != "itemCount"][0]
-
-    yield f"| {top_field} | count |\n"
-    yield "|-|-|\n"
-    for row in (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items()):
-        yield row

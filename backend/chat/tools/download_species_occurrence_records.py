@@ -5,7 +5,7 @@ import requests
 import idigbio_util
 from chat.chat_util import make_pretty_json_string
 from chat.conversation import Conversation, Message, AiProcessingMessage, present_results, \
-    get_record_count, generate_records_download_parameters
+    get_idigbio_record_count_and_data, generate_records_download_parameters
 from chat.stream_util import StreamedString
 from chat.tools.tool import Tool
 from nlp.agent import Agent
@@ -35,7 +35,7 @@ class DownloadSpeciesOccurrenceRecords(Tool):
             portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
             yield f"\n\nView results in the iDigBio portal [here]({portal_url})"
 
-            count, _ = get_record_count(api_url)
+            count, _ = get_idigbio_record_count_and_data(api_url)
             yield f"\n\nTotal number of matching records in iDigBio: {count}"
 
             yield f"\n\nSending download request... "

@@ -1,11 +1,15 @@
+from typing import Iterable
+
+import requests
 from attr import dataclass
 
 import idigbio_util
+import search
 from chat.chat_util import make_pretty_json_string
-from chat.conversation import Message, Conversation, get_record_count, \
-    AiProcessingMessage, generate_records_summary_parameters, stream_record_counts_as_markdown_table
+from chat.conversation import Message, Conversation, AiProcessingMessage
 from chat.stream_util import StreamedString
 from nlp.agent import Agent
+from schema.idigbio.api import IDigBioSummaryApiParameters
 
 SUMMARY = """\
 Generated the following search parameters to count species occurrence records in iDigBio:
@@ -22,6 +26,32 @@ Breakdown of counts by {top_fields} in descending order:
 
 DEFAULT_NUM_TOP_COUNTS = 10
 MAX_NUM_TOP_COUNTS = 100
+
+
+def _query_summary_api(query_url: str) -> (int, dict):
+    res = requests.get(query_url)
+    return res.json()["itemCount"], res.json()
+
+
+def _generate_records_summary_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+    result = agent.client.chat.completions.create(
+        model="gpt-4o",
+        temperature=0,
+        response_model=IDigBioSummaryApiParameters,
+        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
+    )
+
+    params = result.model_dump(exclude_none=True)
+    return params
+
+
+def _stream_record_counts_as_markdown_table(counts) -> Iterable[str]:
+    top_field = [x for x in counts if x != "itemCount"][0]
+
+    yield f"| {top_field} | count |\n"
+    yield "|-|-|\n"
+    for row in (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items()):
+        yield row
 
 
 @dataclass
@@ -43,7 +73,7 @@ class IDigBioRecordsSummary:
         return self.__results
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
-        params = generate_records_summary_parameters(agent, history, request)
+        params = _generate_records_summary_parameters(agent, history, request)
 
         if "top_fields" not in params:
             params |= {"top_fields": "scientificname"}
@@ -60,7 +90,7 @@ class IDigBioRecordsSummary:
             test_params["count"] = MAX_NUM_TOP_COUNTS
         limited_summary_api_url = f"https://search.idigbio.org/v2/summary/top/records?{url_params}"
 
-        total_count, top_counts = get_record_count(limited_summary_api_url)
+        total_count, top_counts = _query_summary_api(limited_summary_api_url)
         yield f"\n\n[View summary of {total_count} records]({full_summary_api_url})"
 
         self.__results = IDigBioRecordsSummaryResults(
@@ -82,7 +112,7 @@ class IDigBioRecordsSummary:
 
     def summarize(self) -> str:
         r = self.results
-        counts_table = "".join(stream_record_counts_as_markdown_table(r.top_counts))
+        counts_table = "".join(_stream_record_counts_as_markdown_table(r.top_counts))
         summary = SUMMARY.format(
             pretty_params=make_pretty_json_string(r.params),
             summary_api_url=r.full_summary_api_url,

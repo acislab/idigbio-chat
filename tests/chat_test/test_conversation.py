@@ -1,4 +1,5 @@
-from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text, get_record_count, \
+from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text, \
+    get_idigbio_record_count_and_data, \
     stream_record_counts_as_markdown_table, generate_records_summary_parameters
 from idigbio_util import url_encode_params
 from nlp.agent import Agent
@@ -74,7 +75,7 @@ def test_get_record_counts_as_markdown_table():
     }
 
     url_params = url_encode_params(params)
-    total, counts = get_record_count(f"https://search.idigbio.org/v2/summary/top/records?{url_params}")
+    total, counts = get_idigbio_record_count_and_data(f"https://search.idigbio.org/v2/summary/top/records?{url_params}")
 
     table = "".join(stream_record_counts_as_markdown_table(counts))
 
