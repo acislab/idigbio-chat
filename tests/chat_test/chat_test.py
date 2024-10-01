@@ -156,8 +156,10 @@ def test_follow_up_question_for_search_query():
     messages += chat("What URL did you use to call the iDigBio API?")
 
     last_message = messages[-1]["value"]
-    url = "https://search.idigbio.org/v2/search/records"
+    url = "https://search.idigbio.org/v2/summary/"
     assert url in last_message
+    assert "ursus" in last_message.lower()
+    assert "arctos" in last_message.lower()
 
 
 def test_count_records():
