@@ -17,8 +17,8 @@ class ShowMapOfSpeciesOccurrences(Tool):
         search = IDigBioRecordsSearch(agent, history, request)
         yield search.make_message()
 
-        if search.record_count > 0:
-            yield AiMapMessage(search.params)
+        if search.results.record_count > 0:
+            yield AiMapMessage(search.results.params)
         else:
             yield present_results(agent, history, request, search.summarize() +
                                   f"\n\nPlease explain to the user that because no records were found, no map will be "
