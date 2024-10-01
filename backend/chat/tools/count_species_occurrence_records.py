@@ -55,8 +55,10 @@ class CountSpeciesOccurrenceRecords(Tool):
 
             if "count" not in params:
                 params |= {"count": 10}
+                yield "\n\nWarning: count not specified, only showing the top 10 counts."
             elif params["count"] > 100:
-                yield "\n\nWarning: only showing the top 100 counts."
+                params["count"] = 100
+                yield "\n\nWarning: count only showing the top 100 counts."
 
             yield f"\n\nBreakdown of counts by {params['top_fields']} in descending order:\n\n"
             yield "".join(stream_record_counts_as_markdown_table(all_counts))
