@@ -25,9 +25,9 @@ class IDigBioRecordsDownload(Action):
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
         params = _generate_records_download_parameters(agent, history, request)
-        yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```\n\n")
+        yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
-        self.note(f"Sending download request...")
+        self.note(f"\n\nSending download request...")
         url_params = idigbio_util.url_encode_params(params)
         download_api_url = f"https://search.idigbio.org/v2/download?{url_params}"
         if live:

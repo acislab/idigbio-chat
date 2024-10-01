@@ -1,5 +1,5 @@
 import json
-from typing import Iterable, Iterator
+from typing import Iterable
 
 from app import app
 
@@ -21,6 +21,6 @@ def parse_response_stream(response) -> dict:
         text = response
     else:
         text = "".join([m.decode("utf-8") for m in response])
-        
+
     text = text.replace("\n", "\\n")
     return json.loads(text)
