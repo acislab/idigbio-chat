@@ -3,6 +3,7 @@ from attr import dataclass
 
 import idigbio_util
 import search
+from chat.actions.action import Action
 from chat.chat_util import make_pretty_json_string
 from chat.conversation import Message, Conversation, AiProcessingMessage
 from chat.stream_util import StreamedString
@@ -47,25 +48,17 @@ def _generate_records_search_parameters(agent: Agent, history: Conversation, req
 
 
 @dataclass
-class IDigBioRecordsDownloadResults:
+class IDigBioRecordsDownloadResults(dict):
     params: dict
     download_api_url: str
     success: bool
 
 
-class IDigBioRecordsDownload:
+class IDigBioRecordsDownload(Action):
+    process_summary = "Generating download request..."
     __results: IDigBioRecordsDownloadResults
     __content: StreamedString
     __notes: list[str] = []
-
-    @property
-    def results(self):
-        self.__content.get()
-        return self.__results
-
-    def note(self, text: str):
-        self.__notes += [text.strip()]
-        return text
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
         params = _generate_records_download_parameters(agent, history, request)
@@ -95,15 +88,3 @@ class IDigBioRecordsDownload:
             download_api_url=download_api_url,
             success=success
         )
-
-    def __init__(self, agent: Agent, history=Conversation([]), request: str = None):
-        self.__content = StreamedString(self.__run__(agent, history, request))
-
-    def make_message(self) -> Message:
-        def think():
-            yield self.summarize()
-
-        return AiProcessingMessage("Generating download request...", self.__content, StreamedString(think()))
-
-    def summarize(self) -> str:
-        return "\n\n".join(self.__notes)
