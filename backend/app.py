@@ -37,7 +37,7 @@ def make_user_info():
 
 
 def get_user_info() -> dict:
-    if "id" not in session:
+    if "id" not in session or session["id"] not in fake_redis:
         if SAFE_MODE:
             return None
         else:
