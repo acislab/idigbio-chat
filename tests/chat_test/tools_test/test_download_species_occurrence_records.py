@@ -14,10 +14,10 @@ def test_good_call():
 
     messages = parse_response_stream("".join(stream_response_as_text(response)))
 
-    assert "Download request sent to orville@pop.corn!" in messages[0]["value"]["content"]
+    assert "Response code: 200 (success)" in messages[0]["value"]["content"]
 
 
-def test_bad_call():
+def test_missing_email():
     download_species_occurrence_records.live = False
 
     agent = Agent()

@@ -199,15 +199,3 @@ def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
             yield fragment
             nonempty = True
     yield "]"
-
-
-def generate_records_download_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioDownloadApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
-
-    params = result.model_dump(exclude_none=True)
-    return params
