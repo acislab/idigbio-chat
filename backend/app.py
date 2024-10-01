@@ -22,21 +22,28 @@ Session(app)
 fake_redis = {}
 
 SHOW_PROCESSING_MESSAGES = True
+SAFE_MODE = False
 
 
-def get_user_info():
+def make_user_info():
+    user_id = uuid4()
+    session["id"] = user_id
+    user = {
+        "id": user_id,
+        "history": Conversation()
+    }
+    fake_redis[user_id] = user
+    return user
+
+
+def get_user_info() -> dict:
     if "id" not in session:
-        user_id = uuid4()
-        session["id"] = user_id
-    else:
-        user_id = session["id"]
+        if SAFE_MODE:
+            return None
+        else:
+            return make_user_info()
 
-    if user_id not in fake_redis:
-        fake_redis[user_id] = {
-            "id": user_id,
-            "history": Conversation()
-        }
-
+    user_id = session["id"]
     return fake_redis[user_id]
 
 
@@ -54,20 +61,23 @@ def chat_api():
     Returns one or more
     [{ "type": str, "value": str | dict }]
     See chat.conversation.MessageType
-    The whole response is streamed. For each response message, "type" is always sent before "value".
+    The whole response is streamed. For each message, "type" is always sent before "value".
 
     Example:
         Request:
         {
-            "type": "user_chat_message",
+            "type": "user_text_message",
             "value": "Show a map of genus Carex"
         }
 
         Response:
         [
             {
-                "type": "ai_chat_message",
-                "value": "Here is a map of occurrences for the genus Carex"
+                "type": "ai_processing_message",
+                "value": {
+                    "summary": "Here's what I'm doing...",
+                    "content": "Here's some markdown"
+                }
             },
             {
                 "type": "ai_map_message,
@@ -80,23 +90,28 @@ def chat_api():
         ]
     """
     print("REQUEST:", request.json, dict(session), sep="\n")
+    agent = Agent()
     user_message = request.json["value"]
     user = get_user_info()
-
-    if user_message.lower() == "clear":
+    if user is None:
+        if "not a robot" in user_message.lower():
+            user = make_user_info()
+            message_stream = chat.api.greet(agent, user["history"], "I can confirm that I'm not a robot. Hello!")
+        else:
+            message_stream = chat.api.are_you_a_robot()
+    elif user_message.lower() == "clear":
         fake_redis.pop(user["id"], None)
-        return {"clear": True}
+        message_stream = chat.api.greet(agent, user["history"], "Hello!")
     else:
-        agent = Agent()
         message_stream = chat.api.chat(agent, user["history"], user_message)
 
-        if not SHOW_PROCESSING_MESSAGES:
-            message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
+    if not SHOW_PROCESSING_MESSAGES:
+        message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
-        text_stream = stream_response_as_text(message_stream)
+    text_stream = stream_response_as_text(message_stream)
 
-        print("RESPONSE:")
-        return app.response_class(stream_with_context(text_stream), mimetype="application/json")
+    print("RESPONSE:")
+    return app.response_class(stream_with_context(text_stream), mimetype="application/json")
 
 
 @app.route("/search/generate_rq", methods=["POST"])

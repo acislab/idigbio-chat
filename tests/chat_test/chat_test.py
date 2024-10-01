@@ -4,12 +4,31 @@ from .chat_test_util import chat
 app.SHOW_PROCESSING_MESSAGES = True
 
 
+def test_robo_check():
+    app.SAFE_MODE = True
+    messages = chat("Hi!")
+
+    assert len(messages) == 1
+    assert messages[0]["type"] == "ai_text_message"
+    assert "please confirm you are a real person" in messages[0]["value"]
+
+
+def test_not_a_robot():
+    app.SAFE_MODE = True
+    messages = chat("I am not a robot")
+
+    assert len(messages) == 1
+    assert messages[0]["type"] == "ai_text_message"
+    assert "please confirm you are a real person" not in messages[0]["value"]
+
+
 def test_be_friendly():
     """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
     messages = chat("Hi!")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
+    assert "please confirm you are a real person" not in messages[0]["value"]
 
 
 def test_echo():

@@ -1,6 +1,6 @@
-from collections.abc import Iterator
-from typing import List
+from typing import List, Iterable
 
+from langgraph.graph.message import Messages
 from pydantic import BaseModel, Field
 
 from chat.conversation import Conversation, UserMessage, ErrorMessage, Message, AiChatMessage
@@ -11,7 +11,23 @@ from nlp.agent import Agent
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 
 
-def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
+def are_you_a_robot() -> Iterable[Message]:
+    response = [
+        AiChatMessage(
+            "Hi! Before you can chat with me, please confirm you are a real person by entering \"I am not a robot\" "
+            "into the text box at the bottom of the screen.")
+    ]
+
+    for ai_message in response:
+        yield ai_message
+
+
+def greet(agent: Agent, history: Conversation, user_text_message: str) -> Iterable[Messages]:
+    history.append(UserMessage(user_text_message))
+    return _respond_conversationally(agent, history)
+
+
+def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterable[Message]:
     history.append(UserMessage(user_text_message))
 
     response = _make_response(agent, history, user_text_message)
@@ -21,7 +37,7 @@ def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterato
         history.append(ai_message)
 
 
-def _handle_individual_request(agent, history, request):
+def _handle_individual_request(agent, history, request) -> Iterable[Message]:
     plan = create_plan(agent, history, request)
     tool_name = plan
 
@@ -42,7 +58,7 @@ def _handle_individual_request(agent, history, request):
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
-def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
+def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterable[Message]:
     baked_response = _get_baked_response(agent, history, user_message)
     if baked_response is not None:
         i = 0
@@ -63,19 +79,28 @@ def _make_response(agent: Agent, history: Conversation, user_message: str) -> It
                 yield message
 
 
-def _get_baked_response(agent, history, user_message) -> Iterator[Message]:
+HELP_MESSAGE = """\
+This is a prototype chatbot that intelligently uses the iDigBio portal to find and discover species
+occurrence records and their media.
+
+Here are some examples of questions this chatbot can answer:
+
+* "How many records does iDigBio have for occurrences in Canada?"
+* "Find records of *Acer saccharum* that have images in iDigBio"
+* "Show a map of *Ursus arctos* occurrences"
+* "What species has the most reported occurrences in Okinawa, Japan?"
+
+If you'd like to provide feedback or want to know more about this service, you can reach the
+developers at https://github.com/acislab/idigbio-chat/issues.
+
+Type "help" to repeat this message.
+"""
+
+
+def _get_baked_response(agent, history, user_message) -> Iterable[Message]:
     match user_message.lower():
         case "help":
-            yield AiChatMessage(
-                "This is a prototype chatbot that has some capabilities for retrieving information from iDigBio APIs. "
-                "If you'd like to provide feedback or are looking for more information, you can reach out to the "
-                "developers at https://github.com/acislab/idigbio-chat/issues. Here are some examples of what it can "
-                "do:\n\n"
-                "\n* \"How many records does iDigBio have for occurrences in Canada?\""
-                "\n* \"Find records of *Acer saccharum* that have images in iDigBio\""
-                "\n* \"Show a map of *Ursus arctos* occurrences\""
-                "\n* \"What species has the most reported occurrences in Okinawa, Japan?\""
-            )
+            yield AiChatMessage(HELP_MESSAGE)
         case _:
             pass
 
