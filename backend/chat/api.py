@@ -14,8 +14,7 @@ tool_lookup = {t.schema["name"]: t for t in all_tools}
 def are_you_a_robot() -> Iterable[Message]:
     response = [
         AiChatMessage(
-            "Hi! Before you can chat with me, please confirm you are a real person by entering \"I am not a robot\" "
-            "into the text box at the bottom of the screen.")
+            "Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
     ]
 
     for ai_message in response:
