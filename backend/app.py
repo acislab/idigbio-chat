@@ -36,6 +36,11 @@ def make_user_info():
     return user
 
 
+def clear_user_history(user):
+    del user["history"]
+    user["history"] = Conversation()
+
+
 def get_user_info() -> dict | None:
     if "id" not in session or session["id"] not in fake_redis:
         if chat_config["SAFE_MODE"]:
@@ -100,7 +105,7 @@ def chat_api():
         else:
             message_stream = chat.api.are_you_a_robot()
     elif user_message.lower() == "clear":
-        fake_redis.pop(user["id"], None)
+        clear_user_history(user)
         message_stream = chat.api.greet(agent, user["history"], "Hello!")
     else:
         message_stream = chat.api.chat(agent, user["history"], user_message)

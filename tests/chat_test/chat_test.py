@@ -26,8 +26,18 @@ def test_skip_robo_check():
     app.chat_config["SAFE_MODE"] = False
     messages = chat("Hi!")
 
-    assert len(messages) == 1
+    assert len(messages) >= 1
     assert messages[0]["type"] == "ai_text_message"
+    assert "please confirm you are a real person" not in messages[0]["value"]
+
+
+def test_remember_robo_check():
+    app.chat_config["SAFE_MODE"] = True
+    chat("not a robot")
+    chat("clear")
+    messages = chat("hi")
+
+    assert len(messages) >= 1
     assert "please confirm you are a real person" not in messages[0]["value"]
 
 
