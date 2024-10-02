@@ -1,3 +1,4 @@
+import tomli
 from uuid import uuid4
 
 from flask import Flask, jsonify, request, render_template, session, stream_with_context
@@ -17,12 +18,11 @@ app.config["SESSION_PERMANENT"] = True
 app.config["SESSION_TYPE"] = "filesystem"
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = "True"
+app.config.from_file("config.toml", tomli.load, text=False)
 Session(app)
 
+chat_config = app.config["CHAT"]
 fake_redis = {}
-
-SHOW_PROCESSING_MESSAGES = True
-SAFE_MODE = False
 
 
 def make_user_info():
@@ -36,9 +36,9 @@ def make_user_info():
     return user
 
 
-def get_user_info() -> dict:
+def get_user_info() -> dict | None:
     if "id" not in session or session["id"] not in fake_redis:
-        if SAFE_MODE:
+        if chat_config["SAFE_MODE"]:
             return None
         else:
             return make_user_info()
@@ -105,7 +105,7 @@ def chat_api():
     else:
         message_stream = chat.api.chat(agent, user["history"], user_message)
 
-    if not SHOW_PROCESSING_MESSAGES:
+    if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
     text_stream = stream_response_as_text(message_stream)

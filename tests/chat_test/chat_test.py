@@ -1,11 +1,11 @@
 import app
 from .chat_test_util import chat
 
-app.SHOW_PROCESSING_MESSAGES = True
+app.chat_config["SHOW_PROCESSING_MESSAGES"] = True
 
 
 def test_robo_check():
-    app.SAFE_MODE = True
+    app.chat_config["SAFE_MODE"] = True
     messages = chat("Hi!")
 
     assert len(messages) == 1
@@ -14,8 +14,17 @@ def test_robo_check():
 
 
 def test_not_a_robot():
-    app.SAFE_MODE = True
+    app.chat_config["SAFE_MODE"] = True
     messages = chat("I am not a robot")
+
+    assert len(messages) == 1
+    assert messages[0]["type"] == "ai_text_message"
+    assert "please confirm you are a real person" not in messages[0]["value"]
+
+
+def test_skip_robo_check():
+    app.chat_config["SAFE_MODE"] = False
+    messages = chat("Hi!")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
