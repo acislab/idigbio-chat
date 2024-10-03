@@ -21,17 +21,23 @@ MessageValue = str | dict | list | StreamedContent
 class ColdMessage:
     __raw: dict[str, Any]
 
-    def __init__(self, **kwargs):
-        self.__raw = dict()
+    def __init__(self, raw: dict = None, **kwargs):
+        if raw is None:
+            self.__raw = dict()
+        else:
+            self.__raw = raw.copy()
 
         for k, v in kwargs.items():
-            self.__raw[k] = json.dumps(v)
+            self.__raw[k] = v
 
     def read(self, key):
-        return json.loads(self.__raw[key])
+        return self.__raw[key]
 
     def read_all(self):
         return {k: self.read(k) for k in self.__raw}
+
+    def stringify(self):
+        return json.dumps(self.__raw)
 
 
 class Message:

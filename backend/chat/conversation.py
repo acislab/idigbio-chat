@@ -20,7 +20,9 @@ class Conversation:
         if not isinstance(messages, list):
             messages = [messages]
         for message in messages:
-            self.history.append(message.freeze())
+            cold_message = message.freeze()
+            self.recorder(cold_message)
+            self.history.append(cold_message)
 
     def render_to_openai(self, system_message: str = None, request: str = None) -> list[dict]:
         return [m for m in self.__message_renderer(system_message, request)]

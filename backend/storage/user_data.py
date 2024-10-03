@@ -7,6 +7,7 @@ from flask_session import Session
 from redis import Redis
 
 from chat.conversation import Conversation
+from chat.messages import ColdMessage
 
 
 class User:
@@ -30,11 +31,12 @@ class UserData:
 
     def get_stored_user_history(self, user_id: str) -> Conversation:
         history_ptr = self.get_user_history_ptr(user_id)
-        history = self.redis.lrange(history_ptr, 0, -1)
+        raw_history = self.redis.lrange(history_ptr, 0, -1)
 
-        def record(message):
-            self.redis.rpush(history_ptr, json.dumps(message))
+        def record(message: ColdMessage):
+            self.redis.rpush(history_ptr, message.stringify())
 
+        history = [ColdMessage(json.loads(message)) for message in raw_history]
         return Conversation(history, record)
 
     def clear_stored_user_history(self, user_id: str):

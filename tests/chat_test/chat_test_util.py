@@ -16,7 +16,7 @@ def chat(message) -> list[dict]:
     return parse_response_stream(wrapped_response)
 
 
-def parse_response_stream(response) -> dict:
+def parse_response_stream(response) -> list[dict]:
     if isinstance(response, str):
         text = response
     else:
