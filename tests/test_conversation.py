@@ -1,4 +1,5 @@
-from chat.conversation import Conversation, UserMessage
+from chat.messages import UserMessage
+from chat.conversation import Conversation
 
 
 def test_append():

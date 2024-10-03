@@ -5,7 +5,7 @@ from flask_cors import CORS
 import chat
 import search.api
 import search.demo
-from chat.conversation import AiProcessingMessage, stream_response_as_text
+from chat.messages import AiProcessingMessage, stream_messages
 from flask_session import Session
 from nlp.agent import Agent
 from storage.fake_redis import FakeRedis
@@ -87,7 +87,7 @@ def chat_api():
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
-    text_stream = stream_response_as_text(message_stream)
+    text_stream = stream_messages(message_stream)
 
     print("RESPONSE:")
     return app.response_class(stream_with_context(text_stream), mimetype="application/json")

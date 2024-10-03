@@ -1,7 +1,9 @@
 from typing import Iterator
 
-from chat.conversation import Conversation, Message, AiProcessingMessage, present_results
+from chat.conversation import Conversation
+from chat.messages import Message, AiProcessingMessage
 from chat.tools.tool import Tool
+from chat.utils.assistant import present_results
 from nlp.agent import Agent
 
 

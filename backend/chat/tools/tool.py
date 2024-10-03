@@ -3,7 +3,8 @@ import importlib
 from os.path import dirname, basename, isfile, join
 from typing import Iterator
 
-from chat.conversation import Conversation, Message
+from chat.conversation import Conversation
+from chat.messages import Message
 from nlp.agent import Agent
 
 # Automatically populated with all children of Tool in the "tools" package

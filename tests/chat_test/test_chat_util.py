@@ -1,5 +1,5 @@
-from chat.chat_util import stream_as_json, make_pretty_json_string
-from chat.conversation import UserMessage, AiChatMessage, AiProcessingMessage, stream_response_as_text
+from chat.utils.json import stream_as_json, make_pretty_json_string
+from chat.messages import UserMessage, AiChatMessage, AiProcessingMessage, stream_messages
 
 
 def test_stream_response_as_json():
@@ -8,7 +8,7 @@ def test_stream_response_as_json():
         yield AiProcessingMessage("Fetching the weather...", "Hurricane")
         yield AiChatMessage("You don't wanna know")
 
-    text = "".join(stream_response_as_text(weather_forecast()))
+    text = "".join(stream_messages(weather_forecast()))
 
     assert text == """[{"type":"user_text_message","value":"What\'s the weather tomorrow?"},""" \
                    """{"type":"ai_processing_message","value":{"summary":"Fetching the weather...",""" \

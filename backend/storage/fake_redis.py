@@ -1,5 +1,6 @@
-import redis
 from threading import Thread
+
+import redis
 from fakeredis import TcpFakeServer
 
 

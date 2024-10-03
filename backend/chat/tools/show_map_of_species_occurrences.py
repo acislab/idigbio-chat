@@ -1,8 +1,10 @@
 from collections.abc import Iterator
 
 from chat.actions.idigbio_records_search import IDigBioRecordsSearch
-from chat.conversation import Conversation, Message, AiMapMessage, present_results
+from chat.conversation import Conversation
+from chat.messages import Message, AiMapMessage
 from chat.tools.tool import Tool
+from chat.utils.assistant import present_results
 from nlp.agent import Agent
 
 

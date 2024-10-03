@@ -1,12 +1,12 @@
 import json
-from typing import Iterable
+from typing import Iterable, Any
 
 
-def escape(s: str):
+def escape_str(s: str):
     return json.dumps(s)[1:-1]
 
 
-def stream_as_json(value):
+def stream_as_json(value: Any):
     if isinstance(value, str):
         yield json.dumps(value)
     elif isinstance(value, dict):
@@ -32,7 +32,7 @@ def stream_as_json(value):
         yield '"'
         for fragment in value:
             if isinstance(fragment, str):
-                yield escape(fragment)
+                yield escape_str(fragment)
             elif fragment is not None:
                 for v in stream_as_json(fragment):
                     yield v

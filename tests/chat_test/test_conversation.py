@@ -1,6 +1,8 @@
-from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text, \
-    get_idigbio_record_count_and_data, \
-    stream_record_counts_as_markdown_table, generate_records_summary_parameters
+from chat.actions.idigbio_records_summary import _generate_records_summary_parameters, \
+    _stream_record_counts_as_markdown_table, _query_summary_api
+from chat.messages import AiProcessingMessage
+from chat.messages import stream_messages
+from chat.conversation import Conversation
 from idigbio_util import url_encode_params
 from nlp.agent import Agent
 
@@ -45,7 +47,7 @@ def test_ai_processing_message_with_dict():
             }
         })
 
-    as_text = "".join(stream_response_as_text(response()))
+    as_text = "".join(stream_messages(response()))
 
     assert as_text == """\
 [{"type":"ai_processing_message","value":"```json
@@ -75,9 +77,10 @@ def test_get_record_counts_as_markdown_table():
     }
 
     url_params = url_encode_params(params)
-    total, counts = get_idigbio_record_count_and_data(f"https://search.idigbio.org/v2/summary/top/records?{url_params}")
+    total, counts = _query_summary_api(
+        f"https://search.idigbio.org/v2/summary/top/records?{url_params}")
 
-    table = "".join(stream_record_counts_as_markdown_table(counts))
+    table = "".join(_stream_record_counts_as_markdown_table(counts))
 
     assert table.startswith("|")
     assert len(table.splitlines()) == 5
@@ -85,8 +88,8 @@ def test_get_record_counts_as_markdown_table():
 
 
 def test_generate_records_summary_parameters():
-    params = generate_records_summary_parameters(Agent(), Conversation(),
-                                                 "What are 3 species of Ursidae in Costa Rica?")
+    params = _generate_records_summary_parameters(Agent(), Conversation(),
+                                                  "What are 3 species of Ursidae in Costa Rica?")
 
     assert "count" in params
     assert params["count"] == 3

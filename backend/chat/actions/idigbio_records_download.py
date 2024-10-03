@@ -4,9 +4,9 @@ from attr import dataclass
 import idigbio_util
 import search
 from chat.actions.action import Action
-from chat.chat_util import make_pretty_json_string
+from chat.content_streams import StreamedString
 from chat.conversation import Conversation
-from chat.stream_util import StreamedString
+from chat.utils.json import make_pretty_json_string
 from nlp.agent import Agent
 from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioDownloadApiParameters
 

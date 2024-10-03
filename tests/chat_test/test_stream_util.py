@@ -1,4 +1,4 @@
-from chat.stream_util import StreamedContent
+from chat.content_streams import StreamedContent
 
 
 def test_streamed_string_from_string():
