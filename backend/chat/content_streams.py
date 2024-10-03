@@ -11,20 +11,23 @@ class StreamedContent:
 
     def __init__(self, stream: Iterable[Content], reducer):
         self.__content = ""
-        self.__stream = self.__gobble(stream)
+        self.__stream = self.__cache_content(stream)
         self.__reducer = reducer
 
     def __iter__(self) -> Iterator[Content]:
         return itertools.chain(iter([self.__content]), self.__stream)
 
-    def __gobble(self, stream) -> Iterator[Content]:
+    def __cache_content(self, stream) -> Iterator[Content]:
         for delta in stream:
             self.__content = self.__reducer(self.__content, delta)
             yield delta
 
-    def get(self) -> Content:
+    def gobble(self) -> None:
         for _ in self.__stream:
             pass
+
+    def get(self) -> Content:
+        self.gobble()
         return self.__content
 
 
