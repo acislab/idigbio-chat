@@ -1,4 +1,4 @@
-from chat.actions.idigbio_records_summary import _generate_records_summary_parameters, \
+from chat.processes.idigbio_records_summary import _generate_records_summary_parameters, \
     _stream_record_counts_as_markdown_table, _query_summary_api
 from chat.messages import AiProcessingMessage
 from chat.messages import stream_messages

@@ -3,7 +3,7 @@ from attr import dataclass
 
 import idigbio_util
 import search
-from chat.actions.action import Action
+from chat.processes.process import Process
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.utils.json import make_pretty_json_string
@@ -20,7 +20,7 @@ class Results(dict):
     success: bool
 
 
-class IDigBioRecordsDownload(Action):
+class IDigBioRecordsDownload(Process):
     process_summary = "Generating download request..."
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:

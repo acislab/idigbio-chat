@@ -1,6 +1,6 @@
 from collections.abc import Iterator
 
-from chat.actions.idigbio_records_download import IDigBioRecordsDownload
+from chat.processes.idigbio_records_download import IDigBioRecordsDownload
 from chat.conversation import Conversation
 from chat.messages import Message
 from chat.tools.tool import Tool

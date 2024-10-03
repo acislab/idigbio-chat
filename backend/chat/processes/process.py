@@ -4,7 +4,7 @@ from chat.messages import Message, AiProcessingMessage
 from nlp.agent import Agent
 
 
-class Action:
+class Process:
     process_summary: str
     __results: dict
     __content: StreamedString
