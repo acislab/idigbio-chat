@@ -58,7 +58,7 @@ class Message:
         """
         Stream to the frontend.
         """
-        return stream_as_json({"type": self.get_type().value, "value": self.value}) if self.show_user else ""
+        return stream_as_json({"type": self.get_type().value, "value": self.value})
 
     def to_type_and_value(self) -> dict:
         return json.loads("".join(self.stream_type_and_value()))
@@ -218,12 +218,13 @@ def present_results(agent: Agent, history: Conversation, request: str, results: 
 
 
 def stream_response_as_text(message_stream: Iterator[Message]) -> Iterator[str]:
-    nonempty = False
+    streamed_previous_message = False
     yield "["
     for i, message in enumerate(message_stream):
-        if nonempty:
+        if streamed_previous_message:
             yield ","
-        for fragment in message.stream_type_and_value():
-            yield fragment
-            nonempty = True
+        if message.show_user:
+            for fragment in message.stream_type_and_value():
+                yield fragment
+            streamed_previous_message = True
     yield "]"
