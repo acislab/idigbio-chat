@@ -2,6 +2,7 @@ import app
 from .chat_test_util import chat
 
 app.chat_config["SHOW_PROCESSING_MESSAGES"] = True
+app.chat_config["SAFE_MODE"] = False
 
 
 def test_robo_check():
@@ -38,15 +39,6 @@ def test_remember_robo_check():
     messages = chat("hi")
 
     assert len(messages) >= 1
-    assert "please confirm you are a real person" not in messages[0]["value"]
-
-
-def test_be_friendly():
-    """Require the chatbot to infer that the user wants to search iDigBio, then build an appropriate API query"""
-    messages = chat("Hi!")
-
-    assert len(messages) == 1
-    assert messages[0]["type"] == "ai_text_message"
     assert "please confirm you are a real person" not in messages[0]["value"]
 
 

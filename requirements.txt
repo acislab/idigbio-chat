@@ -9,3 +9,7 @@ pydantic~=2.8.2
 langgraph~=0.1.19
 attrs~=23.2.0
 tomli~=2.0.1
+redis~=5.1.0
+fakeredis~=2.25.1
+email-validator~=2.2.0
+pytest~=8.3.3

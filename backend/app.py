@@ -1,15 +1,19 @@
-import tomli
+import json
+from datetime import datetime
 from uuid import uuid4
 
+import tomli
 from flask import Flask, jsonify, request, render_template, session, stream_with_context
 from flask_cors import CORS
-from flask_session import Session
 
 import chat
 import search.api
 import search.demo
 from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text
+from flask_session import Session
 from nlp.agent import Agent
+from storage.key_value import FakeRedis
+from storage.user import User
 
 app = Flask(__name__, template_folder="templates")
 CORS(app, supports_credentials=True)
@@ -21,35 +25,48 @@ app.config["SESSION_COOKIE_SECURE"] = "True"
 app.config.from_file("config.toml", tomli.load, text=False)
 Session(app)
 
+redis = FakeRedis().redis
 chat_config = app.config["CHAT"]
-fake_redis = {}
 
 
-def make_user_info():
-    user_id = uuid4()
-    session["id"] = user_id
-    user = {
-        "id": user_id,
-        "history": Conversation()
-    }
-    fake_redis[user_id] = user
-    return user
+def get_user_history_ptr(user_id):
+    return user_id + "_history"
 
 
-def clear_user_history(user):
-    del user["history"]
-    user["history"] = Conversation()
+def get_stored_user_history(user_id) -> Conversation:
+    history_ptr = get_user_history_ptr(user_id)
+    history = redis.lrange(history_ptr, 0, -1)
+
+    def record(message):
+        redis.rpush(history_ptr, json.dumps(message))
+
+    return Conversation(history, record)
 
 
-def get_user_info() -> dict | None:
-    if "id" not in session or session["id"] not in fake_redis:
+def clear_stored_user_history(user_id):
+    history_ptr = get_user_history_ptr(user_id)
+    redis.delete(history_ptr)
+
+
+def get_user() -> User | None:
+    if "id" not in session or not redis.exists(session["id"]):
         if chat_config["SAFE_MODE"]:
             return None
         else:
-            return make_user_info()
+            return make_user()
 
     user_id = session["id"]
-    return fake_redis[user_id]
+    history = get_stored_user_history(user_id)
+    return User(user_id, history)
+
+
+def make_user() -> User:
+    user_id = str(uuid4())
+    session["id"] = user_id
+    redis.hset(user_id, "join_date", str(datetime.now().isoformat()))
+
+    history = get_stored_user_history(user_id)
+    return User(user_id, history)
 
 
 @app.route("/", methods=["GET"])
@@ -97,18 +114,18 @@ def chat_api():
     print("REQUEST:", request.json, dict(session), sep="\n")
     agent = Agent()
     user_message = request.json["value"]
-    user = get_user_info()
+    user = get_user()
     if user is None:
         if "not a robot" in user_message.lower():
-            user = make_user_info()
-            message_stream = chat.api.greet(agent, user["history"], "I can confirm that I'm not a robot. Hello!")
+            user = make_user()
+            message_stream = chat.api.greet(agent, user.history, "I can confirm that I'm not a robot. Hello!")
         else:
             message_stream = chat.api.are_you_a_robot()
     elif user_message.lower() == "clear":
-        clear_user_history(user)
-        message_stream = chat.api.greet(agent, user["history"], "Hello!")
+        clear_stored_user_history(user.user_id)
+        message_stream = chat.api.greet(agent, user.history, "Hello!")
     else:
-        message_stream = chat.api.chat(agent, user["history"], user_message)
+        message_stream = chat.api.chat(agent, user.history, user_message)
 
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)

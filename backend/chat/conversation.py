@@ -1,4 +1,6 @@
+import json
 from enum import Enum
+from typing import Callable, Any
 from typing import Iterator, Iterable
 
 from chat.chat_util import stream_openai, stream_as_json
@@ -17,6 +19,22 @@ class MessageType(Enum):
 MessageValue = str | dict | list | StreamedContent
 
 
+class ColdMessage:
+    __raw: dict[str, Any]
+
+    def __init__(self, **kwargs):
+        self.__raw = dict()
+
+        for k, v in kwargs.items():
+            self.__raw[k] = json.dumps(v)
+
+    def read(self, key):
+        return json.loads(self.__raw[key])
+
+    def read_all(self):
+        return {k: self.read(k) for k in self.__raw}
+
+
 class Message:
     value: MessageValue
     tool_name: str
@@ -31,10 +49,31 @@ class Message:
         pass
 
     def to_role_and_content(self) -> list[dict]:
+        """
+        Render in OpenAI format.
+        """
         pass
 
     def stream_type_and_value(self) -> Iterable[str]:
-        return stream_as_json({"type": self.get_type().value, "value": self.value}) if self.show_user else []
+        """
+        Stream to the frontend.
+        """
+        return stream_as_json({"type": self.get_type().value, "value": self.value}) if self.show_user else ""
+
+    def to_type_and_value(self) -> dict:
+        return json.loads("".join(self.stream_type_and_value()))
+
+    def freeze(self) -> ColdMessage:
+        """
+        Encode as json for persistent storage.
+        """
+        return ColdMessage(
+            type=self.get_type().value,
+            tool_name=self.tool_name,
+            show_user=self.show_user,
+            role_and_content=self.to_role_and_content(),
+            type_and_value=self.to_type_and_value(),
+        )
 
 
 class UserMessage(Message):
@@ -58,7 +97,7 @@ class AiChatMessage(Message):
         return [
             {
                 "role": "assistant",
-                "content": self.value
+                "content": "".join(self.value)
             }
         ]
 
@@ -113,33 +152,24 @@ class ErrorMessage(Message):
         ]
 
 
-def _parse_message_from_dict(d: dict) -> Message:
-    try:
-        match MessageType(d["type"]):
-            case MessageType.ai_text_message:
-                return AiChatMessage(d["value"])
-            case MessageType.user_text_message:
-                return UserMessage(d["value"])
-            case MessageType.error:
-                return ErrorMessage(d["value"])
-            case _:
-                raise Exception(f"Undefined message type \"{d['type']}\"")
-    except Exception as e:
-        return ErrorMessage(f"Failed to parse message data: {d}\n{e}")
-
-
 class Conversation:
-    def __init__(self, history: list[dict] = None):
+    history: list[ColdMessage]
+    recorder: Callable[[ColdMessage], None]
+
+    def __init__(self, history: list[ColdMessage] = None, recorder: Callable[[ColdMessage], None] = None):
         if history is None:
             history = []
+        if recorder is None:
+            recorder = lambda x: x
 
-        self.history: list[Message] = [_parse_message_from_dict(m) for m in history]
+        self.history = history
+        self.recorder = recorder
 
-    def append(self, message: Message | list[Message]):
-        if isinstance(message, list):
-            self.history.extend(message)
-        else:
-            self.history.append(message)
+    def append(self, messages: Message | list[Message]):
+        if not isinstance(messages, list):
+            messages = [messages]
+        for message in messages:
+            self.history.append(message.freeze())
 
     def render_to_openai(self, system_message: str = None, request: str = None) -> list[dict]:
         return [m for m in self.__message_renderer(system_message, request)]
@@ -149,12 +179,12 @@ class Conversation:
             yield {"role": "system", "content": system_message}
 
         for message in self.history:
-            for role_and_content in message.to_role_and_content():
+            for role_and_content in message.read("role_and_content"):
                 yield role_and_content
 
         if request is not None:
-            for role_and_content in UserMessage(
-                    f"First address the following request: {request}").to_role_and_content():
+            atomized_request = UserMessage(f"First address the following request: {request}")
+            for role_and_content in atomized_request.to_role_and_content():
                 yield role_and_content
 
 
