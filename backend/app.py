@@ -1,7 +1,3 @@
-import json
-from datetime import datetime
-from uuid import uuid4
-
 import tomli
 from flask import Flask, jsonify, request, render_template, session, stream_with_context
 from flask_cors import CORS
@@ -9,11 +5,11 @@ from flask_cors import CORS
 import chat
 import search.api
 import search.demo
-from chat.conversation import Conversation, AiProcessingMessage, stream_response_as_text
+from chat.conversation import AiProcessingMessage, stream_response_as_text
 from flask_session import Session
 from nlp.agent import Agent
-from storage.key_value import FakeRedis
-from storage.user import User
+from storage.fake_redis import FakeRedis
+from storage.user_data import UserData
 
 app = Flask(__name__, template_folder="templates")
 CORS(app, supports_credentials=True)
@@ -27,46 +23,7 @@ Session(app)
 
 redis = FakeRedis().redis
 chat_config = app.config["CHAT"]
-
-
-def get_user_history_ptr(user_id):
-    return user_id + "_history"
-
-
-def get_stored_user_history(user_id) -> Conversation:
-    history_ptr = get_user_history_ptr(user_id)
-    history = redis.lrange(history_ptr, 0, -1)
-
-    def record(message):
-        redis.rpush(history_ptr, json.dumps(message))
-
-    return Conversation(history, record)
-
-
-def clear_stored_user_history(user_id):
-    history_ptr = get_user_history_ptr(user_id)
-    redis.delete(history_ptr)
-
-
-def get_user() -> User | None:
-    if "id" not in session or not redis.exists(session["id"]):
-        if chat_config["SAFE_MODE"]:
-            return None
-        else:
-            return make_user()
-
-    user_id = session["id"]
-    history = get_stored_user_history(user_id)
-    return User(user_id, history)
-
-
-def make_user() -> User:
-    user_id = str(uuid4())
-    session["id"] = user_id
-    redis.hset(user_id, "join_date", str(datetime.now().isoformat()))
-
-    history = get_stored_user_history(user_id)
-    return User(user_id, history)
+user_data = UserData(session, redis, chat_config)
 
 
 @app.route("/", methods=["GET"])
@@ -114,15 +71,15 @@ def chat_api():
     print("REQUEST:", request.json, dict(session), sep="\n")
     agent = Agent()
     user_message = request.json["value"]
-    user = get_user()
+    user = user_data.get_user()
     if user is None:
         if "not a robot" in user_message.lower():
-            user = make_user()
+            user = user_data.make_user()
             message_stream = chat.api.greet(agent, user.history, "I can confirm that I'm not a robot. Hello!")
         else:
             message_stream = chat.api.are_you_a_robot()
     elif user_message.lower() == "clear":
-        clear_stored_user_history(user.user_id)
+        user_data.clear_stored_user_history(user.user_id)
         message_stream = chat.api.greet(agent, user.history, "Hello!")
     else:
         message_stream = chat.api.chat(agent, user.history, user_message)
