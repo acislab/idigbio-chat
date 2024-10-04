@@ -5,7 +5,7 @@ from datetime import date
 from enum import Enum
 from typing import Optional, List, Union, Literal
 
-from pydantic import Field, BaseModel, EmailStr
+from pydantic import Field, BaseModel, EmailStr, field_validator
 
 from .fields import fields
 
@@ -104,10 +104,26 @@ class IDBQuerySchema(BaseModel):
     version: Optional[int] = None
     waterbody: Optional[str] = None
 
+    @field_validator('geopoint', mode='before')
+    def validate_geopoint(cls, v):
+        if v is None:
+            return v
+        if not (-90 <= v['latitude'] <= 90):
+            raise GeoPointValidationError(f"Invalid latitude value: {v['latitude']} is out of range.")
+        if not (-180 <= v['longitude'] <= 180):
+            raise GeoPointValidationError(f"Invalid longitude value: {v['longitude']} is out of range.")
+        return v
+
     class Config:
         json_encoders = {
             date: date.isoformat
         }
+
+
+class GeoPointValidationError(Exception):
+    def __init__(self, message):
+        self.message = message
+        super().__init__(self.message)
 
 
 class IDigBioRecordsApiParameters(BaseModel):
