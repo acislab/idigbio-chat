@@ -116,25 +116,28 @@ def _respond_conversationally(agent, history):
         yield message
 
 
-BREAK_DOWN_PROMPT = """
-You identify what a user wants. If the user requests multiple things, you break them up into a list of individual 
-requests. Each item in the list should fully describe each individual request, even if it is redundant with the other 
-items in the list. If the user only wants one thing, represent it as a list with one item. Format lists as JSON 
-arrays. If the user is not requesting any specific information, create an empty array. Only break down the user's 
-last message. Do not repeat requests that have already been addressed, unless the user's latest message is a 
-follow-up to an earlier request. For example, if the user provides additional information to refine an earlier request.
+BREAK_DOWN_PROMPT = """\
+You identify what a user wants. If the user requests multiple things of different types, you break them up into a
+list of individual requests. Each item in the list should fully describe each individual request, even if it is
+redundant with the other items in the list. If the user only wants one thing, represent it as a list with one item.
+Do not break up requests simply because they are long or very specific or have a lot of parameters or constraints. 
+Format lists as JSON arrays. If the user is not requesting any specific information, create an empty array. Only 
+break down the user's last message. If the user's last message is a follow up to earlier messages, factor those in as 
+well.
+
+Do not break up search requests unless the user specifically asks you to.
 
 Here are some examples of breaking down user request.
 
 EXAMPLE 1
 
-- User: I want to know what plant species are present in Florida and how many records iDigBio has for each species
-- Assistant: ["what plant species are present in Florida", "how many records does iDigBio have for each species present 
-in Florida"] 
+- User: I want to know what plant species are present in Florida and to see them on a map
+- Assistant: ["what plant species are present in Florida", "show plant species in Florida on a map"] 
 
-The user's last message was the following:
+EXAMPLE 2:
 
-{0}
+- User: Find records of A and B in countries X, Y, Z since 1994
+- Assistant: ["Find records of A and B in countries X, Y, Z since 1994"]\
 """
 
 
@@ -154,7 +157,7 @@ def _break_down_message_into_smaller_requests(agent: Agent, history: Conversatio
         temperature=0,
         max_retries=5,
         response_model=RequestBreakdown,
-        messages=history.render_to_openai(BREAK_DOWN_PROMPT.format(user_message)),
+        messages=history.render_to_openai(BREAK_DOWN_PROMPT.format()),
     )
 
     return response.requests

@@ -213,6 +213,14 @@ def test_composite_request():
     assert messages[3]["type"] == "ai_map_message"
 
 
+def test_complex_search():
+    messages = chat("Find records for Rattus rattus in the US, Mexico, Canada, and Taiwan")
+
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[1]["type"] == "ai_text_message"
+
+
 def test_search_by_date():
     messages = chat("Find records between 1999 and 2020")
 

@@ -235,8 +235,7 @@ Here is the list of fields that are defined:
 
 If the user specifies a binomial scientific name, try to break it up into its genus and specific epithet. However, 
 if the user specifies that they want to search for an exact scientific name, use the "scientificname" field. If the 
-user places something in quotes, use the full text that is quoted, do not break it up. Do not set the "limit" field 
-unless the user requests it.
+user places something in quotes, use the full text that is quoted, do not break it up.
 
 ## Example 1
 
