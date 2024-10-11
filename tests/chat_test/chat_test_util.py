@@ -2,6 +2,8 @@ import json
 from typing import Iterable
 
 from app import app
+from chat.conversation import Conversation
+from chat.messages import Message
 
 app.testing = True
 client = app.test_client()
@@ -24,3 +26,7 @@ def parse_response_stream(response) -> list[dict]:
 
     text = text.replace("\n", "\\n")
     return json.loads(text)
+
+
+def make_history(*messages: Message):
+    return Conversation([m.freeze() for m in messages])

@@ -1,40 +1,32 @@
 from chat.processes.idigbio_records_summary import _generate_records_summary_parameters, \
     _stream_record_counts_as_markdown_table, _query_summary_api
-from chat.messages import AiProcessingMessage
+from chat.messages import AiProcessingMessage, AiChatMessage, UserMessage
 from chat.messages import stream_messages
 from chat.conversation import Conversation
+from chat_test.chat_test_util import make_history
 from idigbio_util import url_encode_params
 from nlp.agent import Agent
 
 
 def test_render_for_openai():
-    conv = Conversation([
-        {"type": "ai_text_message", "value": "a1"},
-        {"type": "user_text_message", "value": "u1"}
-    ])
+    conv = make_history(
+        AiChatMessage("a1"),
+        UserMessage("u1")
+    )
 
-    texts = conv.render_to_openai("This is the system message")
+    texts = conv.render_to_openai("This is the system message", system_header="(header) ")
 
     assert texts == [
-        {'role': 'system', 'content': 'This is the system message'},
+        {'role': 'system', 'content': '(header) This is the system message'},
         {'role': 'assistant', 'content': 'a1'},
         {'role': 'user', 'content': 'u1'}
     ]
 
 
-def test_render_error():
-    conv = Conversation([
-        {"type": "something made up", "value": "uh oh"},
-    ])
-
+def test_render_for_openai_with_datetime():
+    conv = make_history(AiChatMessage("a1"))
     texts = conv.render_to_openai("This is the system message")
-
-    assert texts == [
-        {'role': 'system', 'content': 'This is the system message'},
-        {'role': 'error',
-         'content': "Failed to parse message data: {'type': 'something made up', 'value': 'uh oh'}\n'something made "
-                    "up' is not a valid MessageType", }
-    ]
+    assert texts[0]["content"].startswith("Today's date is")
 
 
 def test_ai_processing_message_with_dict():

@@ -16,7 +16,7 @@ class Process:
     process_summary: str
     results: dict
 
-    def __init__(self, agent: Agent, history: Conversation, request: str):
+    def __init__(self, agent: Agent, history: Conversation, request: str = None):
         self.__content: StreamedString = StreamedString(self.__run__(agent, history, request))
         self.__notes: list[str] = []
         self.__results: dict = dict()
