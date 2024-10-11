@@ -1,3 +1,9 @@
 [CHAT]
 SAFE_MODE = true
 SHOW_PROCESSING_MESSAGES = true
+
+[CHAT.SERVER]
+PORT = 8989
+
+[CHAT.REDIS]
+PORT = 0 # Set to 0 to set up a temporary Redis instance
