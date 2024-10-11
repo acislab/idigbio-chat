@@ -127,4 +127,4 @@ def textbox_demo():
 
 
 if __name__ == '__main__':
-    app.run(debug=True, port=8080, host="0.0.0.0")  # , ssl_context='adhoc'
+    app.run(debug=True, port=chat_config["SERVER"]["PORT"], host="0.0.0.0")  # , ssl_context='adhoc'
