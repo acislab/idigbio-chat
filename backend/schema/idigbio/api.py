@@ -62,7 +62,7 @@ class IDBQuerySchema(BaseModel):
     collector: Optional[str] = None
     commonname: Optional[str] = None
     continent: Optional[str] = None
-    country: Optional[str] = None
+    country: Optional[str] = Field(..., description="Full, accepted country name. For example 'Canada' instead of CAD.")
     county: Optional[str] = None
     datecollected: Optional[Date] = None
     datemodified: Optional[Date] = None
