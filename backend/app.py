@@ -5,6 +5,7 @@ from flask_cors import CORS
 import chat
 import search.api
 import search.demo
+import redis as r
 from chat.messages import AiProcessingMessage, stream_messages
 from flask_session import Session
 from nlp.agent import Agent
@@ -21,8 +22,14 @@ app.config["SESSION_COOKIE_SECURE"] = "True"
 app.config.from_file("config.toml", tomli.load, text=False)
 Session(app)
 
-redis = FakeRedis().redis
 chat_config = app.config["CHAT"]
+redis_config = chat_config["REDIS"]
+
+if redis_config["PORT"] == 0:
+    redis = FakeRedis().redis
+else:
+    redis = r.Redis(port=redis_config["PORT"])
+
 user_data = UserData(session, redis, chat_config)
 
 
