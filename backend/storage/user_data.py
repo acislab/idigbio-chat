@@ -57,6 +57,8 @@ class UserData:
     def make_user(self) -> User:
         user_id = str(uuid4())
         self.session["id"] = user_id
+        
+        self.redis.rpush("users", user_id)
         self.redis.hset(user_id, "join_date", str(datetime.now().isoformat()))
 
         history = self.get_stored_user_history(user_id)

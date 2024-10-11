@@ -72,6 +72,16 @@ def test_help():
     assert messages[0]["value"].startswith("This is a prototype")
 
 
+def test_keep_users_list():
+    users = app.redis.lrange("users", 0, -1)
+    assert len(users) == 0
+
+    chat("Hi!")
+
+    users = app.redis.lrange("users", 0, -1)
+    assert len(users) == 1
+
+
 def test_simple_idigbio_search():
     messages = chat("Find records for genus Carex")
 
