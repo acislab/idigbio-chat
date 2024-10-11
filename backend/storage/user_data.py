@@ -19,6 +19,10 @@ class User:
         self.history = history
 
 
+def get_user_hash_id(user_id: str):
+    return f"user_{user_id}"
+
+
 class UserData:
 
     def __init__(self, session: Session | SessionMixin, redis: Redis, config: dict):
@@ -27,7 +31,8 @@ class UserData:
         self.config = config
 
     def get_user_history_ptr(self, user_id: str):
-        return user_id + "_history"
+        conv_id = user_id  # Placeholder until we ID conversations
+        return f"history_{user_id}_{conv_id}"
 
     def get_stored_user_history(self, user_id: str) -> Conversation:
         history_ptr = self.get_user_history_ptr(user_id)
@@ -57,9 +62,9 @@ class UserData:
     def make_user(self) -> User:
         user_id = str(uuid4())
         self.session["id"] = user_id
-        
+
         self.redis.rpush("users", user_id)
-        self.redis.hset(user_id, "join_date", str(datetime.now().isoformat()))
+        self.redis.hset(get_user_hash_id(user_id), "join_date", str(datetime.now().isoformat()))
 
         history = self.get_stored_user_history(user_id)
         return User(user_id, history)
