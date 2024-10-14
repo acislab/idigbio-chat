@@ -1,6 +1,5 @@
-from typing import List, Iterable
+from typing import List, Iterator
 
-from langgraph.graph.message import Messages
 from pydantic import BaseModel, Field
 
 from chat.conversation import Conversation
@@ -11,7 +10,7 @@ from nlp.agent import Agent
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 
 
-def are_you_a_robot() -> Iterable[Message]:
+def are_you_a_robot() -> Iterator[Message]:
     response = [
         AiChatMessage(
             "Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
@@ -21,12 +20,12 @@ def are_you_a_robot() -> Iterable[Message]:
         yield ai_message
 
 
-def greet(agent: Agent, history: Conversation, user_text_message: str) -> Iterable[Messages]:
+def greet(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
     return _respond_conversationally(agent, history)
 
 
-def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterable[Message]:
+def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
 
     response = _make_response(agent, history, user_text_message)
@@ -36,7 +35,7 @@ def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterabl
         history.append(ai_message)
 
 
-def _handle_individual_request(agent, history, request) -> Iterable[Message]:
+def _handle_individual_request(agent, history, request) -> Iterator[Message]:
     plan = create_plan(agent, history, request)
     tool_name = plan
 
@@ -57,8 +56,8 @@ def _handle_individual_request(agent, history, request) -> Iterable[Message]:
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
-def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterable[Message]:
-    baked_response = _get_baked_response(agent, history, user_message)
+def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
+    baked_response = _get_baked_response(user_message)
     if baked_response is not None:
         i = 0
         for message in baked_response:
@@ -96,7 +95,7 @@ Type "help" to repeat this message.
 """
 
 
-def _get_baked_response(agent, history, user_message) -> Iterable[Message]:
+def _get_baked_response(user_message) -> Iterator[Message]:
     match user_message.lower():
         case "help":
             yield AiChatMessage(HELP_MESSAGE)
@@ -104,7 +103,7 @@ def _get_baked_response(agent, history, user_message) -> Iterable[Message]:
             pass
 
 
-def _respond_conversationally(agent, history):
+def _respond_conversationally(agent, history) -> Iterator[Message]:
     tool = tool_lookup["converse"]()
     response = tool.call(
         agent=agent,
@@ -166,7 +165,7 @@ def _break_down_message_into_smaller_requests(agent: Agent, history: Conversatio
 function_definitions = [p.schema for p in all_tools]
 
 
-def create_plan(agent: Agent, history: Conversation, request: str):
+def create_plan(agent: Agent, history: Conversation, request: str) -> str:
     tool_name = _pick_a_tool(agent, history, request)
     return tool_name
 

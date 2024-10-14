@@ -1,5 +1,5 @@
 import itertools
-from typing import Iterator, Iterable, Callable
+from typing import Iterator, Callable
 
 Content = str | dict
 
@@ -9,7 +9,7 @@ class StreamedContent:
     __stream: Iterator[Content]
     __reducer: Callable[[Content, Content], Content]
 
-    def __init__(self, stream: Iterable[Content], reducer):
+    def __init__(self, stream: Iterator[Content], reducer):
         self.__content = ""
         self.__stream = self.__cache_content(stream)
         self.__reducer = reducer
@@ -36,7 +36,7 @@ def _add_strings(a: str, b: str) -> str:
 
 
 class StreamedString(StreamedContent):
-    def __init__(self, stream: Iterable[Content]):
+    def __init__(self, stream: Iterator[Content]):
         super().__init__(stream, _add_strings)
 
 
@@ -45,7 +45,7 @@ def _take_last(old, new):
 
 
 class StreamedLast(StreamedContent):
-    def __init__(self, stream: Iterable[Content]):
+    def __init__(self, stream: Iterator[Content]):
         super().__init__(stream, _take_last)
 
     def __iter__(self) -> Iterator[Content]:

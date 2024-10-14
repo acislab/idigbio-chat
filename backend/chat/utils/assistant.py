@@ -22,7 +22,7 @@ Use the context information below:
 """
 
 
-def present_results(agent: Agent, history: Conversation, request: str, results: str | StreamedString):
+def present_results(agent: Agent, history: Conversation, request: str, results: str | StreamedString) -> AiChatMessage:
     response = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,

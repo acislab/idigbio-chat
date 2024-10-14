@@ -1,13 +1,13 @@
-from typing import Iterable
+from typing import Iterator
 
 import requests
 from attr import dataclass
 
 import idigbio_util
 import search
-from chat.processes.process import Process
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
+from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
 from nlp.agent import Agent
 from schema.idigbio.api import IDigBioSummaryApiParameters
@@ -86,7 +86,7 @@ def _generate_records_summary_parameters(agent: Agent, history: Conversation, re
     return params
 
 
-def _stream_record_counts_as_markdown_table(counts) -> Iterable[str]:
+def _stream_record_counts_as_markdown_table(counts) -> Iterator[str]:
     top_field = [x for x in counts if x != "itemCount"][0]
 
     yield f"| {top_field} | count |\n"

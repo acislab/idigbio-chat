@@ -1,7 +1,6 @@
 import json
 from enum import Enum
 from typing import Any, Iterator
-from typing import Iterable
 
 from chat.content_streams import StreamedContent
 from chat.utils.json import stream_as_json
@@ -59,7 +58,7 @@ class Message:
         """
         pass
 
-    def stream_type_and_value(self) -> Iterable[str]:
+    def stream_type_and_value(self) -> Iterator[str]:
         """
         Stream to the frontend.
         """
