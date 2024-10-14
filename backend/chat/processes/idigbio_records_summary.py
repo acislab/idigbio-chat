@@ -2,6 +2,8 @@ from typing import Iterator
 
 import requests
 from attr import dataclass
+from instructor.exceptions import InstructorRetryException
+from tenacity import Retrying
 
 import idigbio_util
 import search
@@ -9,7 +11,7 @@ from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
-from nlp.agent import Agent
+from nlp.agent import Agent, StopOnTerminalErrorOrMaxAttempts, AgentGenerationException
 from schema.idigbio.api import IDigBioSummaryApiParameters
 
 DEFAULT_NUM_TOP_COUNTS = 10
@@ -29,7 +31,11 @@ class IDigBioRecordsSummary(Process):
     process_summary = "Searching for records..."
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
-        params = _generate_records_summary_parameters(agent, history, request)
+        try:
+            params = _generate_records_summary_parameters(agent, history, request)
+        except AgentGenerationException as e:
+            yield self.note(e.message)
+            return
 
         if "top_fields" not in params:
             params |= {"top_fields": "scientificname"}
@@ -75,12 +81,17 @@ def _query_summary_api(query_url: str) -> (int, dict):
 
 
 def _generate_records_summary_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioSummaryApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
+    try:
+        result = agent.client.chat.completions.create(
+            model="gpt-4o",
+            temperature=0,
+            response_model=IDigBioSummaryApiParameters,
+            messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
+                                              request=request),
+            max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
+        )
+    except InstructorRetryException as e:
+        raise AgentGenerationException(e)
 
     params = result.model_dump(exclude_none=True)
     return params

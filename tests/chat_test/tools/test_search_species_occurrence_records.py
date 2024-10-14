@@ -26,3 +26,12 @@ def test_search_this_year():
     assert "datemodified" in search.results.params["rq"]
     assert str(search.results.params["rq"]["datemodified"]["gte"]) == f"{year}-01-01"
     assert str(search.results.params["rq"]["datemodified"]["lte"]) == f"{year}-12-31"
+
+
+def test_geopoint_exception():
+    history = make_history(UserMessage("Generate a search query for Ursus arctos with latitude=-100 and longitude=200"))
+    search = IDigBioRecordsSearch(Agent(), history)
+    summary = search.summarize()
+    assert summary == ('Error: Error: Invalid latitude value: -100.0 is not in range [-90, +90]\n'
+                       '\n'
+                       'Error: Error: Invalid latitude value: 200.0 is not in range [-180, +180]')

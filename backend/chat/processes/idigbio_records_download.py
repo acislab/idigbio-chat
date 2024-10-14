@@ -1,13 +1,15 @@
 import requests
 from attr import dataclass
+from instructor.exceptions import InstructorRetryException
+from tenacity import Retrying
 
 import idigbio_util
 import search
-from chat.processes.process import Process
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
+from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
-from nlp.agent import Agent
+from nlp.agent import Agent, StopOnTerminalErrorOrMaxAttempts, AgentGenerationException
 from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioDownloadApiParameters
 
 live = True
@@ -24,7 +26,12 @@ class IDigBioRecordsDownload(Process):
     process_summary = "Generating download request..."
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
-        params = _generate_records_download_parameters(agent, history, request)
+        try:
+            params = _generate_records_download_parameters(agent, history, request)
+        except AgentGenerationException as e:
+            yield self.note(e.message)
+            return
+
         yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
         self.note(f"\n\nSending download request...")
@@ -76,12 +83,17 @@ def _query_search_api(query_url: str) -> (int, dict):
 
 
 def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
-        model="gpt-4o",
-        temperature=0,
-        response_model=IDigBioRecordsApiParameters,
-        messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
-    )
+    try:
+        result = agent.client.chat.completions.create(
+            model="gpt-4o",
+            temperature=0,
+            response_model=IDigBioRecordsApiParameters,
+            messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
+                                              request=request),
+            max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
+        )
+    except InstructorRetryException as e:
+        raise AgentGenerationException(e)
 
     params = result.model_dump(exclude_none=True)
     return params

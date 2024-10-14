@@ -5,7 +5,8 @@ from datetime import date
 from enum import Enum
 from typing import Optional, List, Union, Literal
 
-from pydantic import Field, BaseModel, EmailStr, field_validator
+from pydantic import Field, BaseModel, EmailStr, field_validator, ValidationError
+from pydantic_core import PydanticCustomError
 
 from .fields import fields
 
@@ -40,6 +41,32 @@ class GeoPoint(BaseModel):
     latitude: Optional[float] = Field(None)
     longitude: Optional[float] = Field(None)
 
+    @field_validator('latitude', mode='after')
+    @classmethod
+    def validate_latitude(cls, v):
+        if v is None:
+            return v
+        if not (-90 <= v <= 90):
+            raise PydanticCustomError(
+                "geopoint_range_error",
+                "Error: Invalid latitude value: {latitude} is not in range [-90, +90]",
+                dict(latitude=v, terminal=True)
+            )
+        return v
+
+    @field_validator('longitude', mode='after')
+    @classmethod
+    def validate_longitude(cls, v):
+        if v is None:
+            return v
+        if not (-180 <= v <= 180):
+            raise PydanticCustomError(
+                "geopoint_range_error",
+                "Error: Invalid latitude value: {longitude} is not in range [-180, +180]",
+                dict(longitude=v, terminal=True)
+            )
+        return v
+
 
 # Fields
 field_names = [field['field_name'] for field in fields]
@@ -62,7 +89,8 @@ class IDBQuerySchema(BaseModel):
     collector: Optional[str] = None
     commonname: Optional[str] = None
     continent: Optional[str] = None
-    country: Optional[str] = Field(..., description="Full, accepted country name. For example 'Canada' instead of CAD.")
+    country: Optional[str] = Field(default=None,
+                                   description="Full, accepted country name. For example 'Canada' instead of CAD.")
     county: Optional[str] = None
     datecollected: Optional[Date] = None
     datemodified: Optional[Date] = None
@@ -104,26 +132,10 @@ class IDBQuerySchema(BaseModel):
     version: Optional[int] = None
     waterbody: Optional[str] = None
 
-    @field_validator('geopoint', mode='before')
-    def validate_geopoint(cls, v):
-        if v is None:
-            return v
-        if not (-90 <= v['latitude'] <= 90):
-            raise GeoPointValidationError(f"Invalid latitude value: {v['latitude']} is out of range.")
-        if not (-180 <= v['longitude'] <= 180):
-            raise GeoPointValidationError(f"Invalid longitude value: {v['longitude']} is out of range.")
-        return v
-
     class Config:
         json_encoders = {
             date: date.isoformat
         }
-
-
-class GeoPointValidationError(Exception):
-    def __init__(self, message):
-        self.message = message
-        super().__init__(self.message)
 
 
 class IDigBioRecordsApiParameters(BaseModel):
