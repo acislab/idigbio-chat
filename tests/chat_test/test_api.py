@@ -1,7 +1,7 @@
 import chat.api
-from chat.conversation import Conversation
 from chat.messages import UserMessage, AiChatMessage
 from chat_test.chat_test_util import make_history
+from matchers import string_must_contain
 from nlp.agent import Agent
 
 
@@ -12,17 +12,8 @@ def test__break_down_message_into_smaller_requests():
     requests = chat.api._break_down_message_into_smaller_requests(Agent(), conv, user_message)
 
     assert len(requests) == 2
-
-    assert "records" in requests[0]
-    assert "polar bears" in requests[0]
-    assert "Florida" in requests[0]
-    assert "Orville Redenbacher" in requests[0]
-
-    assert "show" in requests[1]
-    assert "polar bears" in requests[1]
-    assert "Florida" in requests[1]
-    assert "Orville Redenbacher" in requests[1]
-    assert "map" in requests[1]
+    assert string_must_contain(requests[0], "records", "polar bears", "Florida", "Orville Redenbacher")
+    assert string_must_contain(requests[1], "show", "polar bears", "Florida", "Orville Redenbacher", "map")
 
 
 def test_dont_break_up_complex_request():
@@ -44,11 +35,7 @@ def test_break_down_requests_with_history():
     requests = chat.api._break_down_message_into_smaller_requests(Agent(), conv, conv.render_to_openai()[-1]["content"])
 
     assert len(requests) == 1
-
-    assert "records" in requests[0]
-    assert "polar bears" in requests[0]
-    assert "Alaska" in requests[0]
-    assert "Orville Redenbacher" in requests[0]
+    assert string_must_contain(requests[0], "records", "polar bears", "Alaska", "Orville Redenbacher")
 
 
 def test_repeat_request_with_follow_up_information():
@@ -61,22 +48,16 @@ def test_repeat_request_with_follow_up_information():
     requests = chat.api._break_down_message_into_smaller_requests(Agent(), conv, conv.render_to_openai()[-1]["content"])
 
     assert len(requests) == 1
-    assert "send the results" in requests[0]
-    assert "orville.redenbacher@yahoo.com" in requests[0]
+    assert string_must_contain(requests[0], "send the results", "orville.redenbacher@yahoo.com")
 
 
 def test_dont_repeat_request_with_follow_up_questions():
-    conv = Conversation([
-        {"type": "user_text_message",
-         "value": "How many bear records are there in iDigBio"},
-        {"type": "ai_text_message",
-         "value": "There are 100 bear records"},
-        {"type": "user_text_message",
-         "value": "What URL did you use to call the iDigBio API to find records?"}
-    ])
+    conv = make_history(
+        UserMessage("How many bear records are there in iDigBio"),
+        AiChatMessage("There are 100 bear records"),
+        UserMessage("What URL did you use to call the iDigBio API to find records?")
+    )
 
     requests = chat.api._break_down_message_into_smaller_requests(Agent(), conv, conv.render_to_openai()[-1]["content"])
 
-    assert requests == [
-        "What URL did you use to call the iDigBio API to find records?"
-    ]
+    assert string_must_contain(requests[0], "URL", "iDigBio API", "find records", "horse")
