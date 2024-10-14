@@ -23,7 +23,7 @@ def test_not_a_robot():
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
-    assert "please confirm you are a real person" not in messages[0]["value"]
+    assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
 def test_skip_robo_check():
@@ -32,7 +32,7 @@ def test_skip_robo_check():
 
     assert len(messages) >= 1
     assert messages[0]["type"] == "ai_text_message"
-    assert "please confirm you are a real person" not in messages[0]["value"]
+    assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
 def test_remember_robo_check():
@@ -42,7 +42,7 @@ def test_remember_robo_check():
     messages = chat("hi")
 
     assert len(messages) >= 1
-    assert "please confirm you are a real person" not in messages[0]["value"]
+    assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
 def test_echo():
@@ -79,7 +79,7 @@ def test_keep_users_list():
     users = app.redis.lrange("users", 0, -1)
     assert len(users) == 0
 
-    chat("Hi!")
+    chat("clear")
 
     users = app.redis.lrange("users", 0, -1)
     assert len(users) == 1
@@ -173,8 +173,8 @@ def test_conversation_history_search_query():
 
 
 def test_follow_up_question_for_search_query():
-    messages = chat("How many records for Ursus arctos are there")
-    messages += chat("What URL did you use to call the iDigBio API?")
+    chat("How many records for Ursus arctos are there")
+    messages = chat("What URL did you use to call the iDigBio API?")
 
     last_message = messages[-1]["value"]
     url = "https://search.idigbio.org/v2/summary/"

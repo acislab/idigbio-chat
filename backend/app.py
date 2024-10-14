@@ -75,14 +75,14 @@ def chat_api():
             }
         ]
     """
-    print("REQUEST:", request.json, dict(session), sep="\n")
+    print("REQUEST:", dict(session), request.json)
     agent = Agent()
     user_message = request.json["value"]
     user = user_data.get_user()
     if user is None:
         if "not a robot" in user_message.lower():
             user = user_data.make_user()
-            message_stream = chat.api.greet(agent, user.history, "I can confirm that I'm not a robot. Hello!")
+            message_stream = chat.api.greet(agent, user.history, "I confirm that I'm not a robot. Hello!")
         else:
             message_stream = chat.api.are_you_a_robot()
     elif user_message.lower() == "clear":
@@ -96,7 +96,6 @@ def chat_api():
 
     text_stream = stream_messages(message_stream)
 
-    print("RESPONSE:")
     return app.response_class(stream_with_context(text_stream), mimetype="application/json")
 
 
