@@ -1,5 +1,6 @@
 import instructor
 import openai
+import pytest
 import requests
 from dotenv import load_dotenv
 
@@ -30,6 +31,7 @@ def ask_llm_to_generate_search_query(prompt: str) -> IDigBioRecordsApiParameters
     )
 
 
+@pytest.mark.skip("This is just reference code")
 def test_simple_search_shorthand():
     for _ in repeat(SAMPLE_SIZE):
         q = ask_llm_to_generate_search_query("Ursus arctos in North America")
@@ -37,6 +39,7 @@ def test_simple_search_shorthand():
         assert result["rq"] == {"continent": "North America", "scientificname": "Ursus arctos"}
 
 
+@pytest.mark.skip("This is just reference code")
 def test_simple_search():
     for _ in repeat(SAMPLE_SIZE):
         q = ask_llm_to_generate_search_query("Show Ursus arctos occurrences in North America")
@@ -44,6 +47,7 @@ def test_simple_search():
         assert result["rq"] == {"continent": "North America", "scientificname": "Ursus arctos"}
 
 
+@pytest.mark.skip("This is just reference code")
 def test_search_by_higher_taxonomy():
     for _ in repeat(SAMPLE_SIZE):
         q = ask_llm_to_generate_search_query("Retrieve records for the family Ursidae")
@@ -51,6 +55,7 @@ def test_search_by_higher_taxonomy():
         assert result["rq"] == {"family": "Ursidae"}
 
 
+@pytest.mark.skip("This is just reference code")
 def test_naive_search_by_common_name():
     q = ask_llm_to_generate_search_query("Retrieve records for all bear species")
     result = q.model_dump(exclude_none=True)

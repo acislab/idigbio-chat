@@ -1,3 +1,5 @@
+import pytest
+
 from chat.messages import stream_messages
 from chat.conversation import Conversation
 from chat.tools import download_species_occurrence_records
@@ -18,6 +20,7 @@ def test_good_call():
     assert "Response code: 200 (success)" in messages[0]["value"]["content"]
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_missing_email():
     download_species_occurrence_records.live = False
 

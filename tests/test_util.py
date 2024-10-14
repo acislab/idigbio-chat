@@ -1,5 +1,5 @@
-from chat.messages import UserMessage, Message
-from chat.conversation import Conversation
+from chat_test.messages import UserMessage, Message
+from chat_test.conversation import Conversation
 
 
 def repeat(n):

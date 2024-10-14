@@ -1,6 +1,6 @@
 import json
 
-from chat.messages import ColdMessage
+from chat_test.messages import ColdMessage
 
 
 def test_pack():

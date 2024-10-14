@@ -1,5 +1,6 @@
 import instructor
 import openai
+import pytest
 from dotenv import load_dotenv
 
 from tests.test_util import repeat
@@ -64,12 +65,14 @@ def ask_llm_to_call_a_function(prompt, *functions):
     )
 
 
+@pytest.mark.skip("This is just reference code")
 def test_user_wants_records():
     for _ in repeat(SAMPLE_SIZE):
         resp = ask_llm_to_call_a_function("Find Ursus arctos occurrence records", *ALL_FUNCTIONS)
         assert resp.choices[0].message.function_call.name == "retrieve_species_occurrence_records"
 
 
+@pytest.mark.skip("This is just reference code")
 def test_user_wants_an_expert_on_topic():
     for _ in repeat(SAMPLE_SIZE):
         resp = ask_llm_to_call_a_function("What's the difference between bears and bees?", *ALL_FUNCTIONS)
@@ -77,6 +80,7 @@ def test_user_wants_an_expert_on_topic():
             0].message.function_call.name == "ask_an_expert"
 
 
+@pytest.mark.skip("This is just reference code")
 def test_user_wants_an_expert_off_topic():
     for _ in repeat(SAMPLE_SIZE):
         resp = ask_llm_to_call_a_function("What's your name?", *ALL_FUNCTIONS)
@@ -84,6 +88,7 @@ def test_user_wants_an_expert_off_topic():
             0].message.function_call.name == "ask_an_expert"
 
 
+@pytest.mark.skip("This is just reference code")
 def test_on_topic():
     for _ in repeat(SAMPLE_SIZE):
         resp = ask_llm_to_call_a_function(
@@ -95,6 +100,7 @@ def test_on_topic():
         assert resp.choices[0].message.function_call.name == "yes"
 
 
+@pytest.mark.skip("This is just reference code")
 def test_off_topic():
     for _ in repeat(SAMPLE_SIZE):
         resp = ask_llm_to_call_a_function(
@@ -105,6 +111,7 @@ def test_off_topic():
         assert resp.choices[0].message.function_call.name == "no"
 
 
+@pytest.mark.skip("This is just reference code")
 def test_species_presence_in_country():
     for _ in repeat(SAMPLE_SIZE):
         resp = ask_llm_to_call_a_function(
@@ -115,30 +122,37 @@ def test_species_presence_in_country():
         assert resp.choices[0].message.function_call.name == "no"
 
 
+@pytest.mark.skip("This is just reference code")
 def test_idigbio_wiki_search():
     """Find, quote, and relate information from iDigBio's wiki"""
 
 
+@pytest.mark.skip("This is just reference code")
 def test_summarize_habitat_notes():
     """Summarize habitat notes across a set of occurrence records"""
 
 
+@pytest.mark.skip("This is just reference code")
 def test_refine_idigbio_search_query():
     """Conversationally refine a search query"""
 
 
+@pytest.mark.skip("This is just reference code")
 def test_compile_list_of_species():
     """From a list of records, list out the unique species that are represented"""
 
 
+@pytest.mark.skip("This is just reference code")
 def test_detect_species_synonyms():
     """Decide whether two scientific names identify the same species"""
 
 
+@pytest.mark.skip("This is just reference code")
 def test_multistep_reasoning():
     """Invoke a sequence of tools to fulfill user queries"""
 
 
+@pytest.mark.skip("This is just reference code")
 def test_request_dataset_download_by_polling():
     """
     Generate a DarwinCore archive using the iDigBio Download API, wait for it to finish.
@@ -146,6 +160,7 @@ def test_request_dataset_download_by_polling():
     """
 
 
+@pytest.mark.skip("This is just reference code")
 def test_request_dataset_download_by_email():
     """
     Generate a DarwinCore archive using the iDigBio Download API, request delivery by email.

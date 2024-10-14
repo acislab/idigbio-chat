@@ -41,9 +41,12 @@ For the following recordsets (that exceed 100,000 records):
 | University of Central Florida Collection of Arthopods (UCFC)                  | 84006c59-fead-4b84-b3b5-cedf28f67ea9
 +-------------------------------------------------------------------------------+--------------------------------------+
 """
+import pytest
+
 from chat_test.chat_test_util import chat
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_list_record_id_fields():
     """
     "uuid","data.dwc:occurrenceID"
@@ -53,6 +56,7 @@ def test_list_record_id_fields():
     assert False
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_the_whole_shebang():
     chat("What fields are used in recordset 2c00c297-9ebd-498a-b701-d3ebde4b49f3?")
     chat("What fields can I use to identify records?")

@@ -1,5 +1,8 @@
+import pytest
+
 import app
-from .chat_test_util import chat
+from chat_test_util import chat
+from matchers import string_must_contain
 
 app.chat_config["SHOW_PROCESSING_MESSAGES"] = True
 app.chat_config["SAFE_MODE"] = False
@@ -175,9 +178,7 @@ def test_follow_up_question_for_search_query():
 
     last_message = messages[-1]["value"]
     url = "https://search.idigbio.org/v2/summary/"
-    assert url in last_message
-    assert "ursus" in last_message.lower()
-    assert "arctos" in last_message.lower()
+    assert string_must_contain(last_message, url, "Ursus arctos")
 
 
 def test_count_records():
@@ -230,6 +231,7 @@ def test_search_by_date():
     assert messages[1]["type"] == "ai_text_message"
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_recommend_spelling_fix_with_no_matches():
     """
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations
@@ -240,6 +242,7 @@ def test_recommend_spelling_fix_with_no_matches():
     # Check for synonyms?
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_recommend_spelling_fix_with_some_matches():
     """
     Given a misspelled taxon name with zero matching records in iDigBio, respond with one or more recommendations
@@ -247,6 +250,7 @@ def test_recommend_spelling_fix_with_some_matches():
     """
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_records_field_lookup():
     """
     Tell the user which field to use in their search.
@@ -256,6 +260,7 @@ def test_records_field_lookup():
     assert False
 
 
+@pytest.mark.skip(reason="Not implemented")
 def test_explain_difference_between_data_and_index_fields():
     """
     Tell the user which field to use in their search.
