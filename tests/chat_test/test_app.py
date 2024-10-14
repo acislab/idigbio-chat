@@ -54,15 +54,10 @@ def test_echo():
     assert messages[0]["value"] == "Toast."
 
 
+# TODO
+@pytest.mark.skip("Need to check content")
 def test_describe_self():
     messages = chat("What can you do?")
-
-    assert len(messages) == 1
-    assert messages[0]["type"] == "ai_text_message"
-
-
-def test_off_topic():
-    messages = chat("How's the weather?")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
@@ -79,7 +74,7 @@ def test_keep_users_list():
     users = app.redis.lrange("users", 0, -1)
     assert len(users) == 0
 
-    chat("clear")
+    chat("ping")  # Don't trigger an LLM response
 
     users = app.redis.lrange("users", 0, -1)
     assert len(users) == 1

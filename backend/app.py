@@ -32,6 +32,8 @@ else:
 
 user_data = UserData(session, redis, chat_config)
 
+agent = Agent()
+
 
 @app.route("/", methods=["GET"])
 def home():
@@ -76,7 +78,6 @@ def chat_api():
         ]
     """
     print("REQUEST:", dict(session), request.json)
-    agent = Agent()
     user_message = request.json["value"]
     user = user_data.get_user()
     if user is None:

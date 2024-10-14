@@ -61,3 +61,11 @@ def test_dont_repeat_request_with_follow_up_questions():
     requests = chat.api._break_down_message_into_smaller_requests(Agent(), conv, conv.render_to_openai()[-1]["content"])
 
     assert string_must_contain(requests[0], "URL", "iDigBio API", "find records", "horse")
+
+
+def test_off_topic():
+    request = "How's the weather?"
+    conv = make_history(UserMessage(request))
+    tool = chat.api.create_plan(Agent(), conv, request)
+
+    assert tool == "converse"
