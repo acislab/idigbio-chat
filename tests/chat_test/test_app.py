@@ -10,7 +10,7 @@ app.chat_config["SAFE_MODE"] = False
 
 def test_robo_check():
     app.chat_config["SAFE_MODE"] = True
-    messages = chat("Hi!")
+    messages = chat("ping")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
@@ -28,18 +28,27 @@ def test_not_a_robot():
 
 def test_skip_robo_check():
     app.chat_config["SAFE_MODE"] = False
-    messages = chat("Hi!")
+    messages = chat("ping")
 
     assert len(messages) >= 1
     assert messages[0]["type"] == "ai_text_message"
     assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
+def test_ping():
+    app.chat_config["SAFE_MODE"] = False
+    messages = chat("ping")
+
+    assert len(messages) >= 1
+    assert messages[0]["type"] == "ai_text_message"
+    assert messages[0]["value"] == "pong"
+
+
 def test_remember_robo_check():
     app.chat_config["SAFE_MODE"] = True
     chat("not a robot")
     chat("clear")
-    messages = chat("hi")
+    messages = chat("ping")
 
     assert len(messages) >= 1
     assert not ("please confirm you are a real person" in messages[0]["value"])
@@ -54,8 +63,6 @@ def test_echo():
     assert messages[0]["value"] == "Toast."
 
 
-# TODO
-@pytest.mark.skip("Need to check content")
 def test_describe_self():
     messages = chat("What can you do?")
 

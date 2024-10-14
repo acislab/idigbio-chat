@@ -100,7 +100,7 @@ def _get_baked_response(user_message) -> Iterator[Message]:
         case "help":
             yield AiChatMessage(HELP_MESSAGE)
         case "ping":
-            yield "pong"
+            yield AiChatMessage("pong")
         case _:
             pass
 
