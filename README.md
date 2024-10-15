@@ -1,3 +1,9 @@
+# idigbio-chat
+
+A chatbot for [the iDigBio Portal](https://www.idigbio.org/portal).
+
+## Develop
+
 Quick start:
 
 ```bash
@@ -10,6 +16,10 @@ pip install -r requirements.txt
 python3 backend/app.py
 ```
 
-# Funding
+Here's a high-level overview of the system:
+
+![flowchart](docs/high_level_flowchart.png)
+
+## Funding
 
 This work is funded by grants from the National Science Foundation (DBI 2027654) and the AT&T Foundation.
