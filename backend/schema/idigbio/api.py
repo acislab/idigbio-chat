@@ -76,7 +76,7 @@ ScientificName = str
 
 class IDBRecordsQuerySchema(BaseModel):
     """
-    This schema represents the iDigBio Query Format.
+    This schema represents the iDigBio Record Query Format.
     """
     associatedsequences: Optional[str] = None
     barcodevalue: Optional[str] = None
@@ -138,16 +138,35 @@ class IDBRecordsQuerySchema(BaseModel):
         }
 
 
+class IDBMediaQuerySchema(BaseModel):
+    """
+    This schema represents the iDigBio Media Query Format.
+    """
+    uuid: Optional[str] = None
+    datemodified: Optional[Date] = Field(None, description="The \"datemodified\" field in the original media record")
+    modified: Optional[Date] = Field(None,
+                                     description="Last time the media record changed in iDigBio, whether the original "
+                                                 "record or iDigBio's metadata")
+    etag: Optional[str] = None
+    version: Optional[int] = None
+    recordset: Optional[str] = None
+    records: Optional[str] = None
+    hasSpecimen: Optional[bool] = None
+
+    class Config:
+        json_encoders = {
+            date: date.isoformat
+        }
+
+
 class IDigBioRecordsApiParameters(BaseModel):
     """
     This schema represents the output containing the LLM-generated iDigBio query. 
     """
     rq: IDBRecordsQuerySchema = Field(...,
-                                      description="This is the iDigBio Query format and should contain the query "
-                                                  "generated from the user's plain text input.")
+                                      description="Search criteria for species occurrence records in iDigBio")
     limit: Optional[int] = Field(None,
-                                 description="The maximum number of records to return. Only set this field if the "
-                                             "user specifically requests a record limit.")
+                                 description="The maximum number of records to return")
 
 
 class IDigBioSummaryApiParameters(BaseModel):
@@ -176,3 +195,15 @@ class IDigBioDownloadApiParameters(IDigBioRecordsApiParameters):
                             description="The email address to send the results of the search to. The email will "
                                         "contain a link to download the results packaged as a DarwinCore Archive zip "
                                         "file.")
+
+
+class IDigBioMediaApiParameters(BaseModel):
+    """
+    This schema represents the output containing the LLM-generated iDigBio query.
+    """
+    mq: IDBMediaQuerySchema = Field(None,
+                                    description="Search criteria for media and media records")
+    rq: IDBRecordsQuerySchema = Field(None,
+                                      description="Search criteria for species occurrence records")
+    limit: Optional[int] = Field(None,
+                                 description="The maximum number of records to return")

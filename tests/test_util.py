@@ -1,5 +1,7 @@
-from chat_test.messages import UserMessage, Message
-from chat_test.conversation import Conversation
+from typing import Sized
+
+from chat.messages import UserMessage, Message
+from chat.conversation import Conversation
 
 
 def repeat(n):
@@ -22,3 +24,14 @@ def test_conversation(m: str | Message | list[Message]):
         conv.append(m)
 
     return conv
+
+
+def clean(data: dict):
+    if not isinstance(data, dict):
+        return data
+    else:
+        return {k: clean(v) for k, v in data.items() if not is_empty(v)}
+
+
+def is_empty(data):
+    return len(data) == 0 if isinstance(data, Sized) else False

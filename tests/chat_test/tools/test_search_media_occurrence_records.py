@@ -5,25 +5,49 @@ from chat.processes.idigbio_media_search import IDigBioMediaSearch
 from chat.tools.search_media_records import SearchMediaRecords
 from chat_test.chat_test_util import make_history
 from nlp.agent import Agent
+from test_util import clean
 
 
 def test_call():
-    history = make_history(UserMessage("Find media for genus Ursus"))
+    history = make_history(UserMessage("Find media"))
     tool = SearchMediaRecords()
     messages = [m for m in tool.call(Agent(), history)]
     assert len(messages) == 2
 
 
+def test_find_by_uuid():
+    history = make_history(UserMessage("Find media with uuid 8c73d3a5-aa07-478b-8bee-d74beb0c812f"))
+    search = IDigBioMediaSearch(Agent(), history)
+
+    assert clean(search.results.params) == {
+        "mq": {
+            "uuid": "8c73d3a5-aa07-478b-8bee-d74beb0c812f"
+        }
+    }
+
+
+def test_find_media_for_species():
+    history = make_history(UserMessage("Find media for Ursus arctos"))
+    search = IDigBioMediaSearch(Agent(), history)
+
+    assert clean(search.results.params) == {
+        "rq": {
+            "genus": "Ursus",
+            "specificepithet": "arctos"
+        }
+    }
+
+
 def test_search_this_year():
-    history = make_history(UserMessage("Find media created this year"))
+    history = make_history(UserMessage("Find media created this year using the datemodified field"))
     search = IDigBioMediaSearch(Agent(), history)
 
     year = str(datetime.now().year)
 
-    assert "rq" in search.results.params
-    assert "datemodified" in search.results.params["rq"]
-    assert str(search.results.params["rq"]["datemodified"]["gte"]) == f"{year}-01-01"
-    assert str(search.results.params["rq"]["datemodified"]["lte"]) == f"{year}-12-31"
+    assert "mq" in search.results.params
+    assert "datemodified" in search.results.params["mq"]
+    assert str(search.results.params["mq"]["datemodified"]["gte"]) == f"{year}-01-01"
+    assert str(search.results.params["mq"]["datemodified"]["lte"]) == f"{year}-12-31"
 
 
 def test_geopoint_exception():
