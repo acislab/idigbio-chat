@@ -27,7 +27,6 @@ def test_not_a_robot():
 
 
 def test_skip_robo_check():
-    app.chat_config["SAFE_MODE"] = False
     messages = chat("ping")
 
     assert len(messages) >= 1
@@ -36,7 +35,6 @@ def test_skip_robo_check():
 
 
 def test_ping():
-    app.chat_config["SAFE_MODE"] = False
     messages = chat("ping")
 
     assert len(messages) >= 1
