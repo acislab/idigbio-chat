@@ -2,7 +2,7 @@ from enum import Enum
 
 from pydantic import BaseModel
 
-from schema.idigbio.api import IDBQuerySchema
+from schema.idigbio.api import IDBRecordsQuerySchema
 
 
 class Result(str, Enum):
@@ -13,6 +13,6 @@ class Result(str, Enum):
 
 class Message(BaseModel):
     input: str
-    rq: str | IDBQuerySchema
+    rq: str | IDBRecordsQuerySchema
     result: Result
     message: str

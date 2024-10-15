@@ -74,7 +74,7 @@ field_names = [field['field_name'] for field in fields]
 ScientificName = str
 
 
-class IDBQuerySchema(BaseModel):
+class IDBRecordsQuerySchema(BaseModel):
     """
     This schema represents the iDigBio Query Format.
     """
@@ -142,9 +142,9 @@ class IDigBioRecordsApiParameters(BaseModel):
     """
     This schema represents the output containing the LLM-generated iDigBio query. 
     """
-    rq: IDBQuerySchema = Field(...,
-                               description="This is the iDigBio Query format and should contain the query generated "
-                                           "from the user's plain text input.")
+    rq: IDBRecordsQuerySchema = Field(...,
+                                      description="This is the iDigBio Query format and should contain the query "
+                                                  "generated from the user's plain text input.")
     limit: Optional[int] = Field(None,
                                  description="The maximum number of records to return. Only set this field if the "
                                              "user specifically requests a record limit.")
@@ -154,9 +154,9 @@ class IDigBioSummaryApiParameters(BaseModel):
     """
     This schema represents the output containing the LLM-generated iDigBio query.
     """
-    rq: IDBQuerySchema = Field(...,
-                               description="This is the iDigBio Query format and should contain the query generated "
-                                           "from the user's plain text input.")
+    rq: IDBRecordsQuerySchema = Field(...,
+                                      description="This is the iDigBio Query format and should contain the query "
+                                                  "generated from the user's plain text input.")
     top_fields: Optional[str] = Field(...,
                                       description="The field to break down record counts by. Defaults to "
                                                   "\"scientificname\". For example, if top_fields is \"country\", "
