@@ -231,6 +231,15 @@ def test_search_by_date():
     assert messages[1]["type"] == "ai_text_message"
 
 
+def test_media_search():
+    messages = chat("Find media for genus Carex")
+
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    content = messages[0]["value"]["content"]
+    assert "https://search.idigbio.org/v2/search/media" in content
+
+
 @pytest.mark.skip(reason="Not implemented")
 def test_recommend_spelling_fix_with_no_matches():
     """

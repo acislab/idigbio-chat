@@ -69,3 +69,11 @@ def test_off_topic():
     tool = chat.api.create_plan(Agent(), conv, request)
 
     assert tool == "converse"
+
+
+def test_media_search():
+    request = "Find media for genus Carex"
+    conv = make_history(UserMessage(request))
+    tool = chat.api.create_plan(Agent(), conv, request)
+
+    assert tool == "search_media_records"
