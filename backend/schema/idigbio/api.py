@@ -173,9 +173,10 @@ class IDigBioSummaryApiParameters(BaseModel):
     """
     This schema represents the output containing the LLM-generated iDigBio query.
     """
-    rq: IDBRecordsQuerySchema = Field(...,
-                                      description="This is the iDigBio Query format and should contain the query "
-                                                  "generated from the user's plain text input.")
+    rq: Optional[IDBRecordsQuerySchema] = Field(None,
+                                                description="This is the iDigBio Query format and should contain the "
+                                                            "query "
+                                                            "generated from the user's plain text input.")
     top_fields: Optional[str] = Field(...,
                                       description="The field to break down record counts by. Defaults to "
                                                   "\"scientificname\". For example, if top_fields is \"country\", "
@@ -201,9 +202,9 @@ class IDigBioMediaApiParameters(BaseModel):
     """
     This schema represents the output containing the LLM-generated iDigBio query.
     """
-    mq: IDBMediaQuerySchema = Field(None,
-                                    description="Search criteria for media and media records")
-    rq: IDBRecordsQuerySchema = Field(None,
-                                      description="Search criteria for species occurrence records")
+    mq: Optional[IDBMediaQuerySchema] = Field(None,
+                                              description="Search criteria for media and media records")
+    rq: Optional[IDBRecordsQuerySchema] = Field(None,
+                                                description="Search criteria for species occurrence records")
     limit: Optional[int] = Field(None,
                                  description="The maximum number of records to return")
