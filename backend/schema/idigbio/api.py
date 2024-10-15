@@ -149,9 +149,11 @@ class IDBMediaQuerySchema(BaseModel):
                                                  "record or iDigBio's metadata")
     etag: Optional[str] = None
     version: Optional[int] = None
-    recordset: Optional[str] = None
-    records: Optional[str] = None
-    hasSpecimen: Optional[bool] = None
+    recordset: Optional[str] = Field(None, description="The record set that the media record is a part of")
+    records: Optional[str] = Field(None, description="UUIDs for records that are associated with the media record")
+    hasSpecimen: Optional[bool] = Field(None,
+                                        description="Whether the media record is associated with a specific species "
+                                                    "occurrence record")
 
     class Config:
         json_encoders = {
