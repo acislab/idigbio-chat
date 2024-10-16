@@ -291,5 +291,5 @@ def search_species_occurrence_records(agent: Agent, messages: list[dict]) -> dic
                  ] + messages,
     )
 
-    params = result.model_dump(exclude_none=True)
+    params = result.model_dump(exclude_none=True, by_alias=True)
     return params

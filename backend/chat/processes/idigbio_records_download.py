@@ -68,7 +68,7 @@ def _generate_records_download_parameters(agent: Agent, history: Conversation, r
         messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT, request=request),
     )
 
-    params = result.model_dump(exclude_none=True)
+    params = result.model_dump(exclude_none=True, by_alias=True)
     return params
 
 
@@ -95,5 +95,5 @@ def _generate_records_search_parameters(agent: Agent, history: Conversation, req
     except InstructorRetryException as e:
         raise AgentGenerationException(e)
 
-    params = result.model_dump(exclude_none=True)
+    params = result.model_dump(exclude_none=True, by_alias=True)
     return params

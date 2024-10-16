@@ -63,7 +63,7 @@ def _generate_records_search_parameters(agent: Agent, history: Conversation, req
     except InstructorRetryException as e:
         raise AgentGenerationException(e)
 
-    params = result.model_dump(exclude_none=True)
+    params = result.model_dump(exclude_none=True, by_alias=True)
     return params
 
 

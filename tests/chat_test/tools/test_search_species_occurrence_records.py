@@ -8,12 +8,9 @@ from nlp.agent import Agent
 
 
 def test_call():
-    agent = Agent()
     tool = SearchSpeciesOccurrenceRecords()
-    response = tool.call(agent, "Find records for genus Ursus")
-    assert response["rq"] == {
-        "genus": "Ursus"
-    }
+    messages = [m for m in tool.call(Agent(), make_history(UserMessage("Find records for genus Ursus")))]
+    assert len(messages) == 2
 
 
 def test_search_this_year():
@@ -35,3 +32,15 @@ def test_geopoint_exception():
     assert summary == ('Error: Error: Invalid latitude value: -100.0 is not in range [-90, +90]\n'
                        '\n'
                        'Error: Error: Invalid latitude value: 200.0 is not in range [-180, +180]')
+
+
+def test_aliased_field_search():
+    """
+    The field "class" is a keyword in Python, so we have to use Pydantic's alias feature to serialize the field name
+    as a string. Aliases must be enabled in Pydantic's "[obj].model_dump" method.
+    """
+    history = make_history(UserMessage("Find records of Aves"))
+    search = IDigBioRecordsSearch(Agent(), history)
+    assert search.results.params["rq"] == {
+        "class": "Aves"
+    }
