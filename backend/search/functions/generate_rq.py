@@ -293,6 +293,15 @@ You {{
         "type": "missing"
     }}
 }}
+
+## Example 8 - records with boolean fields
+
+User: "Records with no family classification"
+You {{
+    "family": {{
+        "type": "missing"
+    }}
+}}
 """
 
 

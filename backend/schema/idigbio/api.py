@@ -26,7 +26,7 @@ class Existence(BaseModel):
 Date = Union[date, DateRange, Existence]
 String = Union[str, Existence]
 Bool = Union[bool, Existence]
-Float = Union[bool, Existence]
+Float = Union[float, Existence]
 Int = Union[int, Existence]
 
 
@@ -97,7 +97,7 @@ class IDBRecordsQuerySchema(BaseModel):
     fieldnumber: Optional[String] = None
     genus: Optional[String] = None
     geopoint: Optional[GeoPoint] = None
-    hasImage: Optional[Bool] = None
+    hasImage: Optional[bool] = None  # All records have this field, no need to allow existence queries
     highertaxon: Optional[String] = None
     infraspecificepithet: Optional[String] = None
     institutioncode: Optional[String] = None
@@ -147,7 +147,8 @@ class IDBMediaQuerySchema(BaseModel):
     version: Optional[Int] = None
     recordset: Optional[String] = Field(None, description="The record set that the media record is a part of")
     records: Optional[String] = Field(None, description="UUIDs for records that are associated with the media record")
-    hasSpecimen: Optional[Bool] = Field(None,
+    # All records have "hasSpecimen", no need to allow existence queries
+    hasSpecimen: Optional[bool] = Field(None,
                                         description="Whether the media record is associated with a specific species "
                                                     "occurrence record")
 

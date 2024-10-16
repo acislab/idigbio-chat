@@ -47,11 +47,20 @@ def test_aliased_field_search():
 
 
 def test_existence_search():
-    history = make_history(UserMessage("Records that specify a commonname"))
+    history = make_history(UserMessage("Records that specify a common name"))
     search = IDigBioRecordsSearch(Agent(), history)
 
     assert search.results.params["rq"] == {
         "commonname": {
             "type": "exists"
         }
+    }
+
+
+def test_has_image():
+    history = make_history(UserMessage("Records with no images"))
+    search = IDigBioRecordsSearch(Agent(), history)
+
+    assert search.results.params["rq"] == {
+        "hasImage": False
     }
