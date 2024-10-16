@@ -275,6 +275,24 @@ You: {{
     "scientificname": ["Homo sapiens", "Rattus rattus],
     "continent": ["North America", "Australia"]
 }}
+
+## Example 6 - only match records that specify a field
+
+User: "Records with a common name"
+You {{
+    "commonname": {{
+        "type": "exists"
+    }}
+}}
+
+## Example 7 - only match records that do NOT specify a field
+
+User: "Records with no family classification"
+You {{
+    "family": {{
+        "type": "missing"
+    }}
+}}
 """
 
 

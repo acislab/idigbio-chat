@@ -44,3 +44,14 @@ def test_aliased_field_search():
     assert search.results.params["rq"] == {
         "class": "Aves"
     }
+
+
+def test_existence_search():
+    history = make_history(UserMessage("Records that specify a commonname"))
+    search = IDigBioRecordsSearch(Agent(), history)
+
+    assert search.results.params["rq"] == {
+        "commonname": {
+            "type": "exists"
+        }
+    }

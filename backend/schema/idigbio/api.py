@@ -13,33 +13,29 @@ from .fields import fields
 
 class DateRange(BaseModel):
     type: Literal["range"]
-    gte: date = Field(None, description="The start date of the range",
-                      examples=["1900-3-14", "2024-01-01"])
-    lte: date = Field(None, description="The end date of the range.",
-                      examples=["1900-12-20", "2024-02-01"])
-
-
-Date = Union[date, DateRange]
-
-
-class ExistenceEnum(str, Enum):
-    exists: "exists"
-    missing: "missing"
+    gte: Optional[date] = Field(None, description="The start date of the range",
+                                examples=["1900-3-14", "2024-01-01"])
+    lte: Optional[date] = Field(None, description="The end date of the range.",
+                                examples=["1900-12-20", "2024-02-01"])
 
 
 class Existence(BaseModel):
-    type: ExistenceEnum
+    type: Literal["exists", "missing"]
 
 
+Date = Union[date, DateRange, Existence]
 String = Union[str, Existence]
+Bool = Union[bool, Existence]
+Float = Union[bool, Existence]
+Int = Union[int, Existence]
 
 
 class GeoPoint(BaseModel):
     """
     This schema represents a location on earth.
     """
-    latitude: Optional[float] = Field(None)
-    longitude: Optional[float] = Field(None)
+    latitude: Optional[Float] = Field(None)
+    longitude: Optional[Float] = Field(None)
 
     @field_validator('latitude', mode='after')
     @classmethod
@@ -71,66 +67,66 @@ class GeoPoint(BaseModel):
 # Fields
 field_names = [field['field_name'] for field in fields]
 
-ScientificName = str
-
 
 class IDBRecordsQuerySchema(BaseModel):
     """
     This schema represents the iDigBio Record Query Format.
     """
-    associatedsequences: Optional[str] = None
-    barcodevalue: Optional[str] = None
-    basisofrecord: Optional[str] = None
-    catalognumber: Optional[str] = None
-    class_: Optional[str] = Field(default=None, alias='class')
-    collectioncode: Optional[str] = None
-    collectionid: Optional[str] = None
-    collectionname: Optional[str] = None
-    collector: Optional[str] = None
-    commonname: Optional[str] = None
-    continent: Optional[str] = None
-    country: Optional[str] = Field(default=None,
-                                   description="Full, accepted country name. For example 'Canada' instead of CAD.")
-    county: Optional[str] = None
+    associatedsequences: Optional[String] = None
+    barcodevalue: Optional[String] = None
+    basisofrecord: Optional[String] = None
+    catalognumber: Optional[String] = None
+    class_: Optional[String] = Field(None, alias='class')
+    collectioncode: Optional[String] = None
+    collectionid: Optional[String] = None
+    collectionname: Optional[String] = None
+    collector: Optional[String] = None
+    commonname: Optional[String] = Field(None,
+                                         description="Common name for a specific species. Do not use for taxonomic "
+                                                     "groups like \"birds\" or \"mammals\"")
+    continent: Optional[String] = None
+    country: Optional[String] = Field(None,
+                                      description="Full, accepted country name. For example 'Canada' instead of CAD.")
+    county: Optional[String] = None
     datecollected: Optional[Date] = None
     datemodified: Optional[Date] = None
-    earliestperiodorlowestsystem: Optional[str] = None
-    etag: Optional[str] = None
+    earliestperiodorlowestsystem: Optional[String] = None
+    etag: Optional[String] = None
     eventdate: Optional[Date] = None
-    family: Optional[str] = None
-    fieldnumber: Optional[str] = None
-    genus: Optional[str] = None
+    family: Optional[String] = None
+    fieldnumber: Optional[String] = None
+    genus: Optional[String] = None
     geopoint: Optional[GeoPoint] = None
-    hasImage: Optional[bool] = None
-    highertaxon: Optional[str] = None
-    infraspecificepithet: Optional[str] = None
-    institutioncode: Optional[str] = None
-    institutionid: Optional[str] = None
-    institutionname: Optional[str] = None
-    kingdom: Optional[str] = None
-    latestperiodorhighestsystem: Optional[str] = None
-    locality: Optional[str] = None
-    maxdepth: Optional[float] = None
-    maxelevation: Optional[float] = None
-    mediarecords: Optional[str] = None
-    mindepth: Optional[float] = None
-    minelevation: Optional[float] = None
-    municipality: Optional[str] = None
-    occurrenceid: Optional[str] = None
-    order: Optional[str] = None
-    phylum: Optional[str] = None
-    recordids: Optional[str] = None
-    recordnumber: Optional[str] = None
-    recordset: Optional[str] = None
-    scientificname: Optional[Union[ScientificName, List[ScientificName]]] = None
-    specificepithet: Optional[str] = None
-    stateprovince: Optional[Union[str, List[str]]] = None
-    typestatus: Optional[str] = None
-    uuid: Optional[str] = None
-    verbatimeventdate: Optional[str] = None
-    verbatimlocality: Optional[str] = None
-    version: Optional[int] = None
-    waterbody: Optional[str] = None
+    hasImage: Optional[Bool] = None
+    highertaxon: Optional[String] = None
+    infraspecificepithet: Optional[String] = None
+    institutioncode: Optional[String] = None
+    institutionid: Optional[String] = None
+    institutionname: Optional[String] = None
+    kingdom: Optional[String] = None
+    latestperiodorhighestsystem: Optional[String] = None
+    locality: Optional[String] = None
+    maxdepth: Optional[Float] = None
+    maxelevation: Optional[Float] = None
+    mediarecords: Optional[String] = None
+    mindepth: Optional[Float] = None
+    minelevation: Optional[Float] = None
+    municipality: Optional[String] = None
+    occurrenceid: Optional[String] = None
+    order: Optional[String] = None
+    phylum: Optional[String] = None
+    recordids: Optional[String] = None
+    recordnumber: Optional[String] = None
+    recordset: Optional[String] = None
+    scientificname: Optional[Union[String, List[str]]] = None
+    specificepithet: Optional[String] = None
+    stateprovince: Optional[Union[String, List[str]]] = None
+    typestatus: Optional[String] = None
+    uuid: Optional[String] = None
+    verbatimeventdate: Optional[String] = None
+    verbatimlocality: Optional[String] = None
+    version: Optional[Int] = None
+    waterbody: Optional[String] = None
 
     class Config:
         json_encoders = {
@@ -142,16 +138,16 @@ class IDBMediaQuerySchema(BaseModel):
     """
     This schema represents the iDigBio Media Query Format.
     """
-    uuid: Optional[str] = None
+    uuid: Optional[String] = None
     datemodified: Optional[Date] = Field(None, description="The \"datemodified\" field in the original media record")
     modified: Optional[Date] = Field(None,
                                      description="Last time the media record changed in iDigBio, whether the original "
                                                  "record or iDigBio's metadata")
-    etag: Optional[str] = None
-    version: Optional[int] = None
-    recordset: Optional[str] = Field(None, description="The record set that the media record is a part of")
-    records: Optional[str] = Field(None, description="UUIDs for records that are associated with the media record")
-    hasSpecimen: Optional[bool] = Field(None,
+    etag: Optional[String] = None
+    version: Optional[Int] = None
+    recordset: Optional[String] = Field(None, description="The record set that the media record is a part of")
+    records: Optional[String] = Field(None, description="UUIDs for records that are associated with the media record")
+    hasSpecimen: Optional[Bool] = Field(None,
                                         description="Whether the media record is associated with a specific species "
                                                     "occurrence record")
 
