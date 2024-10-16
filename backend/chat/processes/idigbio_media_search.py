@@ -16,11 +16,11 @@ from schema.idigbio.api import IDigBioMediaApiParameters
 class Results(dict):
     params: dict
     record_count: int
-    media_api_url: str
+    api_query_url: str
 
 
 class IDigBioMediaSearch(Process):
-    process_summary = "Searching for media..."
+    process_summary = "Searching for media records..."
 
     def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
         try:
@@ -31,23 +31,35 @@ class IDigBioMediaSearch(Process):
 
         yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
+        media_api_url = "https://search.idigbio.org/v2/search/media"
         url_params = idigbio_util.url_encode_params(params)
-        media_api_url = f"https://search.idigbio.org/v2/search/media?{url_params}"
-        self.note(f"Querying the iDigBio media API with URL {media_api_url}")
-        record_count = _query_search_api(media_api_url)
-        yield f"\n\n[View {record_count} matching media records]({media_api_url})"
-        self.note(f"The API query matched {record_count} records in iDigBio")
+        api_query_url = f"{media_api_url}?{url_params}"
+
+        self.note(f"Sending a POST request to the iDigBio media API at {media_api_url}")
+
+        response_code, success, record_count = _query_search_api(media_api_url, params)
+
+        if success:
+            self.note(f"Response code: {response_code}")
+        else:
+            yield self.note(f"\n\nResponse code: {response_code} - something went wrong!")
+            return
+
+        yield f"\n\n[View {record_count} matching media records]({api_query_url})"
+        self.note(f"The API query matched {record_count} media records in iDigBio")
 
         self.set_results(Results(
             params=params,
             record_count=record_count,
-            media_api_url=media_api_url
+            api_query_url=api_query_url
         ))
 
 
-def _query_search_api(query_url: str) -> (int, dict):
-    res = requests.get(query_url)
-    return res.json()["itemCount"]
+def _query_search_api(query_url: str, params: dict) -> (int, bool, dict):
+    response = requests.post(query_url, json=params)
+    data: dict = response.json()
+    count = data.get("itemCount", None)
+    return response.status_code, response.ok, count
 
 
 def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:

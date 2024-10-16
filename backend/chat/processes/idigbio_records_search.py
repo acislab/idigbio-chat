@@ -17,7 +17,7 @@ from schema.idigbio.api import IDigBioRecordsApiParameters
 class Results(dict):
     params: dict
     record_count: int
-    records_api_url: str
+    api_query_url: str
     portal_url: str
 
 
@@ -34,38 +34,38 @@ class IDigBioRecordsSearch(Process):
         yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
         url_params = idigbio_util.url_encode_params(params)
-        query_url = f"https://search.idigbio.org/v2/search/records?{url_params}"
+        api_query_url = f"https://search.idigbio.org/v2/search/records?{url_params}"
         self.note(f"Sending a POST request to the iDigBio records API at https://search.idigbio.org/v2/search/records")
 
         response_code, success, record_count = _query_search_api(
             "https://search.idigbio.org/v2/search/records", params
         )
 
-        self.note(f"Response code: {response_code}")
-        if not success:
-            yield f"Response code: {response_code}\n\nSomething went wrong."
-            self.note(f"Error! Something went wrong.")
+        if success:
+            self.note(f"Response code: {response_code}")
+        else:
+            yield self.note(f"\n\nResponse code: {response_code} - something went wrong!")
             return
 
-        yield f"\n\n[View {record_count} matching records]({query_url})"
-        self.note(f"The API query matched {record_count} records in iDigBio using the URL {query_url}")
+        yield f"\n\n[View {record_count} matching records]({api_query_url})"
+        self.note(f"The API query matched {record_count} records in iDigBio using the URL {api_query_url}")
 
         portal_url = f"https://portal.idigbio.org/portal/search?{url_params}"
         yield f" | [Show in iDigBio portal]({portal_url})"
         self.note(
             f"The records can be viewed in the iDigBio portal at {portal_url}. The portal shows the records in an "
             f"interactive list and plots them on a map. The raw records returned returned by the API can be found at "
-            f"{query_url}")
+            f"{api_query_url}")
 
         self.set_results(Results(
             params=params,
             record_count=record_count,
-            records_api_url=query_url,
+            api_query_url=api_query_url,
             portal_url=portal_url
         ))
 
 
-def _query_search_api(query_url: str, params: dict) -> (int, dict):
+def _query_search_api(query_url: str, params: dict) -> (int, bool, dict):
     response = requests.post(query_url, json=params)
     data: dict = response.json()
     count = data.get("itemCount", None)
