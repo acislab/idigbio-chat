@@ -29,3 +29,14 @@ def test_get_only_countries():
 
     indexed_countries = {r["indexTerms"]["country"].lower() for r in records['items']}
     assert indexed_countries == {"united states"}
+
+
+def test_bad_post():
+    response = rq.post("https://search.idigbio.org/v2/search/records", json={"rq": "crash!!"})
+
+    assert response.json() == {
+        'error': 'unable to parse parameter',
+        'name': 'ParameterParseError',
+        'parameter': 'rq',
+        'statusCode': 400
+    }
