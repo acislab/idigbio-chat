@@ -5,12 +5,42 @@ from chat.processes.idigbio_records_search import IDigBioRecordsSearch
 from chat.tools.search_species_occurrence_records import SearchSpeciesOccurrenceRecords
 from chat_test.chat_test_util import make_history
 from nlp.agent import Agent
+from test_util import assert_string_matches_template
 
 
 def test_call():
     tool = SearchSpeciesOccurrenceRecords()
     messages = [m for m in tool.call(Agent(), make_history(UserMessage("Find records for genus Ursus")))]
     assert len(messages) == 2
+
+
+def test_notes():
+    ref_summary = """
+Generated search parameters:
+```json
+"rq": {
+    "mediarecords": {
+        "type": "exists"
+    }
+}
+```
+
+Sending a POST request to the iDigBio records API at https://search.idigbio.org/v2/search/records
+
+Response code: 200 OK
+
+The API query matched {word} records in iDigBio using the URL https://search.idigbio.org/v2/search/records?rq={
+"mediarecords":{"type":"exists"}}
+
+The records can be viewed in the iDigBio portal at https://portal.idigbio.org/portal/search?rq={"mediarecords":{
+"type":"exists"}}. The portal shows the records in an interactive list and plots them on a map. The raw records 
+returned returned by the API can be found at https://search.idigbio.org/v2/search/records?rq={"mediarecords":{
+"type":"exists"}}
+"""
+    history = make_history(UserMessage("Find media"))
+    search = IDigBioRecordsSearch(Agent(), history)
+    summary = search.summarize()
+    assert_string_matches_template(summary, ref_summary)
 
 
 def test_search_this_year():

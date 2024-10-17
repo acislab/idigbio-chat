@@ -1,13 +1,12 @@
-import requests
 from attr import dataclass
 from instructor.exceptions import InstructorRetryException
 from tenacity import Retrying
 
-import idigbio_util
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
+from idigbio_util import make_idigbio_api_url, query_idigbio_api
 from nlp.agent import Agent, StopOnTerminalErrorOrMaxAttempts, AgentGenerationException
 from schema.idigbio.api import IDigBioMediaApiParameters
 
@@ -31,13 +30,11 @@ class IDigBioMediaSearch(Process):
 
         yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
-        media_api_url = "https://search.idigbio.org/v2/search/media"
-        url_params = idigbio_util.url_encode_params(params)
-        api_query_url = f"{media_api_url}?{url_params}"
-
+        media_api_url = make_idigbio_api_url("/v2/search/media")
         self.note(f"Sending a POST request to the iDigBio media API at {media_api_url}")
 
-        response_code, success, record_count = _query_search_api(media_api_url, params)
+        response_code, success, response_data = query_idigbio_api("/v2/search/media", params)
+        record_count = response_data.get("itemCount", 0)
 
         if success:
             self.note(f"Response code: {response_code}")
@@ -45,6 +42,7 @@ class IDigBioMediaSearch(Process):
             yield self.note(f"\n\nResponse code: {response_code} - something went wrong!")
             return
 
+        api_query_url = make_idigbio_api_url("/v2/search/media", params)
         yield f"\n\n[View {record_count} matching media records]({api_query_url})"
         self.note(f"The API query matched {record_count} media records in iDigBio")
 
@@ -53,13 +51,6 @@ class IDigBioMediaSearch(Process):
             record_count=record_count,
             api_query_url=api_query_url
         ))
-
-
-def _query_search_api(query_url: str, params: dict) -> (int, bool, dict):
-    response = requests.post(query_url, json=params)
-    data: dict = response.json()
-    count = data.get("itemCount", None)
-    return response.status_code, response.ok, count
 
 
 def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:

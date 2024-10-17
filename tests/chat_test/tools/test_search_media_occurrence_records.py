@@ -5,7 +5,7 @@ from chat.processes.idigbio_media_search import IDigBioMediaSearch
 from chat.tools.search_media_records import SearchMediaRecords
 from chat_test.chat_test_util import make_history
 from nlp.agent import Agent
-from test_util import clean
+from test_util import clean, assert_string_matches_template
 
 
 def test_call():
@@ -13,6 +13,40 @@ def test_call():
     tool = SearchMediaRecords()
     messages = [m for m in tool.call(Agent(), history)]
     assert len(messages) == 2
+
+
+def test_notes():
+    ref_summary = """
+Generated search parameters:
+```json
+"mq": {}
+```
+
+Sending a POST request to the iDigBio media API at https://search.idigbio.org/v2/search/media
+
+Response code: 200 OK
+
+The API query matched {word} media records in iDigBio
+"""
+    history = make_history(UserMessage("Find media"))
+    search = IDigBioMediaSearch(Agent(), history)
+    summary = search.summarize()
+    assert_string_matches_template(summary, ref_summary)
+
+
+def test_mq_and_rq():
+    history = make_history(UserMessage("Find media that have a specimen for species Ursus arctos"))
+    search = IDigBioMediaSearch(Agent(), history)
+
+    assert clean(search.results.params) == {
+        'mq': {
+            'hasSpecimen': True
+        },
+        'rq': {
+            'genus': 'Ursus',
+            'specificepithet': 'arctos'
+        }
+    }
 
 
 def test_find_by_uuid():

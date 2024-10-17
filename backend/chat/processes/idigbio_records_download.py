@@ -1,14 +1,13 @@
-import requests
 from attr import dataclass
 from instructor.exceptions import InstructorRetryException
 from tenacity import Retrying
 
-import idigbio_util
 import search
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
+from idigbio_util import query_idigbio_api, make_idigbio_api_url, make_idigbio_portal_url
 from nlp.agent import Agent, StopOnTerminalErrorOrMaxAttempts, AgentGenerationException
 from schema.idigbio.api import IDigBioRecordsApiParameters, IDigBioDownloadApiParameters
 
@@ -34,28 +33,37 @@ class IDigBioRecordsDownload(Process):
 
         yield self.note(f"Generated search parameters:\n```json\n{make_pretty_json_string(params)}\n```")
 
-        self.note(f"\n\nSending download request...")
-        url_params = idigbio_util.url_encode_params(params)
-        download_api_url = f"https://search.idigbio.org/v2/download?{url_params}"
-        if live:
-            response_code, success = _send_download_request(download_api_url)
-        else:
-            response_code, success = 200, True
+        download_api_url = make_idigbio_api_url("/v2/download")
+        self.note(f"Sending a POST request to the iDigBio download API at {download_api_url}")
 
-        yield self.note(f"Response code: {response_code}")
+        portal_url = make_idigbio_portal_url(params)
+        records_api_query_url = make_idigbio_api_url("/v2/search/records", params)
+        download_api_query_url = make_idigbio_api_url("/v2/download", params)
+
+        if live:
+            response_code, success, _ = query_idigbio_api("/v2/download", params)
+        else:
+            response_code, success = "200 OK", True
+
+        yield self.note(f"\n\nResponse code: {response_code}")
+        yield f" | [Resend request]({download_api_query_url})"
 
         if success:
-            yield " (success)"
-            self.note(f"\n\nRequested records download link to be sent to {params['email']}!")
+            self.note(f"Requested records download link to be sent to {params['email']}!")
         else:
-            yield " (error)"
-            self.note(f"\n\nError! Something went wrong.")
+            yield self.note(f"\n\nError! Something went wrong!")
+            return
 
-        yield f" | [Resend request]({download_api_url})"
+        self.note(
+            f"The records can be viewed in the iDigBio portal at {portal_url}. The portal shows the records in an "
+            f"interactive list and plots them on a map. The raw records returned returned by the API can be found at "
+            f"{records_api_query_url}. The user can resend the download request manually using "
+            f"{download_api_query_url}."
+        )
 
         self.set_results(Results(
             params=params,
-            download_api_url=download_api_url,
+            download_api_url=download_api_query_url,
             success=success
         ))
 
@@ -70,16 +78,6 @@ def _generate_records_download_parameters(agent: Agent, history: Conversation, r
 
     params = result.model_dump(exclude_none=True, by_alias=True)
     return params
-
-
-def _send_download_request(url):
-    res = requests.get(url)
-    return res.status_code, res.ok
-
-
-def _query_search_api(query_url: str) -> (int, dict):
-    res = requests.get(query_url)
-    return res.json()["itemCount"]
 
 
 def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
