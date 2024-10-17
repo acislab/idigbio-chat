@@ -64,7 +64,7 @@ def query_idigbio_api(endpoint: str, params: dict) -> (str, bool, dict):
     params = sanitize_json(params)
     api_url = make_idigbio_api_url(endpoint)
     response = requests.post(api_url, json=params)
-    code = f"{response.status_code} {http.client.responses.get(response.status_code, "")}"
+    code = f"{response.status_code} {http.client.responses.get(response.status_code, '')}"
     return code, response.ok, response.json()
 
 
