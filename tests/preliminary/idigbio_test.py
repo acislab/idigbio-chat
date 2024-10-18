@@ -40,3 +40,28 @@ def test_bad_post():
         'parameter': 'rq',
         'statusCode': 400
     }
+
+
+def _get_fields(data: dict, deep: bool):
+    if type(data) is dict:
+        for k, v in data.items():
+            if type(v) is dict:
+                if tuple(v.keys()) == ("type", "fieldName"):
+                    yield v
+                elif deep:
+                    for f in _get_fields(v, True):
+                        yield f
+
+
+def get_fields(data: dict, deep=False) -> list[dict[str, str]]:
+    return [f for f in _get_fields(data, deep)]
+
+
+def test_get_fields():
+    response = rq.get("https://search.idigbio.org/v2/meta/fields/records")
+
+    data = response.json()
+    top_level_fields = get_fields(data)
+    aggs_fields = get_fields(data["aggs"], deep=True)
+    data_fields = get_fields(data["data"], deep=True)
+    indexData_fields = get_fields(data["indexData"], deep=True)
