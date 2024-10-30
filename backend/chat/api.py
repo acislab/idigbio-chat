@@ -25,25 +25,25 @@ def greet(ai: AI, history: Conversation, user_text_message: str) -> Iterator[Mes
     return _respond_conversationally(ai, history)
 
 
-def chat(agent: AI, history: Conversation, user_text_message: str) -> Iterator[Message]:
+def chat(ai: AI, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
 
-    response = _make_response(agent, history, user_text_message)
+    response = _make_response(ai, history, user_text_message)
 
     for ai_message in response:
         yield ai_message
         history.append(ai_message)
 
 
-def _handle_individual_request(agent, history, request) -> Iterator[Message]:
-    plan = create_plan(agent, history, request)
+def _handle_individual_request(ai, history, request) -> Iterator[Message]:
+    plan = create_plan(ai, history, request)
     tool_name = plan
 
     if tool_name in tool_lookup:
         tool = tool_lookup[tool_name]()
 
         response = tool.call(
-            ai=agent,
+            ai=ai,
             request=request,
             history=history,
             state={}
@@ -56,7 +56,7 @@ def _handle_individual_request(agent, history, request) -> Iterator[Message]:
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
-def _make_response(agent: AI, history: Conversation, user_message: str) -> Iterator[Message]:
+def _make_response(ai: AI, history: Conversation, user_message: str) -> Iterator[Message]:
     baked_response = _get_baked_response(user_message)
     if baked_response is not None:
         i = 0
@@ -66,14 +66,14 @@ def _make_response(agent: AI, history: Conversation, user_message: str) -> Itera
         if i > 0:
             return
 
-    requests = _break_down_message_into_smaller_requests(agent, history, user_message)
+    requests = _break_down_message_into_smaller_requests(ai, history, user_message)
 
     if len(requests) == 0:
-        for message in _respond_conversationally(agent, history):
+        for message in _respond_conversationally(ai, history):
             yield message
     else:
         for request in requests:
-            for message in _handle_individual_request(agent, history, request):
+            for message in _handle_individual_request(ai, history, request):
                 yield message
 
 
@@ -105,10 +105,10 @@ def _get_baked_response(user_message) -> Iterator[Message]:
             pass
 
 
-def _respond_conversationally(agent, history) -> Iterator[Message]:
+def _respond_conversationally(ai, history) -> Iterator[Message]:
     tool = tool_lookup["converse"]()
     response = tool.call(
-        ai=agent,
+        ai=ai,
         history=history,
         state={}
     )
@@ -152,8 +152,8 @@ class RequestBreakdown(BaseModel):
                                             "\"count the number of records for Homo Sapiens in iDigBio\".")
 
 
-def _break_down_message_into_smaller_requests(agent: AI, history: Conversation, user_message: str) -> [str]:
-    response = agent.client.chat.completions.create(
+def _break_down_message_into_smaller_requests(ai: AI, history: Conversation, user_message: str) -> [str]:
+    response = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         max_retries=5,
@@ -199,8 +199,8 @@ You: converse
 """
 
 
-def _pick_a_tool(agent: AI, history: Conversation, request: str) -> str:
-    result = agent.client.chat.completions.create(
+def _pick_a_tool(ai: AI, history: Conversation, request: str) -> str:
+    result = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=None,

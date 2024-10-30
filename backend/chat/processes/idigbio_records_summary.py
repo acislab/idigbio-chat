@@ -30,9 +30,9 @@ class Results(dict):
 class IDigBioRecordsSummary(Process):
     process_summary = "Searching for records..."
 
-    def __run__(self, agent: AI, history=Conversation([]), request: str = None) -> StreamedString:
+    def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:
-            params = _generate_records_summary_parameters(agent, history, request)
+            params = _generate_records_summary_parameters(ai, history, request)
         except AIGenerationException as e:
             yield self.note(e.message)
             return
@@ -80,9 +80,9 @@ def _query_summary_api(query_url: str) -> (int, dict):
     return res.json()["itemCount"], res.json()
 
 
-def _generate_records_summary_parameters(agent: AI, history: Conversation, request: str) -> dict:
+def _generate_records_summary_parameters(ai: AI, history: Conversation, request: str) -> dict:
     try:
-        result = agent.client.chat.completions.create(
+        result = ai.client.chat.completions.create(
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioSummaryApiParameters,

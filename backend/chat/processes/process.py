@@ -16,8 +16,8 @@ class Process:
     process_summary: str
     results: dict
 
-    def __init__(self, agent: AI, history: Conversation, request: str = None):
-        self.__content: StreamedString = StreamedString(self.__run__(agent, history, request))
+    def __init__(self, ai: AI, history: Conversation, request: str = None):
+        self.__content: StreamedString = StreamedString(self.__run__(ai, history, request))
         self.__notes: list[str] = []
         self.__results: dict = dict()
 
@@ -40,7 +40,12 @@ class Process:
         self.__notes += [text.strip()]
         return text
 
-    def __run__(self, agent: AI, history: Conversation, request: str) -> StreamedString:
+    def __run__(self, ai: AI, history: Conversation, request: str) -> StreamedString:
+        """
+        Run the process, generating messages (via "yield" operators) and collecting notes along the way to help the
+        LLM understand the steps and outputs of the process, including any warnings or errors encountered during
+        execution.
+        """
         pass
 
     def summarize(self) -> str:

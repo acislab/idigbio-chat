@@ -103,8 +103,8 @@ def chat_api():
 @app.route("/search/generate_rq", methods=["POST"])
 def generate_rq():
     print("REQUEST:", request.json)
-    agent = AI()
-    response = search.api.generate_rq(agent, request.json)
+    ai = AI()
+    response = search.api.generate_rq(ai, request.json)
     print("RESPONSE:", response)
 
     return response
@@ -113,8 +113,8 @@ def generate_rq():
 @app.route("/search/update_input", methods=["POST"])
 def update_input():
     print("REQUEST:", request.json)
-    agent = AI()
-    response = search.api.update_input(agent, request.json)
+    ai = AI()
+    response = search.api.update_input(ai, request.json)
     print("RESPONSE:", response)
 
     return response
@@ -126,8 +126,8 @@ def textbox_demo():
         return render_template("textbox.html.j2")
     elif request.method == "POST":
         print("REQUEST:", request.form)
-        agent = AI()
-        response = search.demo.run(agent, request.form)
+        ai = AI()
+        response = search.demo.run(ai, request.form)
         print("RESPONSE:", response)
 
         return render_template("textbox.html.j2", **response)

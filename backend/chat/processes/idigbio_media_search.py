@@ -21,9 +21,9 @@ class Results(dict):
 class IDigBioMediaSearch(Process):
     process_summary = "Searching for media records..."
 
-    def __run__(self, agent: AI, history=Conversation([]), request: str = None) -> StreamedString:
+    def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:
-            params = _generate_records_search_parameters(agent, history, request)
+            params = _generate_records_search_parameters(ai, history, request)
         except AIGenerationException as e:
             yield self.note(e.message)
             return

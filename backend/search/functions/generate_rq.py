@@ -305,8 +305,8 @@ You {{
 """
 
 
-def search_species_occurrence_records(agent: AI, messages: list[dict]) -> dict:
-    result = agent.client.chat.completions.create(
+def search_species_occurrence_records(ai: AI, messages: list[dict]) -> dict:
+    result = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=IDigBioRecordsApiParameters,

@@ -22,8 +22,8 @@ Use the context information below:
 """
 
 
-def present_results(agent: AI, history: Conversation, request: str, results: str | StreamedString) -> AiChatMessage:
-    response = agent.openai.chat.completions.create(
+def present_results(ai: AI, history: Conversation, request: str, results: str | StreamedString) -> AiChatMessage:
+    response = ai.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(request=request, context=results), request),

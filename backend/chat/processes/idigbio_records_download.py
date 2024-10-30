@@ -24,9 +24,9 @@ class Results(dict):
 class IDigBioRecordsDownload(Process):
     process_summary = "Generating download request..."
 
-    def __run__(self, agent: AI, history=Conversation([]), request: str = None) -> StreamedString:
+    def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:
-            params = _generate_records_download_parameters(agent, history, request)
+            params = _generate_records_download_parameters(ai, history, request)
         except AIGenerationException as e:
             yield self.note(e.message)
             return
@@ -68,8 +68,8 @@ class IDigBioRecordsDownload(Process):
         ))
 
 
-def _generate_records_download_parameters(agent: AI, history: Conversation, request: str) -> dict:
-    result = agent.client.chat.completions.create(
+def _generate_records_download_parameters(ai: AI, history: Conversation, request: str) -> dict:
+    result = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=IDigBioDownloadApiParameters,
@@ -80,9 +80,9 @@ def _generate_records_download_parameters(agent: AI, history: Conversation, requ
     return params
 
 
-def _generate_records_search_parameters(agent: AI, history: Conversation, request: str) -> dict:
+def _generate_records_search_parameters(ai: AI, history: Conversation, request: str) -> dict:
     try:
-        result = agent.client.chat.completions.create(
+        result = ai.client.chat.completions.create(
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioRecordsApiParameters,
