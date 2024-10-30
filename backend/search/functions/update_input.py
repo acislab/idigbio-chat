@@ -1,6 +1,6 @@
 import json
 
-from nlp.agent import Agent
+from nlp.ai import AI
 from search.data_types import Message
 
 SYSTEM_PROMPT = """
@@ -42,11 +42,11 @@ You: species = Homo sapiens, continent = Asia
 """
 
 
-def run(agent: Agent, data: dict) -> Message:
+def run(ai: AI, data: dict) -> Message:
     reference_input = data["input"]
     rq = data["rq"]
 
-    new_input = generate_new_input_from_rq(agent, reference_input, rq)
+    new_input = generate_new_input_from_rq(ai, reference_input, rq)
 
     # TODO: Make sure new input translates back to the given rq
 
@@ -58,8 +58,8 @@ def run(agent: Agent, data: dict) -> Message:
     )
 
 
-def generate_new_input_from_rq(agent, reference_input, rq) -> str:
-    result = agent.client.chat.completions.create(
+def generate_new_input_from_rq(ai: AI, reference_input: str, rq: dict) -> str:
+    result = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=None,

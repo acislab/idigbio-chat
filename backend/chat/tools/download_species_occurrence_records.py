@@ -5,7 +5,7 @@ from chat.conversation import Conversation
 from chat.messages import Message
 from chat.tools.tool import Tool
 from chat.utils.assistant import present_results
-from nlp.agent import Agent
+from nlp.ai import AI
 
 live = True
 
@@ -18,8 +18,8 @@ class DownloadSpeciesOccurrenceRecords(Tool):
         address."""
     }
 
-    def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        search = IDigBioRecordsDownload(agent, history, request)
+    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+        search = IDigBioRecordsDownload(ai, history, request)
         yield search.make_message()
 
         if search.results.success:
@@ -30,4 +30,4 @@ class DownloadSpeciesOccurrenceRecords(Tool):
         else:
             success_message = "\n\nPlease inform the user that something went wrong with the download request."
 
-        yield present_results(agent, history, request, search.summarize() + success_message)
+        yield present_results(ai, history, request, search.summarize() + success_message)

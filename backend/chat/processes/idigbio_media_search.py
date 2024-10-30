@@ -7,7 +7,7 @@ from chat.conversation import Conversation
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
 from idigbio_util import make_idigbio_api_url, query_idigbio_api
-from nlp.agent import Agent, StopOnTerminalErrorOrMaxAttempts, AgentGenerationException
+from nlp.ai import AI, StopOnTerminalErrorOrMaxAttempts, AIGenerationException
 from schema.idigbio.api import IDigBioMediaApiParameters
 
 
@@ -21,10 +21,10 @@ class Results(dict):
 class IDigBioMediaSearch(Process):
     process_summary = "Searching for media records..."
 
-    def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
+    def __run__(self, agent: AI, history=Conversation([]), request: str = None) -> StreamedString:
         try:
             params = _generate_records_search_parameters(agent, history, request)
-        except AgentGenerationException as e:
+        except AIGenerationException as e:
             yield self.note(e.message)
             return
 
@@ -53,9 +53,9 @@ class IDigBioMediaSearch(Process):
         ))
 
 
-def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+def _generate_records_search_parameters(ai: AI, history: Conversation, request: str) -> dict:
     try:
-        result = agent.client.chat.completions.create(
+        result = ai.client.chat.completions.create(
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioMediaApiParameters,
@@ -64,7 +64,7 @@ def _generate_records_search_parameters(agent: Agent, history: Conversation, req
             max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
         )
     except InstructorRetryException as e:
-        raise AgentGenerationException(e)
+        raise AIGenerationException(e)
 
     params = result.model_dump(exclude_none=True, by_alias=True)
     return params

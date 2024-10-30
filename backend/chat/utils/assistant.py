@@ -2,7 +2,7 @@ from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.messages import AiChatMessage
 from chat.utils.json import stream_openai
-from nlp.agent import Agent
+from nlp.ai import AI
 
 PRESENT_RESULTS_PROMPT = """
 You are an assistant who relays information to the user. You not know anything. Only use what information has been 
@@ -22,7 +22,7 @@ Use the context information below:
 """
 
 
-def present_results(agent: Agent, history: Conversation, request: str, results: str | StreamedString) -> AiChatMessage:
+def present_results(agent: AI, history: Conversation, request: str, results: str | StreamedString) -> AiChatMessage:
     response = agent.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,

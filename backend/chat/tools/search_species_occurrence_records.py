@@ -5,7 +5,7 @@ from chat.conversation import Conversation
 from chat.messages import Message
 from chat.tools.tool import Tool
 from chat.utils.assistant import present_results
-from nlp.agent import Agent
+from nlp.ai import AI
 
 
 class SearchSpeciesOccurrenceRecords(Tool):
@@ -16,7 +16,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
         perform the search, and a URL to view the results in the iDigBio Search Portal."""
     }
 
-    def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        search = IDigBioRecordsSearch(agent, history, request)
+    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+        search = IDigBioRecordsSearch(ai, history, request)
         yield search.make_message()
-        yield present_results(agent, history, request, search.summarize())
+        yield present_results(ai, history, request, search.summarize())

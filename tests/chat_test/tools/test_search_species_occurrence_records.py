@@ -4,13 +4,13 @@ from chat.messages import UserMessage
 from chat.processes.idigbio_records_search import IDigBioRecordsSearch
 from chat.tools.search_species_occurrence_records import SearchSpeciesOccurrenceRecords
 from chat_test.chat_test_util import make_history
-from nlp.agent import Agent
+from nlp.ai import AI
 from test_util import assert_string_matches_template
 
 
 def test_call():
     tool = SearchSpeciesOccurrenceRecords()
-    messages = [m for m in tool.call(Agent(), make_history(UserMessage("Find records for genus Ursus")))]
+    messages = [m for m in tool.call(AI(), make_history(UserMessage("Find records for genus Ursus")))]
     assert len(messages) == 2
 
 
@@ -38,14 +38,14 @@ returned returned by the API can be found at https://search.idigbio.org/v2/searc
 "type":"exists"}}
 """
     history = make_history(UserMessage("Find media"))
-    search = IDigBioRecordsSearch(Agent(), history)
+    search = IDigBioRecordsSearch(AI(), history)
     summary = search.summarize()
     assert_string_matches_template(summary, ref_summary)
 
 
 def test_search_this_year():
     history = make_history(UserMessage("Find records created this year"))
-    search = IDigBioRecordsSearch(Agent(), history)
+    search = IDigBioRecordsSearch(AI(), history)
 
     year = str(datetime.now().year)
 
@@ -57,7 +57,7 @@ def test_search_this_year():
 
 def test_geopoint_exception():
     history = make_history(UserMessage("Generate a search query for Ursus arctos with latitude=-100 and longitude=200"))
-    search = IDigBioRecordsSearch(Agent(), history)
+    search = IDigBioRecordsSearch(AI(), history)
     summary = search.summarize()
     assert summary == ('Error: Error: Invalid latitude value: -100.0 is not in range [-90, +90]\n'
                        '\n'
@@ -70,7 +70,7 @@ def test_aliased_field_search():
     as a string. Aliases must be enabled in Pydantic's "[obj].model_dump" method.
     """
     history = make_history(UserMessage("Find records of Aves"))
-    search = IDigBioRecordsSearch(Agent(), history)
+    search = IDigBioRecordsSearch(AI(), history)
     assert search.results.params["rq"] == {
         "class": "Aves"
     }
@@ -78,7 +78,7 @@ def test_aliased_field_search():
 
 def test_existence_search():
     history = make_history(UserMessage("Records that specify a common name"))
-    search = IDigBioRecordsSearch(Agent(), history)
+    search = IDigBioRecordsSearch(AI(), history)
 
     assert search.results.params["rq"] == {
         "commonname": {
@@ -89,7 +89,7 @@ def test_existence_search():
 
 def test_has_image():
     history = make_history(UserMessage("Records with no images"))
-    search = IDigBioRecordsSearch(Agent(), history)
+    search = IDigBioRecordsSearch(AI(), history)
 
     assert search.results.params["rq"] == {
         "hasImage": False

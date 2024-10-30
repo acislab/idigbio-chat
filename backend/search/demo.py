@@ -2,14 +2,14 @@ import json
 
 import idigbio_util
 import search
-from nlp.agent import Agent
+from nlp.ai import AI
 
 
-def run(agent: Agent, request: dict):
+def run(ai: AI, request: dict):
     if request["action"] == "generate_rq":
-        response = search.api.generate_rq(agent, request)
+        response = search.api.generate_rq(ai, request)
     else:
-        response = search.api.update_input(agent, request)
+        response = search.api.update_input(ai, request)
 
     if type(response["rq"]) == dict:
         rq = json.dumps(response["rq"])

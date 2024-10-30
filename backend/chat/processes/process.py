@@ -1,7 +1,7 @@
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.messages import Message, AiProcessingMessage
-from nlp.agent import Agent
+from nlp.ai import AI
 
 
 class Process:
@@ -16,7 +16,7 @@ class Process:
     process_summary: str
     results: dict
 
-    def __init__(self, agent: Agent, history: Conversation, request: str = None):
+    def __init__(self, agent: AI, history: Conversation, request: str = None):
         self.__content: StreamedString = StreamedString(self.__run__(agent, history, request))
         self.__notes: list[str] = []
         self.__results: dict = dict()
@@ -40,7 +40,7 @@ class Process:
         self.__notes += [text.strip()]
         return text
 
-    def __run__(self, agent: Agent, history: Conversation, request: str) -> StreamedString:
+    def __run__(self, agent: AI, history: Conversation, request: str) -> StreamedString:
         pass
 
     def summarize(self) -> str:

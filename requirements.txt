@@ -11,6 +11,6 @@ redis~=5.1.0
 fakeredis~=2.25.1
 pytest~=8.3.3
 tenacity~=8.5.0
-
+unstructured~=0.16.0
 pandas~=2.2.3
 pydantic_core~=2.23.4

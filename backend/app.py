@@ -1,5 +1,5 @@
 import tomli
-from flask import Flask, jsonify, request, render_template, session, stream_with_context
+from flask import Flask, jsonify, request, render_template, session, stream_with_context, redirect, url_for
 from flask_cors import CORS
 
 import chat
@@ -8,7 +8,7 @@ import search.demo
 import redis as r
 from chat.messages import AiProcessingMessage, stream_messages
 from flask_session import Session
-from nlp.agent import Agent
+from nlp.ai import AI
 from storage.fake_redis import FakeRedis
 from storage.user_data import UserData
 
@@ -32,19 +32,19 @@ else:
 
 user_data = UserData(session, redis, chat_config)
 
-agent = Agent()
+ai = AI()
 
 
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "Hello, World!"})
+    return redirect(url_for("chat"))
 
 
 @app.route("/chat", methods=["POST"])
 def chat_api():
     """
     Expects
-    { "message": str }
+    { "type" str, "value": str | dict }
 
     Returns one or more
     [{ "type": str, "value": str | dict }]
@@ -83,14 +83,14 @@ def chat_api():
     if user is None:
         if "not a robot" in user_message.lower():
             user = user_data.make_user()
-            message_stream = chat.api.greet(agent, user.history, "I confirm that I'm not a robot. Hello!")
+            message_stream = chat.api.greet(ai, user.history, user_message)
         else:
             message_stream = chat.api.are_you_a_robot()
     elif user_message.lower() == "clear":
         user_data.clear_stored_user_history(user.user_id)
-        message_stream = chat.api.greet(agent, user.history, "Hello!")
+        message_stream = chat.api.greet(ai, user.history, "Hello!")
     else:
-        message_stream = chat.api.chat(agent, user.history, user_message)
+        message_stream = chat.api.chat(ai, user.history, user_message)
 
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
@@ -103,7 +103,7 @@ def chat_api():
 @app.route("/search/generate_rq", methods=["POST"])
 def generate_rq():
     print("REQUEST:", request.json)
-    agent = Agent()
+    agent = AI()
     response = search.api.generate_rq(agent, request.json)
     print("RESPONSE:", response)
 
@@ -113,7 +113,7 @@ def generate_rq():
 @app.route("/search/update_input", methods=["POST"])
 def update_input():
     print("REQUEST:", request.json)
-    agent = Agent()
+    agent = AI()
     response = search.api.update_input(agent, request.json)
     print("RESPONSE:", response)
 
@@ -126,7 +126,7 @@ def textbox_demo():
         return render_template("textbox.html.j2")
     elif request.method == "POST":
         print("REQUEST:", request.form)
-        agent = Agent()
+        agent = AI()
         response = search.demo.run(agent, request.form)
         print("RESPONSE:", response)
 

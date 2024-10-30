@@ -5,7 +5,7 @@ from pydantic import BaseModel, Field
 from chat.conversation import Conversation
 from chat.messages import UserMessage, ErrorMessage, Message, AiChatMessage
 from chat.tools.tool import all_tools
-from nlp.agent import Agent
+from nlp.ai import AI
 
 tool_lookup = {t.schema["name"]: t for t in all_tools}
 
@@ -20,12 +20,12 @@ def are_you_a_robot() -> Iterator[Message]:
         yield ai_message
 
 
-def greet(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
+def greet(ai: AI, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
-    return _respond_conversationally(agent, history)
+    return _respond_conversationally(ai, history)
 
 
-def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
+def chat(agent: AI, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
 
     response = _make_response(agent, history, user_text_message)
@@ -43,7 +43,7 @@ def _handle_individual_request(agent, history, request) -> Iterator[Message]:
         tool = tool_lookup[tool_name]()
 
         response = tool.call(
-            agent=agent,
+            ai=agent,
             request=request,
             history=history,
             state={}
@@ -56,7 +56,7 @@ def _handle_individual_request(agent, history, request) -> Iterator[Message]:
         yield ErrorMessage(f"Tried to use undefined tool \"{tool_name}\"")
 
 
-def _make_response(agent: Agent, history: Conversation, user_message: str) -> Iterator[Message]:
+def _make_response(agent: AI, history: Conversation, user_message: str) -> Iterator[Message]:
     baked_response = _get_baked_response(user_message)
     if baked_response is not None:
         i = 0
@@ -108,7 +108,7 @@ def _get_baked_response(user_message) -> Iterator[Message]:
 def _respond_conversationally(agent, history) -> Iterator[Message]:
     tool = tool_lookup["converse"]()
     response = tool.call(
-        agent=agent,
+        ai=agent,
         history=history,
         state={}
     )
@@ -152,7 +152,7 @@ class RequestBreakdown(BaseModel):
                                             "\"count the number of records for Homo Sapiens in iDigBio\".")
 
 
-def _break_down_message_into_smaller_requests(agent: Agent, history: Conversation, user_message: str) -> [str]:
+def _break_down_message_into_smaller_requests(agent: AI, history: Conversation, user_message: str) -> [str]:
     response = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
@@ -167,8 +167,8 @@ def _break_down_message_into_smaller_requests(agent: Agent, history: Conversatio
 function_definitions = [p.schema for p in all_tools]
 
 
-def create_plan(agent: Agent, history: Conversation, request: str) -> str:
-    tool_name = _pick_a_tool(agent, history, request)
+def create_plan(ai: AI, history: Conversation, request: str) -> str:
+    tool_name = _pick_a_tool(ai, history, request)
     return tool_name
 
 
@@ -199,7 +199,7 @@ You: converse
 """
 
 
-def _pick_a_tool(agent: Agent, history: Conversation, request: str) -> str:
+def _pick_a_tool(agent: AI, history: Conversation, request: str) -> str:
     result = agent.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
