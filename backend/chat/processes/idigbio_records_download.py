@@ -22,7 +22,7 @@ class Results(dict):
 
 
 class IDigBioRecordsDownload(Process):
-    process_summary = "Generating download request..."
+    process_summary = "Creating iDigBio download request..."
 
     def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:

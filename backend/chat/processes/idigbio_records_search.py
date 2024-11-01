@@ -21,7 +21,7 @@ class Results(dict):
 
 
 class IDigBioRecordsSearch(Process):
-    process_summary = "Searching for records..."
+    process_summary = "Searching iDigBio..."
 
     def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:

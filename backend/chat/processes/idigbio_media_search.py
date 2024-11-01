@@ -19,7 +19,7 @@ class Results(dict):
 
 
 class IDigBioMediaSearch(Process):
-    process_summary = "Searching for media records..."
+    process_summary = "Searching iDigBio..."
 
     def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:
