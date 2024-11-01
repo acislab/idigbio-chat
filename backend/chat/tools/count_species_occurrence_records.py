@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 
+from chat.plans import DataType
 from chat.processes.idigbio_records_summary import IDigBioRecordsSummary
 from chat.conversation import Conversation
 from chat.messages import Message
@@ -8,10 +9,9 @@ from chat.utils.assistant import present_results
 from nlp.ai import AI
 
 DESCRIPTION = """\
-Counts the total number of records in iDigBio matching the user's search criteria. Also
-breaks the count down by a specified field (default: scientific name) to build top-N lists or to find unique record 
-field values that were matched. Counts can be broken down by any of iDigBio's query fields, such as "country" or
-"collector".
+Counts the total number of records in iDigBio matching the user's search criteria. Also breaks the count down by a 
+specified field (default: scientific name) to build top-N lists or to find unique record field values that were 
+matched. Counts can be broken down by any of iDigBio's query fields, such as "country" or "collector".
 
 Here are some examples of building top-N lists:
 - List the 10 species that have the most records in a country
@@ -28,10 +28,9 @@ Also returns the URL used to collect records counts from the iDigBio Summary API
 
 
 class CountSpeciesOccurrenceRecords(Tool):
-    schema = {
-        "name": "count_species_occurrence_records",
-        "description": DESCRIPTION
-    }
+    name = "count_species_occurrence_records"
+    description = DESCRIPTION
+    output = DataType.species_occurrence_record_statistics
 
     def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         search = IDigBioRecordsSummary(ai, history, request)

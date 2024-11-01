@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 
+from chat.plans import DataType
 from chat.processes.idigbio_records_search import IDigBioRecordsSearch
 from chat.conversation import Conversation
 from chat.messages import Message, AiMapMessage
@@ -7,13 +8,16 @@ from chat.tools.tool import Tool
 from chat.utils.assistant import present_results
 from nlp.ai import AI
 
+DESCRIPTION = """\
+Shows an interactive map of species occurrences described in records served by iDigBio. The map is visualized using 
+the Leaflet JavaScript library (https://leafletjs.com/).
+"""
+
 
 class ShowMapOfSpeciesOccurrences(Tool):
-    schema = {
-        "name": "show_map_of_species_occurrences",
-        "description": "Shows an interactive map of species occurrences described in records served by iDigBio. The "
-                       "map is visualized using the Leaflet JavaScript library (https://leafletjs.com/)."
-    }
+    name = "show_map_of_species_occurrences"
+    description = DESCRIPTION
+    output = DataType.species_occurrence_map
 
     def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         search = IDigBioRecordsSearch(ai, history, request)

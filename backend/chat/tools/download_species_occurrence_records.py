@@ -1,5 +1,6 @@
 from collections.abc import Iterator
 
+from chat.plans import DataType
 from chat.processes.idigbio_records_download import IDigBioRecordsDownload
 from chat.conversation import Conversation
 from chat.messages import Message
@@ -9,14 +10,16 @@ from nlp.ai import AI
 
 live = True
 
+DESCRIPTION = """\
+Begins a search for species occurrence records using the iDigBio records API. Once the search is completed, 
+the results are packaged as a DarwinCore Archive zip file and sent to a specified email address.
+"""
+
 
 class DownloadSpeciesOccurrenceRecords(Tool):
-    schema = {
-        "name": "download_species_occurrence_records",
-        "description": """Begins a search for species occurrence records using the iDigBio records API. Once the 
-        search is completed, the results are packaged as a DarwinCore Archive zip file and sent to a specified email 
-        address."""
-    }
+    name = "download_species_occurrence_records"
+    description = DESCRIPTION
+    output = DataType.species_occurrence_records_download_email
 
     def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         search = IDigBioRecordsDownload(ai, history, request)

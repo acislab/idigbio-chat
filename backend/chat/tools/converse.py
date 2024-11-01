@@ -6,13 +6,16 @@ from chat.tools.tool import Tool
 from chat.utils.json import stream_openai
 from nlp.ai import AI
 
+DESCRIPTION = """\
+If the user is not requesting information or is requesting information that you cannot provide, this function will 
+address their request in a friendly manner.
+"""
+
 
 class Converse(Tool):
-    schema = {
-        "name": "converse",
-        "description": "If the user is not requesting information or is requesting information that you cannot "
-                       "provide, this function will address their request in a friendly manner."
-    }
+    name = "converse"
+    description = DESCRIPTION
+    output = None
 
     def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         yield _ask_llm_for_a_friendly_response(ai, history, request)

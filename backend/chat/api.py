@@ -7,7 +7,7 @@ from chat.messages import UserMessage, ErrorMessage, Message, AiChatMessage
 from chat.tools.tool import all_tools
 from nlp.ai import AI
 
-tool_lookup = {t.schema["name"]: t for t in all_tools}
+tool_lookup = {t.name: t for t in all_tools}
 
 
 def are_you_a_robot() -> Iterator[Message]:
@@ -164,7 +164,7 @@ def _break_down_message_into_smaller_requests(ai: AI, history: Conversation, use
     return response.requests
 
 
-function_definitions = [p.schema for p in all_tools]
+function_definitions = [{"name": t.name, "description": t.description} for t in all_tools]
 
 
 def create_plan(ai: AI, history: Conversation, request: str) -> str:
