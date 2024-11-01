@@ -48,7 +48,7 @@ class Process:
         """
         pass
 
-    def summarize(self) -> str:
+    def describe(self) -> str:
         """
         :return: Compiles the notes created while executing the process.
         """
@@ -61,6 +61,6 @@ class Process:
         """
 
         def think():
-            yield self.summarize()
+            yield self.describe()
 
         return AiProcessingMessage(self.process_summary, self.__content, StreamedString(think()))

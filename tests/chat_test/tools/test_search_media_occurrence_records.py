@@ -30,7 +30,7 @@ The API query matched {word} media records in iDigBio
 """
     history = make_history(UserMessage("Find media"))
     search = IDigBioMediaSearch(AI(), history)
-    summary = search.summarize()
+    summary = search.describe()
     assert_string_matches_template(summary, ref_summary)
 
 
@@ -87,7 +87,7 @@ def test_search_this_year():
 def test_geopoint_exception():
     history = make_history(UserMessage("Find media for Ursus arctos with latitude=-100 and longitude=200"))
     search = IDigBioMediaSearch(AI(), history)
-    summary = search.summarize()
+    summary = search.describe()
     assert summary == ('Error: Error: Invalid latitude value: -100.0 is not in range [-90, +90]\n'
                        '\n'
                        'Error: Error: Invalid latitude value: 200.0 is not in range [-180, +180]')

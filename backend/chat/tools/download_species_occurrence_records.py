@@ -30,4 +30,4 @@ class DownloadSpeciesOccurrenceRecords(Tool):
         else:
             success_message = "\n\nPlease inform the user that something went wrong with the download request."
 
-        yield present_results(ai, history, request, search.summarize() + success_message)
+        yield present_results(ai, history, request, search.describe() + success_message)

@@ -36,4 +36,4 @@ class CountSpeciesOccurrenceRecords(Tool):
     def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         search = IDigBioRecordsSummary(ai, history, request)
         yield search.make_message()
-        yield present_results(ai, history, request, search.summarize())
+        yield present_results(ai, history, request, search.describe())

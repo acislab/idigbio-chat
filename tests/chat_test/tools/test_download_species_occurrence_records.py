@@ -44,7 +44,7 @@ download request manually using https://search.idigbio.org/v2/download?email="te
 """
     history = make_history(UserMessage("Send everything to test@idigbio.org"))
     process = IDigBioRecordsDownload(AI(), history)
-    summary = process.summarize()
+    summary = process.describe()
     assert_string_matches_template(summary, ref_summary)
 
 

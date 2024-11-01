@@ -22,6 +22,6 @@ class ShowMapOfSpeciesOccurrences(Tool):
         if search.results.record_count > 0:
             yield AiMapMessage(search.results.params)
         else:
-            yield present_results(ai, history, request, search.summarize() +
+            yield present_results(ai, history, request, search.describe() +
                                   f"\n\nPlease explain to the user that because no records were found, no map will be "
                                   f"shown. Be as concise as possible.")
