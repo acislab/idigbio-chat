@@ -2,37 +2,210 @@ import tomli
 from flask import Flask, jsonify, request, render_template, session, stream_with_context
 from flask_cors import CORS
 
+import requests
 import chat
 import search.api
 import search.demo
 import redis as r
 from chat.messages import AiProcessingMessage, stream_messages
+from chat.conversation import Conversation
 from flask_session import Session
+from keycloak import KeycloakOpenID
 from nlp.agent import Agent
 from storage.fake_redis import FakeRedis
 from storage.user_data import UserData
+from dotenv import load_dotenv
+from functools import wraps
+from datetime import timedelta
+import os
+from sqlalchemy import create_engine
+from storage.database import DatabaseEngine
+from uuid import uuid4
+from jose import jwt
+from jose.backends import RSAKey
+from jose.utils import base64url_decode
+load_dotenv()
 
 app = Flask(__name__, template_folder="templates")
 CORS(app, supports_credentials=True)
 
-app.config["SESSION_PERMANENT"] = True
-app.config["SESSION_TYPE"] = "filesystem"
+database_url = f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable"
+app.config["SESSION_PERMANENT"] = False
+app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
+app.config["SESSION_REFRESH_EACH_REQUEST"] = True
+app.config["SESSION_TYPE"] = "redis"
+app.config['SESSION_REDIS'] = r.from_url(f"redis://:{os.getenv('REDIS_SECRET')}@localhost:9211/2")
 app.config["SESSION_COOKIE_SAMESITE"] = "None"
 app.config["SESSION_COOKIE_SECURE"] = "True"
 app.config.from_file("config.toml", tomli.load, text=False)
 Session(app)
 
+keycloak_openid = KeycloakOpenID(
+    server_url="https://auth.acis.ufl.edu/",
+    client_id="chat",
+    realm_name="iDigBio",
+    client_secret_key=os.getenv('KC_SECRET'),
+)
+
 chat_config = app.config["CHAT"]
 redis_config = chat_config["REDIS"]
+redis = app.config["SESSION_REDIS"]
+engine = create_engine(database_url, echo=True)
+db = DatabaseEngine(engine)
 
-if redis_config["PORT"] == 0:
-    redis = FakeRedis().redis
-else:
-    redis = r.Redis(port=redis_config["PORT"])
-
-user_data = UserData(session, redis, chat_config)
-
+user_data = UserData(session, redis, chat_config, keycloak_openid, db)
 agent = Agent()
+
+
+KEYCLOAK_PUBLIC_KEY = None
+KEYCLOAK_URL = "https://auth.acis.ufl.edu"
+REALM_NAME = "iDigBio"
+CLIENT_ID = "chat"
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+    return decorated_function
+
+def get_conversation_id(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        try:
+            if request.json['conversation_id'] != '':
+                kwargs['conversation_id'] = request.json['conversation_id']
+            else:
+                kwargs['conversation_id'] = uuid4()
+        except KeyError as e:
+            print("No conversation id provided.")
+            kwargs['conversation_id'] = uuid4()
+        return f(*args, **kwargs)
+    return wrapper
+
+# def get_public_key():
+#     key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
+#     response = requests.get(key_url)
+#     keys = response.json()
+#     key_data = keys['keys'][0]
+    
+#     # Convert JWK components to RSA key
+#     n = base64url_decode(key_data['n'].encode('utf-8'))
+#     e = base64url_decode(key_data['e'].encode('utf-8'))
+    
+#     # Create RSA key from components
+#     key = RSAKey(n, e)
+#     return key.public_key()
+
+def get_public_key():
+    key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
+    response = requests.get(key_url)
+    keys = response.json()
+    # Return the complete key set - python-jose will handle key selection
+    return keys
+
+
+# def requires_auth(f):
+#     @wraps(f)
+#     def decorated(*args, **kwargs):
+#         auth_header = request.headers.get('Authorization', None)
+#         if not auth_header:
+#             return jsonify({'message': 'No authorization header'}), 401
+
+#         try:
+#             token = auth_header.split(' ')[1]
+#             print(token)
+#             payload = jwt.decode(
+#                 token,
+#                 get_public_key(),
+#                 algorithms=['RS256'],
+#                 options={"verify_aud": False},
+#                 issuer=f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
+#             )
+#             request.token_payload = payload
+#             return f(*args, **kwargs)
+#         except jwt.ExpiredSignatureError:
+#             return jsonify({'message': 'Token has expired'}), 401
+#         except jwt.JWTError as e:
+#             print(e)
+#             return jsonify({'message': 'Invalid token'}), 401
+
+#     return decorated
+def requires_auth(f):
+    @wraps(f)
+    def decorated(*args, **kwargs):
+        auth_header = request.headers.get('Authorization', None)
+        if not auth_header:
+            # restrict endpoints
+            # return jsonify({'message': 'No authorization header'}), 401
+            return f(*args, **kwargs)
+        try:
+            token = auth_header.split(' ')[1]
+
+            # Debugging
+            # unverified_claims = jwt.get_unverified_claims(token)
+            # expected_issuer = f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
+            # actual_issuer = unverified_claims.get('iss')
+            # print(f"Expected issuer: {expected_issuer}")
+            # print(f"Actual issuer: {actual_issuer}")
+
+            # Get the unverified headers to find the key ID
+            headers = jwt.get_unverified_headers(token)
+            kid = headers.get('kid')
+            
+            # Get the full JWKS
+            jwks = get_public_key()
+            
+            # Find the matching key in the JWKS
+            rsa_key = {}
+            for key in jwks['keys']:
+                if key['kid'] == kid:
+                    rsa_key = {
+                        'kty': key['kty'],
+                        'kid': key['kid'],
+                        'n': key['n'],
+                        'e': key['e']
+                    }
+                    break
+            
+            if not rsa_key:
+                return jsonify({'message': 'Unable to find appropriate key'}), 401
+            
+            payload = jwt.decode(
+                token,
+                rsa_key,
+                algorithms=['RS256'],
+                options={"verify_aud": False},
+                issuer=f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
+            )
+            request.token_payload = payload
+            return f(*args, **kwargs)
+        except jwt.ExpiredSignatureError:
+            return jsonify({'message': 'Token has expired'}), 401
+        except jwt.JWTError as e:
+            print(f"JWT Error: {str(e)}")
+            return jsonify({'message': 'Invalid token'}), 401
+
+    return decorated
+
+
+def get_current_user():
+    """Helper to get current user from token payload"""
+    if not hasattr(request, 'token_payload'):
+        return None
+        
+    return {
+        'id': request.token_payload.get('sub'),
+        'name': request.token_payload.get('sub'),
+        'preferred_username': request.token_payload.get('preferred_username'),
+        'given_name': request.token_payload.get('preferred_username'),
+        'family_name': request.token_payload.get('family_name'),
+        'email': request.token_payload.get('email'),
+        'roles': request.token_payload.get('realm_access', {}).get('roles', [])
+    }
+
 
 
 @app.route("/", methods=["GET"])
@@ -40,8 +213,10 @@ def home():
     return jsonify({"message": "Hello, World!"})
 
 
-@app.route("/chat", methods=["POST"])
-def chat_api():
+@app.route("/chat-protected", methods=["POST"])
+@requires_auth
+@get_conversation_id
+def chat_api(**kwargs):
     """
     Expects
     { "message": str }
@@ -77,24 +252,74 @@ def chat_api():
             }
         ]
     """
-    print("REQUEST:", dict(session), request.json)
+    # print("REQUEST:", dict(session), request.json)
+
     user_message = request.json["value"]
-    user = user_data.get_user()
+    user = get_current_user()
+    print(user)
+
     if user is None:
-        if "not a robot" in user_message.lower():
-            user = user_data.make_user()
-            message_stream = chat.api.greet(agent, user.history, "I confirm that I'm not a robot. Hello!")
-        else:
-            message_stream = chat.api.are_you_a_robot()
-    elif user_message.lower() == "clear":
-        user_data.clear_stored_user_history(user.user_id)
-        message_stream = chat.api.greet(agent, user.history, "Hello!")
+        return jsonify({'message': 'User must be authenticated to access this endpoint.'}), 401
+
+    # user = session.get('user') or user_data.get_temp_user()
+    # if user_type == 'temporary':
+    #     if "not a robot" in user_message.lower():
+    #         # user = user_data.make_temp_user()
+    #         message_stream = chat.api.greet(agent, user.history, "I confirm that I'm not a robot. Hello!")
+    #     else:
+    #         message_stream = chat.api.are_you_a_robot()
+
+    # elif user_message.lower() == 'clear':
+    #     if user==user_data.get_temp_user():
+    #             user_data.clear_stored_user_history(user.user_id)
+    #             message_stream = chat.api.greet(agent, user.history, "Hello!")
+    #     return jsonify({"message": "User is logged in"}), 200
+    
+    # else:
+    #     if user == session.get('user'):
+    #         conversation_id = kwargs['conversation_id']
+    #         user_id = session.get('user')['sub']
+    #         history = user_data.db.get_or_create_conversation(conversation_id, user_id)
+    #     elif user == user_data.get_temp_user():
+    #         history = user.history
     else:
-        message_stream = chat.api.chat(agent, user.history, user_message)
+        user_id = user['id']
+        if not user_data.db.user_exists(user['id']):
+            user_data.db.insert_user(user)
+            print('INSERTED USER')
+
+        conversation_id = kwargs['conversation_id']
+        history = user_data.db.get_or_create_conversation(conversation_id, user_id)
+
+        message_stream = chat.api.chat(agent, history, user_message)
 
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
+    text_stream = stream_messages(message_stream)
+
+    return app.response_class(stream_with_context(text_stream), mimetype="application/json")
+
+
+@app.route("/chat", methods=["POST"])
+def chat_unprotected():
+    user_message = request.json["value"]
+    user = user_data.get_temp_user()
+    if user is None:
+        if "not a robot" in user_message.lower():
+            user = user_data.make_temp_user()
+            message_stream = chat.api.greet(agent, user.history, user_message)
+        else:
+            message_stream = chat.api.are_you_a_robot()
+    elif user_message.lower() == "clear":
+        user_data.clear_temp_user_history(user.user_id)
+        message_stream = chat.api.greet(agent, user.history, "Hello!")
+    else:
+        message_stream = chat.api.chat(agent, user.history, user_message)
+    
+    if not chat_config["SHOW_PROCESSING_MESSAGES"]:
+        message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
+    
     text_stream = stream_messages(message_stream)
 
     return app.response_class(stream_with_context(text_stream), mimetype="application/json")
@@ -131,6 +356,69 @@ def textbox_demo():
         print("RESPONSE:", response)
 
         return render_template("textbox.html.j2", **response)
+    
+
+@app.route("/api/login", methods=['POST'])
+def login():
+    try:
+        auth_code = request.json.get('code')
+        userinfo = user_data.login(auth_code)
+        
+        return jsonify({
+            "message": "Login Successful.",
+            "user": userinfo
+        })
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+
+@app.route("/api/logout", methods=['POST'])
+def logout():
+    try:
+        user_data.logout()
+        return jsonify({"message": "Logged out successfully"})
+    except Exception as e:
+        return jsonify({"error": str(e)})
+
+
+@app.route("/api/user", methods=['POST'])
+def get_user():
+    return jsonify(session['user'])
+
+
+@app.route('/api/refresh-token', methods=['POST'])
+def refresh_token():
+    try:
+        refresh_token = session.get('token', {}).get('refresh_token')
+        if not refresh_token:
+            return jsonify({"error": "No refresh token found"}), 401
+        
+        token = keycloak_openid.refresh_token(refresh_token)
+        session['token'] = token
+
+        return jsonify({
+            "message": "Token Refreshed.",
+            "token": token
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 400
+    
+@app.route("/api/conversations", methods=['POST'])
+@requires_auth
+def get_conversations():
+    try:
+        user_id = get_current_user()['id']
+        user_conversations = user_data.db.get_user_conversations(user_id)
+        print(user_id)
+        return jsonify({
+            "user": session.get('user'),
+            "history": user_conversations
+        })
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+
 
 
 if __name__ == '__main__':

@@ -28,10 +28,14 @@ def greet(agent: Agent, history: Conversation, user_text_message: str) -> Iterat
 def chat(agent: Agent, history: Conversation, user_text_message: str) -> Iterator[Message]:
     history.append(UserMessage(user_text_message))
 
+    cold_message = UserMessage(user_text_message).freeze()
+    print(cold_message.read_all())
+
     response = _make_response(agent, history, user_text_message)
 
     for ai_message in response:
         yield ai_message
+        print(ai_message.freeze().read_all())
         history.append(ai_message)
 
 
@@ -114,6 +118,7 @@ def _respond_conversationally(agent, history) -> Iterator[Message]:
     )
 
     for message in response:
+        print(f"MESSAGE_CONVERSATIONAL: {message.freeze().read_all()}")
         yield message
 
 
@@ -160,8 +165,9 @@ def _break_down_message_into_smaller_requests(agent: Agent, history: Conversatio
         response_model=RequestBreakdown,
         messages=history.render_to_openai(BREAK_DOWN_PROMPT.format()),
     )
-
+    print(F"REQUESTS: {response.requests}")
     return response.requests
+    
 
 
 function_definitions = [p.schema for p in all_tools]

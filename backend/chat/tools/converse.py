@@ -37,5 +37,7 @@ def _ask_llm_for_a_friendly_response(agent: Agent, conversation: Conversation, r
         stream=True,
         messages=conversation.render_to_openai(system_message=CONVERSATIONAL_PROMPT, request=request)
     )
+    
 
-    return AiChatMessage(stream_openai(result))
+    return AiChatMessage("".join(filter(None, stream_openai(result))))
+
