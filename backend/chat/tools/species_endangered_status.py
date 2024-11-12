@@ -15,7 +15,7 @@
 #
 #     verbal_return_type = "the endangered status of a species"
 #
-#     def call(self, agent: Agent, history=Conversation([]), request: str, state=None) -> Iterator[Message]:
+#     def call(self, ai: AI, history=Conversation([]), request: str, state=None) -> Iterator[Message]:
 #         status = _get_threat_status()
 #
 #

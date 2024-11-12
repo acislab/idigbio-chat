@@ -1,13 +1,15 @@
 import glob
 import importlib
+import typing
 from os.path import dirname, basename, isfile, join
 from typing import Iterator
 
 from chat.conversation import Conversation
 from chat.messages import Message
-from nlp.agent import Agent
+from chat.plans import DataType
+from nlp.ai import AI
 
-# Automatically populated with all children of Tool in the "tools" package
+# Automatically populated with all subclasses of Tool in the "tools" package
 all_tools = []
 
 
@@ -15,12 +17,13 @@ class Tool:
     """
     Implements all the logic needed to generate an appropriate response to a user query.
     """
-    schema: dict
-    verbal_return_type: str
+    name: str
+    description: str
+    output: DataType
 
-    def call(self, agent: Agent, conversation=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+    def call(self, ai: AI, conversation=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
         """
-        :param agent: An interface for using LLMs.
+        :param ai: An interface for using LLMs.
         :param conversation: Stores all user- and AI-generated messages.
         :param request: The user request currently being addressed. Note that complicated user messages are broken
         down into multiple requests.

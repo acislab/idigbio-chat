@@ -5,7 +5,7 @@ from chat.messages import stream_messages
 from chat.conversation import Conversation
 from chat_test.chat_test_util import make_history
 from idigbio_util import url_encode_params
-from nlp.agent import Agent
+from nlp.ai import AI
 
 
 def test_render_for_openai():
@@ -80,7 +80,7 @@ def test_get_record_counts_as_markdown_table():
 
 
 def test_generate_records_summary_parameters():
-    params = _generate_records_summary_parameters(Agent(), Conversation(),
+    params = _generate_records_summary_parameters(AI(), Conversation(),
                                                   "What are 3 species of Ursidae in Costa Rica?")
 
     assert "count" in params

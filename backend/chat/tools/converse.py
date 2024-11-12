@@ -4,18 +4,21 @@ from chat.conversation import Conversation
 from chat.messages import AiChatMessage, Message
 from chat.tools.tool import Tool
 from chat.utils.json import stream_openai
-from nlp.agent import Agent
+from nlp.ai import AI
+
+DESCRIPTION = """\
+If the user is not requesting information or is requesting information that you cannot provide, this function will 
+address their request in a friendly manner.
+"""
 
 
 class Converse(Tool):
-    schema = {
-        "name": "converse",
-        "description": "If the user is not requesting information or is requesting information that you cannot "
-                       "provide, this function will address their request in a friendly manner."
-    }
+    name = "converse"
+    description = DESCRIPTION
+    output = None
 
-    def call(self, agent: Agent, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        yield _ask_llm_for_a_friendly_response(agent, history, request)
+    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+        yield _ask_llm_for_a_friendly_response(ai, history, request)
 
 
 CONVERSATIONAL_PROMPT = """
@@ -27,11 +30,11 @@ not know how to answer their request.
 """
 
 
-def _ask_llm_for_a_friendly_response(agent: Agent, conversation: Conversation, request: str):
+def _ask_llm_for_a_friendly_response(ai: AI, conversation: Conversation, request: str):
     """
     Asks the LLM to continue the conversation without providing scientific data.
     """
-    result = agent.openai.chat.completions.create(
+    result = ai.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
         stream=True,

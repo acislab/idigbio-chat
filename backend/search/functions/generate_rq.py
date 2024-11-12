@@ -1,15 +1,15 @@
-from nlp.agent import Agent
+from nlp.ai import AI
 from schema.idigbio.api import IDigBioRecordsApiParameters
 from schema.idigbio.fields import fields
 from search.data_types import Message, Result
 
 
-def run(agent: Agent, data: dict) -> Message:
+def run(ai: AI, data: dict) -> Message:
     user_input = data["input"]
-    should_parse = check_if_user_input_is_on_topic(agent, user_input)
+    should_parse = check_if_user_input_is_on_topic(ai, user_input)
 
     if should_parse:
-        params = search_species_occurrence_records(agent, [{
+        params = search_species_occurrence_records(ai, [{
             "role": "user",
             "content": user_input
         }])
@@ -41,8 +41,8 @@ ABORT = {
 }
 
 
-def check_if_user_input_is_on_topic(agent, user_input) -> bool:
-    result = agent.client.chat.completions.create(
+def check_if_user_input_is_on_topic(ai: AI, user_input: str) -> bool:
+    result = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=None,
@@ -305,8 +305,8 @@ You {{
 """
 
 
-def search_species_occurrence_records(agent: Agent, messages: list[dict]) -> dict:
-    result = agent.client.chat.completions.create(
+def search_species_occurrence_records(ai: AI, messages: list[dict]) -> dict:
+    result = ai.client.chat.completions.create(
         model="gpt-4o",
         temperature=0,
         response_model=IDigBioRecordsApiParameters,

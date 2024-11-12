@@ -1,7 +1,7 @@
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
 from chat.messages import Message, AiProcessingMessage
-from nlp.agent import Agent
+from nlp.ai import AI
 
 
 class Process:
@@ -16,8 +16,8 @@ class Process:
     process_summary: str
     results: dict
 
-    def __init__(self, agent: Agent, history: Conversation, request: str = None):
-        self.__content: StreamedString = StreamedString(self.__run__(agent, history, request))
+    def __init__(self, ai: AI, history: Conversation, request: str = None):
+        self.__content: StreamedString = StreamedString(self.__run__(ai, history, request))
         self.__notes: list[str] = []
         self.__results: dict = dict()
 
@@ -40,10 +40,15 @@ class Process:
         self.__notes += [text.strip()]
         return text
 
-    def __run__(self, agent: Agent, history: Conversation, request: str) -> StreamedString:
+    def __run__(self, ai: AI, history: Conversation, request: str) -> StreamedString:
+        """
+        Run the process, generating messages (via "yield" operators) and collecting notes along the way to help the
+        LLM understand the steps and outputs of the process, including any warnings or errors encountered during
+        execution.
+        """
         pass
 
-    def summarize(self) -> str:
+    def describe(self) -> str:
         """
         :return: Compiles the notes created while executing the process.
         """
@@ -56,6 +61,6 @@ class Process:
         """
 
         def think():
-            yield self.summarize()
+            yield self.describe()
 
         return AiProcessingMessage(self.process_summary, self.__content, StreamedString(think()))

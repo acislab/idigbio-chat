@@ -2,7 +2,6 @@
 This module provides pydantic schema used to craft and validate LLM responses.
 """
 from datetime import date
-from enum import Enum
 from typing import Optional, List, Union, Literal
 
 from pydantic import Field, BaseModel, EmailStr, field_validator, ValidationError

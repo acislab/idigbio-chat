@@ -6,16 +6,16 @@ from chat.processes.idigbio_records_download import IDigBioRecordsDownload
 from chat.tools import download_species_occurrence_records
 from chat.tools.download_species_occurrence_records import DownloadSpeciesOccurrenceRecords
 from chat_test.chat_test_util import parse_response_stream, make_history
-from nlp.agent import Agent
+from nlp.ai import AI
 from test_util import assert_string_matches_template
 
 
 def test_good_call():
     download_species_occurrence_records.live = False
 
-    agent = Agent()
+    ai = AI()
     tool = DownloadSpeciesOccurrenceRecords()
-    response = tool.call(agent, Conversation(), "Send records for Crangonyx floridanus to orville@pop.corn")
+    response = tool.call(ai, Conversation(), "Send records for Crangonyx floridanus to orville@pop.corn")
 
     messages = parse_response_stream("".join(stream_messages(response)))
 
@@ -43,8 +43,8 @@ API can be found at https://search.idigbio.org/v2/search/records?email="test@idi
 download request manually using https://search.idigbio.org/v2/download?email="test@idigbio.org".
 """
     history = make_history(UserMessage("Send everything to test@idigbio.org"))
-    process = IDigBioRecordsDownload(Agent(), history)
-    summary = process.summarize()
+    process = IDigBioRecordsDownload(AI(), history)
+    summary = process.describe()
     assert_string_matches_template(summary, ref_summary)
 
 
@@ -52,9 +52,9 @@ download request manually using https://search.idigbio.org/v2/download?email="te
 def test_missing_email():
     download_species_occurrence_records.live = False
 
-    agent = Agent()
+    ai = AI()
     tool = DownloadSpeciesOccurrenceRecords()
-    response = tool.call(agent, Conversation(), "Send records for Crangonyx floridanus to orville")
+    response = tool.call(ai, Conversation(), "Send records for Crangonyx floridanus to orville")
 
     messages = parse_response_stream("".join(stream_messages(response)))
 

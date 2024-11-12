@@ -1,5 +1,5 @@
 import tomli
-from flask import Flask, jsonify, request, render_template, session, stream_with_context
+from flask import Flask, jsonify, request, render_template, session, stream_with_context, redirect, url_for
 from flask_cors import CORS
 
 import requests
@@ -11,7 +11,7 @@ from chat.messages import AiProcessingMessage, stream_messages
 from chat.conversation import Conversation
 from flask_session import Session
 from keycloak import KeycloakOpenID
-from nlp.agent import Agent
+from nlp.ai import AI
 from storage.fake_redis import FakeRedis
 from storage.user_data import UserData
 from dotenv import load_dotenv
@@ -54,7 +54,14 @@ engine = create_engine(database_url, echo=True)
 db = DatabaseEngine(engine)
 
 user_data = UserData(session, redis, chat_config, keycloak_openid, db)
-agent = Agent()
+ai = AI()
+
+if redis_config["PORT"] == 0:
+    redis = FakeRedis().redis
+else:
+    redis = r.Redis(port=redis_config["PORT"])
+
+
 
 
 KEYCLOAK_PUBLIC_KEY = None
@@ -106,33 +113,6 @@ def get_public_key():
     # Return the complete key set - python-jose will handle key selection
     return keys
 
-
-# def requires_auth(f):
-#     @wraps(f)
-#     def decorated(*args, **kwargs):
-#         auth_header = request.headers.get('Authorization', None)
-#         if not auth_header:
-#             return jsonify({'message': 'No authorization header'}), 401
-
-#         try:
-#             token = auth_header.split(' ')[1]
-#             print(token)
-#             payload = jwt.decode(
-#                 token,
-#                 get_public_key(),
-#                 algorithms=['RS256'],
-#                 options={"verify_aud": False},
-#                 issuer=f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
-#             )
-#             request.token_payload = payload
-#             return f(*args, **kwargs)
-#         except jwt.ExpiredSignatureError:
-#             return jsonify({'message': 'Token has expired'}), 401
-#         except jwt.JWTError as e:
-#             print(e)
-#             return jsonify({'message': 'Invalid token'}), 401
-
-#     return decorated
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
@@ -210,7 +190,7 @@ def get_current_user():
 
 @app.route("/", methods=["GET"])
 def home():
-    return jsonify({"message": "Hello, World!"})
+    return redirect(url_for("chat"))
 
 
 @app.route("/chat-protected", methods=["POST"])
@@ -219,7 +199,7 @@ def home():
 def chat_api(**kwargs):
     """
     Expects
-    { "message": str }
+    { "type" str, "value": str | dict }
 
     Returns one or more
     [{ "type": str, "value": str | dict }]
@@ -260,28 +240,6 @@ def chat_api(**kwargs):
 
     if user is None:
         return jsonify({'message': 'User must be authenticated to access this endpoint.'}), 401
-
-    # user = session.get('user') or user_data.get_temp_user()
-    # if user_type == 'temporary':
-    #     if "not a robot" in user_message.lower():
-    #         # user = user_data.make_temp_user()
-    #         message_stream = chat.api.greet(agent, user.history, "I confirm that I'm not a robot. Hello!")
-    #     else:
-    #         message_stream = chat.api.are_you_a_robot()
-
-    # elif user_message.lower() == 'clear':
-    #     if user==user_data.get_temp_user():
-    #             user_data.clear_stored_user_history(user.user_id)
-    #             message_stream = chat.api.greet(agent, user.history, "Hello!")
-    #     return jsonify({"message": "User is logged in"}), 200
-    
-    # else:
-    #     if user == session.get('user'):
-    #         conversation_id = kwargs['conversation_id']
-    #         user_id = session.get('user')['sub']
-    #         history = user_data.db.get_or_create_conversation(conversation_id, user_id)
-    #     elif user == user_data.get_temp_user():
-    #         history = user.history
     else:
         user_id = user['id']
         if not user_data.db.user_exists(user['id']):
@@ -291,7 +249,7 @@ def chat_api(**kwargs):
         conversation_id = kwargs['conversation_id']
         history = user_data.db.get_or_create_conversation(conversation_id, user_id)
 
-        message_stream = chat.api.chat(agent, history, user_message)
+        message_stream = chat.api.chat(ai, history, user_message)
 
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
@@ -308,14 +266,14 @@ def chat_unprotected():
     if user is None:
         if "not a robot" in user_message.lower():
             user = user_data.make_temp_user()
-            message_stream = chat.api.greet(agent, user.history, user_message)
+            message_stream = chat.api.greet(ai, user.history, user_message)
         else:
             message_stream = chat.api.are_you_a_robot()
     elif user_message.lower() == "clear":
         user_data.clear_temp_user_history(user.user_id)
-        message_stream = chat.api.greet(agent, user.history, "Hello!")
+        message_stream = chat.api.greet(ai, user.history, "Hello!")
     else:
-        message_stream = chat.api.chat(agent, user.history, user_message)
+        message_stream = chat.api.chat(ai, user.history, user_message)
     
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
@@ -328,8 +286,8 @@ def chat_unprotected():
 @app.route("/search/generate_rq", methods=["POST"])
 def generate_rq():
     print("REQUEST:", request.json)
-    agent = Agent()
-    response = search.api.generate_rq(agent, request.json)
+    ai = AI()
+    response = search.api.generate_rq(ai, request.json)
     print("RESPONSE:", response)
 
     return response
@@ -338,8 +296,8 @@ def generate_rq():
 @app.route("/search/update_input", methods=["POST"])
 def update_input():
     print("REQUEST:", request.json)
-    agent = Agent()
-    response = search.api.update_input(agent, request.json)
+    ai = AI()
+    response = search.api.update_input(ai, request.json)
     print("RESPONSE:", response)
 
     return response
@@ -351,8 +309,8 @@ def textbox_demo():
         return render_template("textbox.html.j2")
     elif request.method == "POST":
         print("REQUEST:", request.form)
-        agent = Agent()
-        response = search.demo.run(agent, request.form)
+        ai = AI()
+        response = search.demo.run(ai, request.form)
         print("RESPONSE:", response)
 
         return render_template("textbox.html.j2", **response)

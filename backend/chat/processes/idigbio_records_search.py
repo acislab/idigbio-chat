@@ -8,7 +8,7 @@ from chat.conversation import Conversation
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
 from idigbio_util import query_idigbio_api, make_idigbio_api_url, make_idigbio_portal_url
-from nlp.agent import Agent, StopOnTerminalErrorOrMaxAttempts, AgentGenerationException
+from nlp.ai import AI, StopOnTerminalErrorOrMaxAttempts, AIGenerationException
 from schema.idigbio.api import IDigBioRecordsApiParameters
 
 
@@ -21,12 +21,12 @@ class Results(dict):
 
 
 class IDigBioRecordsSearch(Process):
-    process_summary = "Searching for records..."
+    process_summary = "Searching iDigBio..."
 
-    def __run__(self, agent: Agent, history=Conversation([]), request: str = None) -> StreamedString:
+    def __run__(self, ai: AI, history, request: str) -> StreamedString:
         try:
-            params = _generate_records_search_parameters(agent, history, request)
-        except AgentGenerationException as e:
+            params = _generate_records_search_parameters(ai, history, request)
+        except AIGenerationException as e:
             yield self.note(e.message)
             return
 
@@ -64,9 +64,9 @@ class IDigBioRecordsSearch(Process):
         ))
 
 
-def _generate_records_search_parameters(agent: Agent, history: Conversation, request: str) -> dict:
+def _generate_records_search_parameters(ai: AI, history: Conversation, request: str) -> dict:
     try:
-        result = agent.client.chat.completions.create(
+        result = ai.client.chat.completions.create(
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioRecordsApiParameters,
@@ -75,7 +75,7 @@ def _generate_records_search_parameters(agent: Agent, history: Conversation, req
             max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
         )
     except InstructorRetryException as e:
-        raise AgentGenerationException(e)
+        raise AIGenerationException(e)
 
     params = result.model_dump(exclude_none=True, by_alias=True)
     return params

@@ -10,7 +10,7 @@ from tenacity.stop import stop_base
 load_dotenv()  # Load API key and patch the instructor client
 
 
-class Agent:
+class AI:
     openai: OpenAI
     client: Instructor | AsyncInstructor
 
@@ -23,7 +23,7 @@ def _is_error_terminal(error: dict):
     return error.get("ctx", {}).get("terminal", False)
 
 
-class AgentGenerationException(Exception):
+class AIGenerationException(Exception):
     def __init__(self, e: InstructorRetryException):
         messages = []
         terminal = False
@@ -34,7 +34,7 @@ class AgentGenerationException(Exception):
                 terminal = True
 
         if not terminal:
-            messages.append(f"Error: Agent failed to generate valid search parameters after {e.n_attempts} attempts.")
+            messages.append(f"Error: AI failed to generate valid search parameters after {e.n_attempts} attempts.")
 
         self.message = "\n\n".join(messages)
 
