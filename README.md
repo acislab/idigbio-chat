@@ -4,6 +4,12 @@ A chatbot for [the iDigBio Portal](https://www.idigbio.org/portal).
 
 ## Develop
 
+Requirements:
+
+```bash
+sudo apt-get install libpq-dev
+```
+
 Quick start:
 
 ```bash

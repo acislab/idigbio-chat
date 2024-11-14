@@ -13,6 +13,7 @@ fakeredis~=2.25.1
 pytest~=8.3.3
 keycloak~=3.1.5
 sqlalchemy~=2.0.36
+psycopg2~=2.9.10
 python-jose~=3.3.0
 tenacity~=8.5.0
 unstructured~=0.16.0
