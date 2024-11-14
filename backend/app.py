@@ -8,9 +8,8 @@ import search.api
 import search.demo
 import redis as r
 from chat.messages import AiProcessingMessage, stream_messages
-from chat.conversation import Conversation
 from flask_session import Session
-from keycloak import KeycloakOpenID
+from keycloak.keycloak_openid import KeycloakOpenID
 from nlp.ai import AI
 from storage.fake_redis import FakeRedis
 from storage.user_data import UserData
@@ -22,14 +21,14 @@ from sqlalchemy import create_engine
 from storage.database import DatabaseEngine
 from uuid import uuid4
 from jose import jwt
-from jose.backends import RSAKey
-from jose.utils import base64url_decode
+
 load_dotenv()
 
 app = Flask(__name__, template_folder="templates")
 CORS(app, supports_credentials=True)
 
-database_url = f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable"
+database_url = (f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:"
+                f"{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable")
 app.config["SESSION_PERMANENT"] = False
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 app.config["SESSION_REFRESH_EACH_REQUEST"] = True
@@ -61,9 +60,6 @@ if redis_config["PORT"] == 0:
 else:
     redis = r.Redis(port=redis_config["PORT"])
 
-
-
-
 KEYCLOAK_PUBLIC_KEY = None
 KEYCLOAK_URL = "https://auth.acis.ufl.edu"
 REALM_NAME = "iDigBio"
@@ -76,7 +72,9 @@ def login_required(f):
         if 'user' not in session:
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
+
     return decorated_function
+
 
 def get_conversation_id(f):
     @wraps(f)
@@ -90,18 +88,20 @@ def get_conversation_id(f):
             print("No conversation id provided.")
             kwargs['conversation_id'] = uuid4()
         return f(*args, **kwargs)
+
     return wrapper
+
 
 # def get_public_key():
 #     key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
 #     response = requests.get(key_url)
 #     keys = response.json()
 #     key_data = keys['keys'][0]
-    
+
 #     # Convert JWK components to RSA key
 #     n = base64url_decode(key_data['n'].encode('utf-8'))
 #     e = base64url_decode(key_data['e'].encode('utf-8'))
-    
+
 #     # Create RSA key from components
 #     key = RSAKey(n, e)
 #     return key.public_key()
@@ -112,6 +112,7 @@ def get_public_key():
     keys = response.json()
     # Return the complete key set - python-jose will handle key selection
     return keys
+
 
 def requires_auth(f):
     @wraps(f)
@@ -134,10 +135,10 @@ def requires_auth(f):
             # Get the unverified headers to find the key ID
             headers = jwt.get_unverified_headers(token)
             kid = headers.get('kid')
-            
+
             # Get the full JWKS
             jwks = get_public_key()
-            
+
             # Find the matching key in the JWKS
             rsa_key = {}
             for key in jwks['keys']:
@@ -149,10 +150,10 @@ def requires_auth(f):
                         'e': key['e']
                     }
                     break
-            
+
             if not rsa_key:
                 return jsonify({'message': 'Unable to find appropriate key'}), 401
-            
+
             payload = jwt.decode(
                 token,
                 rsa_key,
@@ -175,7 +176,7 @@ def get_current_user():
     """Helper to get current user from token payload"""
     if not hasattr(request, 'token_payload'):
         return None
-        
+
     return {
         'id': request.token_payload.get('sub'),
         'name': request.token_payload.get('sub'),
@@ -185,7 +186,6 @@ def get_current_user():
         'email': request.token_payload.get('email'),
         'roles': request.token_payload.get('realm_access', {}).get('roles', [])
     }
-
 
 
 @app.route("/", methods=["GET"])
@@ -274,10 +274,10 @@ def chat_unprotected():
         message_stream = chat.api.greet(ai, user.history, "Hello!")
     else:
         message_stream = chat.api.chat(ai, user.history, user_message)
-    
+
     if not chat_config["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
-    
+
     text_stream = stream_messages(message_stream)
 
     return app.response_class(stream_with_context(text_stream), mimetype="application/json")
@@ -314,14 +314,14 @@ def textbox_demo():
         print("RESPONSE:", response)
 
         return render_template("textbox.html.j2", **response)
-    
+
 
 @app.route("/api/login", methods=['POST'])
 def login():
     try:
         auth_code = request.json.get('code')
         userinfo = user_data.login(auth_code)
-        
+
         return jsonify({
             "message": "Login Successful.",
             "user": userinfo
@@ -329,7 +329,7 @@ def login():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    
+
 
 @app.route("/api/logout", methods=['POST'])
 def logout():
@@ -351,7 +351,7 @@ def refresh_token():
         refresh_token = session.get('token', {}).get('refresh_token')
         if not refresh_token:
             return jsonify({"error": "No refresh token found"}), 401
-        
+
         token = keycloak_openid.refresh_token(refresh_token)
         session['token'] = token
 
@@ -361,7 +361,8 @@ def refresh_token():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    
+
+
 @app.route("/api/conversations", methods=['POST'])
 @requires_auth
 def get_conversations():
@@ -376,7 +377,6 @@ def get_conversations():
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 400
-
 
 
 if __name__ == '__main__':
