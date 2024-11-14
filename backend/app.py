@@ -30,6 +30,7 @@ CORS(app, supports_credentials=True)
 
 database_url = (f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:"
                 f"{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable")
+
 app.config["SESSION_PERMANENT"] = False
 app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
 app.config["SESSION_REFRESH_EACH_REQUEST"] = True

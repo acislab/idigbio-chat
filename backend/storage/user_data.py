@@ -3,6 +3,7 @@ from datetime import datetime
 from uuid import uuid4, UUID
 from typing import Optional
 
+from flask import request
 from flask.sessions import SessionMixin
 from flask_session import Session
 from redis import Redis
@@ -10,7 +11,6 @@ from keycloak import KeycloakOpenID
 
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
-import os
 
 from storage.database import DatabaseEngine
 
@@ -89,10 +89,8 @@ class UserData:
     def login(self, auth_code):
         token = self.kc.token(
             grant_type='authorization_code',
-            client_id='chat',
-            client_secret=os.getenv('KC_SECRET'),
             code=auth_code,
-            redirect_uri='http://localhost:5173',
+            redirect_uri=request.root_url,
         )
         userinfo = self.kc.userinfo(token['access_token'])
 
@@ -109,7 +107,7 @@ class UserData:
     def logout(self):
         self.session.clear()
         self.session.pop('session_key', None)
-        self.kc.logout()
+        self.kc.logout(refresh_token=None)
 
 # class UserEntity(db.Model):
 #     __tablename__ = 'user_entity'

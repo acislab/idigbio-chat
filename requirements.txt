@@ -4,6 +4,7 @@ python-dotenv~=1.0.1
 requests~=2.32.3
 flask~=3.0.3
 flask-cors~=4.0.1
+flask-session~=0.8.0
 pydantic~=2.9.2
 attrs~=23.2.0
 tomli~=2.0.1
