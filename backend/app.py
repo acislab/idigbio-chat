@@ -20,6 +20,7 @@ import os
 from sqlalchemy import create_engine
 from storage.database import DatabaseEngine
 from uuid import uuid4
+import jose
 from jose import jwt
 
 load_dotenv()
@@ -121,7 +122,7 @@ def requires_auth(f):
         if not auth_header:
             # restrict endpoints
             # return jsonify({'message': 'No authorization header'}), 401
-            return f(*args, **kwargs)
+            return f(token_payload={}, *args, **kwargs)
         try:
             token = auth_header.split(' ')[1]
 
@@ -161,30 +162,26 @@ def requires_auth(f):
                 options={"verify_aud": False},
                 issuer=f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
             )
-            request.token_payload = payload
-            return f(*args, **kwargs)
-        except jwt.ExpiredSignatureError:
+            return f(token_payload=payload, *args, **kwargs)
+
+        except jose.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired'}), 401
-        except jwt.JWTError as e:
+        except jose.JWTError as e:
             print(f"JWT Error: {str(e)}")
             return jsonify({'message': 'Invalid token'}), 401
 
     return decorated
 
 
-def get_current_user():
-    """Helper to get current user from token payload"""
-    if not hasattr(request, 'token_payload'):
-        return None
-
+def get_current_user(token_payload: dict):
     return {
-        'id': request.token_payload.get('sub'),
-        'name': request.token_payload.get('sub'),
-        'preferred_username': request.token_payload.get('preferred_username'),
-        'given_name': request.token_payload.get('preferred_username'),
-        'family_name': request.token_payload.get('family_name'),
-        'email': request.token_payload.get('email'),
-        'roles': request.token_payload.get('realm_access', {}).get('roles', [])
+        'id': token_payload.get('sub'),
+        'name': token_payload.get('sub'),
+        'preferred_username': token_payload.get('preferred_username'),
+        'given_name': token_payload.get('preferred_username'),
+        'family_name': token_payload.get('family_name'),
+        'email': token_payload.get('email'),
+        'roles': token_payload.get('realm_access', {}).get('roles', [])
     }
 
 
@@ -196,7 +193,7 @@ def home():
 @app.route("/chat-protected", methods=["POST"])
 @requires_auth
 @get_conversation_id
-def chat_api(**kwargs):
+def chat_api(token_payload: dict, **kwargs):
     """
     Expects
     { "type" str, "value": str | dict }
@@ -235,7 +232,7 @@ def chat_api(**kwargs):
     # print("REQUEST:", dict(session), request.json)
 
     user_message = request.json["value"]
-    user = get_current_user()
+    user = get_current_user(token_payload)
     print(user)
 
     if user is None:
@@ -365,9 +362,9 @@ def refresh_token():
 
 @app.route("/api/conversations", methods=['POST'])
 @requires_auth
-def get_conversations():
+def get_conversations(token_payload: dict):
     try:
-        user_id = get_current_user()['id']
+        user_id = get_current_user(token_payload)['id']
         user_conversations = user_data.db.get_user_conversations(user_id)
         print(user_id)
         return jsonify({

@@ -7,11 +7,13 @@ from flask.sessions import SessionMixin
 from flask_session import Session
 from redis import Redis
 from keycloak import KeycloakOpenID
-from sqlalchemy import Engine
 
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
 import os
+
+from storage.database import DatabaseEngine
+
 
 class User:
     user_id: str
@@ -33,7 +35,8 @@ def get_user_history_ptr(user_id: str):
 
 class UserData:
 
-    def __init__(self, session: Session | SessionMixin, redis: Redis, config: dict, kc: KeycloakOpenID, db: Engine):
+    def __init__(self, session: Session | SessionMixin, redis: Redis, config: dict, kc: KeycloakOpenID,
+                 db: DatabaseEngine):
         self.session = session
         self.redis = redis
         self.config = config
@@ -82,7 +85,7 @@ class UserData:
 
         history = self.get_temp_user_history(user_id)
         return User(user_id, history)
-    
+
     def login(self, auth_code):
         token = self.kc.token(
             grant_type='authorization_code',
@@ -92,52 +95,43 @@ class UserData:
             redirect_uri='http://localhost:5173',
         )
         userinfo = self.kc.userinfo(token['access_token'])
-        
+
         self.session['user'] = userinfo
         self.session['token'] = token
-
 
         if self.db.user_exists(userinfo['sub']):
             return userinfo
         else:
             self.db.insert_user(userinfo)
-        
+
         return userinfo
-    
+
     def logout(self):
         self.session.clear()
         self.session.pop('session_key', None)
         self.kc.logout()
-    
-    
 
-
-
-
-
-    
-    
 # class UserEntity(db.Model):
 #     __tablename__ = 'user_entity'
 #     id = db.Column(db.String, primary_key=True)  # Assuming it's a string ID from Keycloak
 #     # ... other columns you might have
-    
+
 #     # Add relationship to see conversations easily
 #     conversations = db.relationship('Conversation', backref='user', lazy=True)
 
 # class Conversation(db.Model):
 #     __tablename__ = 'conversations'
-    
+
 #     id = db.Column(db.Integer, primary_key=True)
 #     user_id = db.Column(db.String, db.ForeignKey('user_entity.id'), nullable=False)
 #     created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
+
 #     # Add relationship to see messages easily
 #     messages = db.relationship('Message', backref='conversation', lazy=True)
 
 # class Message(db.Model):
 #     __tablename__ = 'messages'
-    
+
 #     id = db.Column(db.Integer, primary_key=True)
 #     conversation_id = db.Column(db.Integer, db.ForeignKey('conversations.id'), nullable=False)
 #     content = db.Column(db.Text, nullable=False)
