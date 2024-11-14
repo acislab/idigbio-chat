@@ -1,27 +1,27 @@
+import os
+from functools import wraps
+from uuid import uuid4
+
+import jose
+import redis as r
+import requests
 import tomli
+from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, session, stream_with_context, redirect, url_for
 from flask_cors import CORS
+from jose import jwt
+from keycloak.keycloak_openid import KeycloakOpenID
+from sqlalchemy import create_engine
 
-import requests
 import chat
 import search.api
 import search.demo
-import redis as r
 from chat.messages import AiProcessingMessage, stream_messages
 from flask_session import Session
-from keycloak.keycloak_openid import KeycloakOpenID
 from nlp.ai import AI
+from storage.database import DatabaseEngine
 from storage.fake_redis import FakeRedis
 from storage.user_data import UserData
-from dotenv import load_dotenv
-from functools import wraps
-from datetime import timedelta
-import os
-from sqlalchemy import create_engine
-from storage.database import DatabaseEngine
-from uuid import uuid4
-import jose
-from jose import jwt
 
 load_dotenv()
 
@@ -31,41 +31,30 @@ CORS(app, supports_credentials=True)
 database_url = (f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:"
                 f"{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable")
 
-app.config["SESSION_PERMANENT"] = False
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
-app.config["SESSION_REFRESH_EACH_REQUEST"] = True
-app.config["SESSION_TYPE"] = "redis"
-app.config['SESSION_REDIS'] = r.from_url(f"redis://:{os.getenv('REDIS_SECRET')}@localhost:9211/2")
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = "True"
 app.config.from_file("config.toml", tomli.load, text=False)
 Session(app)
 
-keycloak_openid = KeycloakOpenID(
-    server_url="https://auth.acis.ufl.edu/",
-    client_id="chat",
-    realm_name="iDigBio",
-    client_secret_key=os.getenv('KC_SECRET'),
-)
-
 chat_config = app.config["CHAT"]
 redis_config = chat_config["REDIS"]
-redis = app.config["SESSION_REDIS"]
-engine = create_engine(database_url, echo=True)
-db = DatabaseEngine(engine)
+kc_config = chat_config["KEYCLOAK"]
 
-user_data = UserData(session, redis, chat_config, keycloak_openid, db)
-ai = AI()
+keycloak_openid = KeycloakOpenID(
+    server_url=kc_config["SERVER_URL"],
+    client_id=kc_config["CLIENT_ID"],
+    realm_name=kc_config["REALM_NAME"],
+    client_secret_key=os.getenv('KC_SECRET'),
+)
 
 if redis_config["PORT"] == 0:
     redis = FakeRedis().redis
 else:
     redis = r.Redis(port=redis_config["PORT"])
 
-KEYCLOAK_PUBLIC_KEY = None
-KEYCLOAK_URL = "https://auth.acis.ufl.edu"
-REALM_NAME = "iDigBio"
-CLIENT_ID = "chat"
+engine = create_engine(database_url, echo=True)
+db = DatabaseEngine(engine)
+
+user_data = UserData(session, redis, chat_config, keycloak_openid, db)
+ai = AI()
 
 
 def login_required(f):
@@ -109,7 +98,8 @@ def get_conversation_id(f):
 #     return key.public_key()
 
 def get_public_key():
-    key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
+    url, realm = kc_config["URL"], kc_config["REALM_NAME"]
+    key_url = f"{url}/realms/{realm}/protocol/openid-connect/certs"
     response = requests.get(key_url)
     keys = response.json()
     # Return the complete key set - python-jose will handle key selection
