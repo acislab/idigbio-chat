@@ -7,7 +7,8 @@ A chatbot for [the iDigBio Portal](https://www.idigbio.org/portal).
 Requirements:
 
 ```bash
-sudo apt-get install libpq-dev
+sudo apt install postgresql
+sudo apt install libpq-dev
 ```
 
 Quick start:

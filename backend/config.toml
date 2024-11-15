@@ -1,21 +1,21 @@
-SESSION_PERMANENT = false
-SESSION_REFRESH_EACH_REQUEST = true
+HOST = "0.0.0.0"
+PORT = 8989
+
 PERMANENT_SESSION_LIFETIME = 2678400 # In seconds. 2678400 seconds = 31 days.
-SESSION_TYPE = "redis"
 SESSION_COOKIE_SAMESITE = "Lax"
 SESSION_COOKIE_SECURE = true
+SESSION_PERMANENT = false
+SESSION_REFRESH_EACH_REQUEST = true
+SESSION_TYPE = "redis"
 
 [CHAT]
 SAFE_MODE = true
 SHOW_PROCESSING_MESSAGES = true
 
-[CHAT.SERVER]
-PORT = 8989
-
-[CHAT.REDIS]
+[REDIS]
 PORT = 9211 # Set to 0 to set up a temporary Redis instance
 
-[CHAT.KEYCLOAK]
+[KEYCLOAK]
 URL = "https://auth.acis.ufl.edu"
 REALM_NAME = "iDigBio"
 CLIENT_ID = "chat"
