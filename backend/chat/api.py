@@ -11,13 +11,7 @@ tool_lookup = {t.name: t for t in all_tools}
 
 
 def are_you_a_robot() -> Iterator[Message]:
-    response = [
-        AiChatMessage(
-            "Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
-    ]
-
-    for ai_message in response:
-        yield ai_message
+    yield AiChatMessage("Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
 
 
 def greet(ai: AI, history: Conversation, user_text_message: str) -> Iterator[Message]:
@@ -63,22 +57,16 @@ def _handle_individual_request(ai, history, request) -> Iterator[Message]:
 def _make_response(ai: AI, history: Conversation, user_message: str) -> Iterator[Message]:
     baked_response = _get_baked_response(user_message)
     if baked_response is not None:
-        i = 0
-        for message in baked_response:
-            i += 1
-            yield message
-        if i > 0:
-            return
+        yield from baked_response
+        return
 
     requests = _break_down_message_into_smaller_requests(ai, history, user_message)
 
     if len(requests) == 0:
-        for message in _respond_conversationally(ai, history):
-            yield message
+        yield from _respond_conversationally(ai, history)
     else:
         for request in requests:
-            for message in _handle_individual_request(ai, history, request):
-                yield message
+            yield from _handle_individual_request(ai, history, request)
 
 
 HELP_MESSAGE = """\
@@ -106,7 +94,7 @@ def _get_baked_response(user_message) -> Iterator[Message]:
         case "ping":
             yield AiChatMessage("pong")
         case _:
-            pass
+            return
 
 
 def _respond_conversationally(ai, history) -> Iterator[Message]:
@@ -116,10 +104,7 @@ def _respond_conversationally(ai, history) -> Iterator[Message]:
         history=history,
         state={}
     )
-
-    for message in response:
-        print(f"MESSAGE_CONVERSATIONAL: {message.freeze().read_all()}")
-        yield message
+    yield from response
 
 
 BREAK_DOWN_PROMPT = """\
@@ -167,7 +152,6 @@ def _break_down_message_into_smaller_requests(ai: AI, history: Conversation, use
     )
     print(F"REQUESTS: {response.requests}")
     return response.requests
-    
 
 
 function_definitions = [{"name": t.name, "description": t.description} for t in all_tools]

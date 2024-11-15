@@ -163,7 +163,6 @@ def stream_messages(message_stream: Iterator[Message]) -> Iterator[str]:
         if streamed_previous_message:
             yield ","
         if message.show_user:
-            for fragment in message.stream_type_and_value():
-                yield fragment
+            yield from message.stream_type_and_value()
             streamed_previous_message = True
     yield "]"
