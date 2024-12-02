@@ -29,5 +29,11 @@ def present_results(ai: AI, history: Conversation, request: str, results: str | 
         messages=history.render_to_openai(PRESENT_RESULTS_PROMPT.format(request=request, context=results), request),
         stream=True,
     )
+    print('PRESENT RESULTS FULL RESPOSNE:')
+    full_response = ''
+    for chunk in response:
+        if chunk.choices[0].delta.content:
+            full_response += chunk.choices[0].delta.content
+    print(full_response)
 
-    return AiChatMessage(stream_openai(response))
+    return AiChatMessage(full_response)

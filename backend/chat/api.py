@@ -35,7 +35,10 @@ def chat(ai: AI, history: Conversation, user_text_message: str) -> Iterator[Mess
 
     for ai_message in response:
         yield ai_message
-        print(ai_message.freeze().read_all())
+        print('RIGHT HURRR')
+        print(ai_message.to_type_and_value())
+    
+
         history.append(ai_message)
 
 
@@ -54,6 +57,7 @@ def _handle_individual_request(ai, history, request) -> Iterator[Message]:
         )
 
         for message in response:
+            print(message.to_type_and_value())
             message.tool_name = tool_name
             yield message
     else:

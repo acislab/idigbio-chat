@@ -45,7 +45,8 @@ def stream_as_json(value: Any):
 
 def stream_openai(response):
     for chunk in response:
-        yield chunk.choices[0].delta.content
+        if chunk.choices[0].delta.content is not None:
+            yield chunk.choices[0].delta.content
 
 
 JSON_INDENT = 4

@@ -20,7 +20,7 @@ from datetime import timedelta
 import os
 from sqlalchemy import create_engine
 from storage.database import DatabaseEngine
-from uuid import uuid4
+from uuid import uuid4, UUID
 from jose import jwt
 from jose.backends import RSAKey
 from jose.utils import base64url_decode
@@ -61,22 +61,11 @@ if redis_config["PORT"] == 0:
 else:
     redis = r.Redis(port=redis_config["PORT"])
 
-
-
-
 KEYCLOAK_PUBLIC_KEY = None
 KEYCLOAK_URL = "https://auth.acis.ufl.edu"
 REALM_NAME = "iDigBio"
 CLIENT_ID = "chat"
 
-
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if 'user' not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-        return f(*args, **kwargs)
-    return decorated_function
 
 def get_conversation_id(f):
     @wraps(f)
@@ -92,19 +81,6 @@ def get_conversation_id(f):
         return f(*args, **kwargs)
     return wrapper
 
-# def get_public_key():
-#     key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
-#     response = requests.get(key_url)
-#     keys = response.json()
-#     key_data = keys['keys'][0]
-    
-#     # Convert JWK components to RSA key
-#     n = base64url_decode(key_data['n'].encode('utf-8'))
-#     e = base64url_decode(key_data['e'].encode('utf-8'))
-    
-#     # Create RSA key from components
-#     key = RSAKey(n, e)
-#     return key.public_key()
 
 def get_public_key():
     key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
@@ -113,14 +89,14 @@ def get_public_key():
     # Return the complete key set - python-jose will handle key selection
     return keys
 
+
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         auth_header = request.headers.get('Authorization', None)
         if not auth_header:
             # restrict endpoints
-            # return jsonify({'message': 'No authorization header'}), 401
-            return f(*args, **kwargs)
+            return jsonify({'message': 'No authorization header'}), 401
         try:
             token = auth_header.split(' ')[1]
 
@@ -161,6 +137,7 @@ def requires_auth(f):
                 issuer=f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
             )
             request.token_payload = payload
+
             return f(*args, **kwargs)
         except jwt.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired'}), 401
@@ -185,7 +162,6 @@ def get_current_user():
         'email': request.token_payload.get('email'),
         'roles': request.token_payload.get('realm_access', {}).get('roles', [])
     }
-
 
 
 @app.route("/", methods=["GET"])
@@ -232,7 +208,7 @@ def chat_api(**kwargs):
             }
         ]
     """
-    # print("REQUEST:", dict(session), request.json)
+    print("REQUEST:", dict(session), request.json)
 
     user_message = request.json["value"]
     user = get_current_user()
@@ -244,7 +220,6 @@ def chat_api(**kwargs):
         user_id = user['id']
         if not user_data.db.user_exists(user['id']):
             user_data.db.insert_user(user)
-            print('INSERTED USER')
 
         conversation_id = kwargs['conversation_id']
         history = user_data.db.get_or_create_conversation(conversation_id, user_id)
@@ -361,7 +336,8 @@ def refresh_token():
         })
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    
+
+
 @app.route("/api/conversations", methods=['POST'])
 @requires_auth
 def get_conversations():
@@ -372,6 +348,28 @@ def get_conversations():
         return jsonify({
             "user": session.get('user'),
             "history": user_conversations
+        })
+    except Exception as e:
+        print(e)
+        return jsonify({"error": str(e)}), 400
+    
+
+@app.route("/api/get-conversation", methods=['POST'])
+@requires_auth
+@get_conversation_id
+def get_conversation(**kwargs):
+    try:
+        if kwargs['conversation_id'] is None or '':
+            return {"Invalid conversation id"}, 400
+        
+        user_id = get_current_user()['id']
+        conversation_id = kwargs['conversation_id']
+
+        conversation = user_data.db.get_conversation_messages(conversation_id)
+        print(conversation)
+        return jsonify({
+            "user": user_id,
+            "history": conversation
         })
     except Exception as e:
         print(e)
