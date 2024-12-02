@@ -3,6 +3,7 @@ from typing import Callable, Optional
 
 from chat.messages import ColdMessage, Message, UserMessage
 from uuid import UUID
+
 SYSTEM_HEADER = """\
 Today's date is {datetime}
 
@@ -14,7 +15,8 @@ class Conversation:
     recorder: Callable[[ColdMessage, Optional[UUID]], None]
     conversation_id: UUID | None
 
-    def __init__(self, history: list[ColdMessage] = None, recorder: Callable[[ColdMessage, Optional[UUID]], None] = None, conversation_id: UUID = None):
+    def __init__(self, history: list[ColdMessage] = None,
+                 recorder: Callable[[ColdMessage, Optional[UUID]], None] = None, conversation_id: UUID = None):
         if history is None:
             history = []
         if recorder is None:
@@ -49,10 +51,8 @@ class Conversation:
         yield {"role": "system", "content": system_message}
 
         for message in self.history:
-            for role_and_content in message.read("role_and_content"):
-                yield role_and_content
+            yield from message.read("role_and_content")
 
         if request is not None:
             atomized_request = UserMessage(f"First address the following request: {request}")
-            for role_and_content in atomized_request.to_role_and_content():
-                yield role_and_content
+            yield from atomized_request.to_role_and_content()

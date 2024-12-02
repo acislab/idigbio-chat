@@ -6,7 +6,15 @@ def escape_str(s: str):
     return json.dumps(s)[1:-1]
 
 
+def remove_empty(it: Iterable[str | None]):
+    yield from filter(bool, it)
+
+
 def stream_as_json(value: Any):
+    yield from remove_empty(_stream_as_json_unsafe(value))
+
+
+def _stream_as_json_unsafe(value: Any):
     if isinstance(value, str):
         yield json.dumps(value)
     elif isinstance(value, dict):
@@ -15,18 +23,14 @@ def stream_as_json(value: Any):
             if i > 0:
                 yield ","
             yield f'{json.dumps(k)}:'
-            for fragment in stream_as_json(v):
-                if fragment is not None:
-                    yield fragment
+            yield from _stream_as_json_unsafe(v)
         yield "}"
     elif isinstance(value, list):
         yield "["
         for i, v in enumerate(value):
             if i > 0:
                 yield ","
-            for fragment in stream_as_json(v):
-                if fragment is not None:
-                    yield fragment
+            yield from _stream_as_json_unsafe(v)
         yield "]"
     elif isinstance(value, Iterable):
         yield '"'
@@ -34,8 +38,7 @@ def stream_as_json(value: Any):
             if isinstance(fragment, str):
                 yield escape_str(fragment)
             elif fragment is not None:
-                for v in stream_as_json(fragment):
-                    yield v
+                yield from _stream_as_json_unsafe(fragment)
         yield '"'
     else:
         yield '"'

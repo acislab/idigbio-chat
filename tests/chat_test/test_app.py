@@ -1,92 +1,90 @@
 import pytest
 
-import app
-from chat_test_util import chat
+from app import redis as app_redis
+from chat_test_util import app, client, chat
 from matchers import string_must_contain
 
-app.chat_config["SHOW_PROCESSING_MESSAGES"] = True
-app.chat_config["SAFE_MODE"] = False
 
-
-def test_robo_check():
-    app.chat_config["SAFE_MODE"] = True
-    messages = chat("ping")
+@pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": True}}}], indirect=True)
+def test_robo_check(app, client):
+    messages = chat(client, "ping")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
     assert "please confirm you are a real person" in messages[0]["value"]
 
 
-def test_not_a_robot():
-    app.chat_config["SAFE_MODE"] = True
-    messages = chat("I am not a robot")
+@pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": True}}}], indirect=True)
+def test_not_a_robot(app, client):
+    messages = chat(client, "I am not a robot")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
     assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
-def test_skip_robo_check():
-    messages = chat("ping")
+@pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": False}}}], indirect=True)
+def test_skip_robo_check(app, client):
+    messages = chat(client, "ping")
 
     assert len(messages) >= 1
     assert messages[0]["type"] == "ai_text_message"
     assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
-def test_ping():
-    messages = chat("ping")
+def test_ping(client):
+    messages = chat(client, "ping")
 
     assert len(messages) >= 1
     assert messages[0]["type"] == "ai_text_message"
     assert messages[0]["value"] == "pong"
 
 
-def test_remember_robo_check():
-    app.chat_config["SAFE_MODE"] = True
-    chat("not a robot")
-    chat("clear")
-    messages = chat("ping")
+@pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": True}}}], indirect=True)
+def test_remember_robo_check(app, client):
+    chat(client, "not a robot")
+    chat(client, "clear")
+    messages = chat(client, "ping")
 
     assert len(messages) >= 1
     assert not ("please confirm you are a real person" in messages[0]["value"])
 
 
-def test_echo():
+def test_echo(client):
     """Make the LLM say something predictable so we can check if its response is correctly transmitted."""
-    messages = chat("Repeat after me: Toast.")
+    messages = chat(client, "Repeat after me: Toast.")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
     assert messages[0]["value"] == "Toast."
 
 
-def test_describe_self():
-    messages = chat("What can you do?")
+def test_describe_self(client):
+    messages = chat(client, "What can you do?")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
 
 
-def test_help():
-    messages = chat("help")
+def test_help(client):
+    messages = chat(client, "help")
 
     assert len(messages) == 1
     assert messages[0]["value"].startswith("This is a prototype")
 
 
-def test_keep_users_list():
-    users = app.redis.lrange("users", 0, -1)
+def test_keep_users_list(app, client):
+    users = app_redis.inst.lrange("users", 0, -1)
     assert len(users) == 0
 
-    chat("ping")  # Don't trigger an LLM response
+    chat(client, "ping")  # Don't trigger an LLM response
 
-    users = app.redis.lrange("users", 0, -1)
+    users = app_redis.inst.lrange("users", 0, -1)
     assert len(users) == 1
 
 
-def test_simple_idigbio_search():
-    messages = chat("Find records for genus Carex")
+def test_simple_idigbio_search(client):
+    messages = chat(client, "Find records for genus Carex")
 
     assert len(messages) == 2
 
@@ -98,8 +96,8 @@ def test_simple_idigbio_search():
     assert messages[1]["type"] == "ai_text_message"
 
 
-def test_simple_idigbio_map():
-    messages = chat("Show a map of genus Carex")
+def test_simple_idigbio_map(client):
+    messages = chat(client, "Show a map of genus Carex")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
@@ -113,8 +111,8 @@ def test_simple_idigbio_map():
     }
 
 
-def test_map_for_no_records():
-    messages = chat("Show a map of genus Jabberwock")
+def test_map_for_no_records(client):
+    messages = chat(client, "Show a map of genus Jabberwock")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
@@ -123,37 +121,32 @@ def test_map_for_no_records():
     assert messages[1]["type"] == "ai_text_message"
 
 
-def test_expert_opinion():
+def test_expert_opinion(client):
     """"""
-    messages = chat("What color are polar bears? Please be brief.")
+    messages = chat(client, "What color are polar bears? Please be brief.")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
 
 
-def test_conversation_history():
+def test_conversation_history(client):
     """"""
-    chat("My name is Ruth.")
-    messages = chat("What is my name?")
+    chat(client, "My name is Ruth.")
+    messages = chat(client, "What is my name?")
 
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
     assert "Ruth" in messages[0]["value"]
 
 
-def test_conversation_history_map_query():
+def test_conversation_history_map_query(client):
     """"""
-    chat("I want to talk about genus Carex")
-    messages = chat("Show a map")
+    chat(client, "I want to talk about genus Carex")
+    messages = chat(client, "Show a map")
 
-    assert len(messages) == 3
-    assert messages[0] == {
-        'type': 'ai_processing_message',
-        'value': {'summary': 'Searching for records...',
-                  'content': {'rq': {'genus': 'Carex'}}}
-    }
-    assert messages[1]["value"].startswith("Here is")
-    assert messages[2] == {
+    assert len(messages) == 2
+    assert messages[0]["type"] == "ai_processing_message"
+    assert messages[1] == {
         "type": "ai_map_message",
         'value': {
             'rq': {'genus': 'Carex'}
@@ -161,10 +154,10 @@ def test_conversation_history_map_query():
     }
 
 
-def test_conversation_history_search_query():
+def test_conversation_history_search_query(client):
     """"""
-    chat("I want to talk about genus Carex")
-    messages = chat("Find records")
+    chat(client, "I want to talk about genus Carex")
+    messages = chat(client, "Find records")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
@@ -172,21 +165,21 @@ def test_conversation_history_search_query():
     assert "Carex" in messages[1]["value"]
 
 
-def test_follow_up_question_for_search_query():
-    chat("How many records for Ursus arctos are there")
-    messages = chat("What URL did you use to call the iDigBio API?")
+def test_follow_up_question_for_search_query(client):
+    chat(client, "How many records for Ursus arctos are there")
+    messages = chat(client, "What URL did you use to call the iDigBio API?")
 
     last_message = messages[-1]["value"]
     url = "https://search.idigbio.org/v2/summary/"
     assert string_must_contain(last_message, url, "Ursus arctos")
 
 
-def test_count_records():
-    messages = chat("How many records for genus Carex?")
+def test_count_records(client):
+    messages = chat(client, "How many records for genus Carex?")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
-    assert messages[0]["value"]["summary"] == "Searching for records..."
+    assert messages[0]["value"]["summary"] == "Searching iDigBio..."
 
     content = messages[0]["value"]["content"]
     assert '"genus": "Carex"' in content
@@ -195,17 +188,17 @@ def test_count_records():
     assert len(messages[1]["value"].splitlines()) == 1
 
 
-def test_break_down_record_counts():
-    messages = chat("What 10 species have the most records in the United States?")
+def test_break_down_record_counts(client):
+    messages = chat(client, "What 10 species have the most records in the United States?")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
-    assert messages[0]["value"]["summary"] == "Searching for records..."
+    assert messages[0]["value"]["summary"] == "Searching iDigBio..."
     assert messages[1]["type"] == "ai_text_message"
 
 
-def test_composite_request():
-    messages = chat("How many records of Ursus arctos are there in iDigBio and where are they on a map?")
+def test_composite_request(client):
+    messages = chat(client, "How many records of Ursus arctos are there in iDigBio and where are they on a map?")
 
     assert len(messages) == 4
     assert messages[0]["type"] == "ai_processing_message"
@@ -214,25 +207,25 @@ def test_composite_request():
     assert messages[3]["type"] == "ai_map_message"
 
 
-def test_complex_search():
-    messages = chat("Find records for Rattus rattus in the US, Mexico, Canada, and Taiwan")
+def test_complex_search(client):
+    messages = chat(client, "Find records for Rattus rattus in the US, Mexico, Canada, and Taiwan")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
     assert messages[1]["type"] == "ai_text_message"
 
 
-def test_search_by_date():
-    messages = chat("Find records between 1999 and 2020")
+def test_search_by_date(client):
+    messages = chat(client, "Find records between 1999 and 2020")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"
-    assert messages[0]["value"]["summary"] == "Searching for records..."
+    assert messages[0]["value"]["summary"] == "Searching iDigBio..."
     assert messages[1]["type"] == "ai_text_message"
 
 
-def test_media_search():
-    messages = chat("Find media for genus Carex")
+def test_media_search(client):
+    messages = chat(client, "Find media for genus Carex")
 
     assert len(messages) == 2
     assert messages[0]["type"] == "ai_processing_message"

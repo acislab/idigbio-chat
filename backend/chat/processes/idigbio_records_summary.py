@@ -102,5 +102,5 @@ def _stream_record_counts_as_markdown_table(counts) -> Iterator[str]:
 
     yield f"| {top_field} | count |\n"
     yield "|-|-|\n"
-    for row in (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items()):
-        yield row
+    rows = (f"| {k} | {v['itemCount']} |\n" for k, v in counts[top_field].items())
+    yield from rows

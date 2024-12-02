@@ -1,15 +1,40 @@
 import json
 from typing import Iterable
 
-from app import app
+import pytest
+from pydantic.v1.utils import deep_update
+
+from app import create_app
 from chat.conversation import Conversation
 from chat.messages import Message
 
-app.testing = True
-client = app.test_client()
+
+@pytest.fixture(params=[({"config_overrides": None},)])
+def app(request):
+    test_config = {
+        "CHAT": {
+            "SHOW_PROCESSING_MESSAGES": True,
+            "SAFE_MODE": False,
+        },
+    }
+
+    if "config_overrides" in request.param:
+        test_config = deep_update(test_config, request.param["config_overrides"])
+
+    app = create_app(config_dict=test_config)
+    app.testing = True
+
+    with app.app_context():
+        yield app
 
 
-def chat(message) -> list[dict]:
+@pytest.fixture()
+def client(app):
+    with app.test_client() as c:
+        yield c
+
+
+def chat(client, message) -> list[dict]:
     wrapped_response: Iterable[bytes] = client.post('/chat', json={
         "type": "user_text_message",
         "value": message

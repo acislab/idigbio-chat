@@ -1,9 +1,11 @@
-from sqlalchemy import create_engine, Engine, MetaData, Table, Column, Integer, String, ForeignKey, Text, DateTime, func, JSON, insert, text
-import sqlalchemy as alchemy
 from uuid import uuid4, UUID
-from chat.messages import ColdMessage
+
+import sqlalchemy as alchemy
+from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, DateTime, \
+    func, JSON, insert, text
+
 from chat.conversation import Conversation
-from typing import Optional
+from chat.messages import ColdMessage
 
 metadata = MetaData()
 
@@ -30,7 +32,7 @@ messages = Table(
     Column('id', String(36), primary_key=True),
     Column('conversation_id', String(36), ForeignKey('conversations.id'), nullable=False),
     Column('type', String, nullable=False),
-    Column('value', JSON, nullable=False),  
+    Column('value', JSON, nullable=False),
     Column('created', DateTime, default=func.now()),
     Column('tool', String, nullable=False),
     Column('role_and_content', JSON, nullable=False),
@@ -54,20 +56,20 @@ class DatabaseEngine:
                         LIMIT 1;
                     """)
             result = conn.execute(query, {"user_id": user_id}).fetchall()
-            
+
             if len(result) == 1:
                 return True
-            return False 
-    
+            return False
+
     def get_user(self, user_id: str):
         with self.engine.connect() as conn:
-            query = """
+            query = text("""
                         SELECT *
                         FROM users
                         WHERE user_id = :user_id;
-                    """
+                    """)
             result = conn.execute(query, {"user_id": user_id})
-            
+
             return result.fetchall()
 
     def insert_user(self, user):
@@ -88,7 +90,7 @@ class DatabaseEngine:
             except Exception as e:
                 trans.rollback()
                 print("Error inserting user:", e)
-        
+
         return self.user_exists(user['sub'])
 
     def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: UUID):
@@ -97,14 +99,14 @@ class DatabaseEngine:
         print(cold_message.read_raw())
         print(cold_message_dict)
         new_message = {
-                "id": str(uuid4()),
-                "conversation_id": str(conversation_id),
-                "type": cold_message_dict['type'],
-                "value": cold_message_dict['type_and_value']['value'],
-                "tool": cold_message_dict['tool_name'],
-                "role_and_content": cold_message_dict['role_and_content']
-            }
-        
+            "id": str(uuid4()),
+            "conversation_id": str(conversation_id),
+            "type": cold_message_dict['type'],
+            "value": cold_message_dict['type_and_value']['value'],
+            "tool": cold_message_dict['tool_name'],
+            "role_and_content": cold_message_dict['role_and_content']
+        }
+
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
@@ -113,7 +115,7 @@ class DatabaseEngine:
             except Exception as e:
                 trans.rollback()
                 print("Error inserting message:", e)
-    
+
     def get_conversation_history(self, conversation_id: UUID) -> Conversation:
         cold_messages = []
         print('CONVO')
@@ -124,6 +126,7 @@ class DatabaseEngine:
             conversation_messages = result.fetchall()
 
             for message in conversation_messages:
+<<<<<<< HEAD
                 message_dict = dict(message._mapping)
                 cold_messages.append(ColdMessage(
                     type=message_dict['type'],
@@ -133,6 +136,17 @@ class DatabaseEngine:
                     type_and_value = {
                         'type': message_dict['type'],
                         'value': message_dict['value']
+=======
+                message = dict(message)
+                cold_messages.append(ColdMessage(
+                    type=message['type'],
+                    tool_name=message['tool'],
+                    show_user=message['show_user'],
+                    role_and_content=message['role_and_content'],
+                    type_and_value={
+                        'type': message['type'],
+                        'value': message['value']
+>>>>>>> bb9713f8ab08e3c3b2907549bed0e09946df7942
                     }
                 ))
         history = Conversation(
@@ -143,6 +157,7 @@ class DatabaseEngine:
         print('-----------------COLD MESSAGES: ----------------')
         print(cold_messages)
         return history
+<<<<<<< HEAD
     
     def get_conversation_messages(self, conversation_id: UUID) -> Conversation:
         cold_messages = []
@@ -163,6 +178,9 @@ class DatabaseEngine:
         
         return simplified_messages
     
+=======
+
+>>>>>>> bb9713f8ab08e3c3b2907549bed0e09946df7942
     def conversation_history_exists(self, conversation_id: UUID):
         with self.engine.connect() as conn:
             query = text("""
@@ -172,11 +190,11 @@ class DatabaseEngine:
                         LIMIT 1;
                     """)
             result = conn.execute(query, {"conversation_id": str(conversation_id)}).fetchall()
-            
+
             if len(result) == 1:
                 return True
             return False
-        
+
     def create_conversation_history(self, conversation_id: UUID, user_id: str):
         new_conversation = {
             'id': str(conversation_id),
@@ -195,40 +213,10 @@ class DatabaseEngine:
         if not self.conversation_history_exists(conversation_id):
             self.create_conversation_history(conversation_id, user_id)
         return self.get_conversation_history(conversation_id)
-    
+
     def get_user_conversations(self, user_id: str) -> list[str]:
-        user_conversations = []
         with self.engine.connect() as conn:
             query = alchemy.select(conversations.c.id).where(conversations.c.user_id == user_id)
             result = conn.execute(query)
-            
             ids = [row[0] for row in result.fetchall()]
-            print(ids)
         return ids
-
-
-
-
-
-
-            
-            
-
-
-
-            
-
-
-
-
-
-    
-
-            
-            
-
-            
-
-
-
-

@@ -1,70 +1,100 @@
-import tomli
-from flask import Flask, jsonify, request, render_template, session, stream_with_context, redirect, url_for
-from flask_cors import CORS
+import os
+from functools import wraps
+from uuid import uuid4
 
+import jose
 import requests
+import tomli
+from dotenv import load_dotenv
+from flask import Flask, jsonify, request, render_template, stream_with_context, redirect, url_for, current_app, \
+    Blueprint, session
+from flask_cors import CORS
+from jose import jwt
+from keycloak.keycloak_openid import KeycloakOpenID
+from pydantic.v1.utils import deep_update
+from sqlalchemy import create_engine
+from typing_extensions import Optional
+
 import chat
 import search.api
 import search.demo
-import redis as r
 from chat.messages import AiProcessingMessage, stream_messages
-from chat.conversation import Conversation
 from flask_session import Session
-from keycloak import KeycloakOpenID
 from nlp.ai import AI
-from storage.fake_redis import FakeRedis
-from storage.user_data import UserData
-from dotenv import load_dotenv
-from functools import wraps
-from datetime import timedelta
-import os
-from sqlalchemy import create_engine
 from storage.database import DatabaseEngine
-from uuid import uuid4, UUID
-from jose import jwt
-from jose.backends import RSAKey
-from jose.utils import base64url_decode
-load_dotenv()
+from extensions.flask_redis import FlaskRedis
+from extensions.user_data import UserData
 
-app = Flask(__name__, template_folder="templates")
-CORS(app, supports_credentials=True)
+plan = Blueprint("blueprint", __name__)
 
-database_url = f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable"
-app.config["SESSION_PERMANENT"] = False
-app.config["PERMANENT_SESSION_LIFETIME"] = timedelta(minutes=30)
-app.config["SESSION_REFRESH_EACH_REQUEST"] = True
-app.config["SESSION_TYPE"] = "redis"
-app.config['SESSION_REDIS'] = r.from_url(f"redis://:{os.getenv('REDIS_SECRET')}@localhost:9211/2")
-app.config["SESSION_COOKIE_SAMESITE"] = "None"
-app.config["SESSION_COOKIE_SECURE"] = "True"
-app.config.from_file("config.toml", tomli.load, text=False)
-Session(app)
-
-keycloak_openid = KeycloakOpenID(
-    server_url="https://auth.acis.ufl.edu/",
-    client_id="chat",
-    realm_name="iDigBio",
-    client_secret_key=os.getenv('KC_SECRET'),
-)
-
-chat_config = app.config["CHAT"]
-redis_config = chat_config["REDIS"]
-redis = app.config["SESSION_REDIS"]
-engine = create_engine(database_url, echo=True)
-db = DatabaseEngine(engine)
-
-user_data = UserData(session, redis, chat_config, keycloak_openid, db)
+redis = FlaskRedis()
+user_data = UserData()
 ai = AI()
 
-if redis_config["PORT"] == 0:
-    redis = FakeRedis().redis
-else:
-    redis = r.Redis(port=redis_config["PORT"])
 
-KEYCLOAK_PUBLIC_KEY = None
-KEYCLOAK_URL = "https://auth.acis.ufl.edu"
-REALM_NAME = "iDigBio"
-CLIENT_ID = "chat"
+def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = None,
+               database_url=""):
+    app = Flask(__name__, template_folder="templates")
+    app.register_blueprint(plan)
+
+    defaults = {
+        "HOST": "0.0.0.0",
+        "PORT": 8989,
+        "PERMANENT_SESSION_LIFETIME": 2678400,  # In seconds. 2678400 seconds = 31 days.
+        "SESSION_COOKIE_SAMESITE": "Lax",
+        "SESSION_COOKIE_SECURE": True,
+        "SESSION_PERMANENT": False,
+        "SESSION_REFRESH_EACH_REQUEST": True,
+        "SESSION_TYPE": "redis",
+        "CHAT": {
+            "SAFE_MODE": True,
+            "SHOW_PROCESSING_MESSAGES": True
+        },
+    }
+    app.config.update(defaults)
+
+    if config_file:
+        with open(config_file, "rb") as f:
+            config_file_content = tomli.load(f, )
+            app.config = deep_update(app.config, config_file_content)
+
+    if config_dict:
+        app.config = deep_update(app.config, config_dict)
+
+    if "KEYCLOAK" in app.config:
+        kc_config = app.config["KEYCLOAK"]
+        kc = KeycloakOpenID(
+            server_url=kc_config["URL"],
+            client_id=kc_config["CLIENT_ID"],
+            realm_name=kc_config["REALM_NAME"],
+            client_secret_key=os.getenv('KC_SECRET'),
+        )
+    else:
+        kc = None
+
+    CORS(app, supports_credentials=True)
+    Session(app)
+    redis.init_app(app)
+
+    if database_url:
+        engine = create_engine(database_url, echo=True)
+        db = DatabaseEngine(engine)
+    else:
+        db = None
+
+    user_data.init_app(app, redis.inst, kc, db)
+
+    return app
+
+
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            return jsonify({"error": "Unauthorized"}), 401
+        return f(*args, **kwargs)
+
+    return decorated_function
 
 
 def get_conversation_id(f):
@@ -79,11 +109,13 @@ def get_conversation_id(f):
             print("No conversation id provided.")
             kwargs['conversation_id'] = uuid4()
         return f(*args, **kwargs)
+
     return wrapper
 
 
 def get_public_key():
-    key_url = f"{KEYCLOAK_URL}/realms/{REALM_NAME}/protocol/openid-connect/certs"
+    url, realm = current_app.config["URL"], current_app.config["REALM_NAME"]
+    key_url = f"{url}/realms/{realm}/protocol/openid-connect/certs"
     response = requests.get(key_url)
     keys = response.json()
     # Return the complete key set - python-jose will handle key selection
@@ -96,7 +128,8 @@ def requires_auth(f):
         auth_header = request.headers.get('Authorization', None)
         if not auth_header:
             # restrict endpoints
-            return jsonify({'message': 'No authorization header'}), 401
+            # return jsonify({'message': 'No authorization header'}), 401
+            return f(token_payload={}, *args, **kwargs)
         try:
             token = auth_header.split(' ')[1]
 
@@ -110,10 +143,10 @@ def requires_auth(f):
             # Get the unverified headers to find the key ID
             headers = jwt.get_unverified_headers(token)
             kid = headers.get('kid')
-            
+
             # Get the full JWKS
             jwks = get_public_key()
-            
+
             # Find the matching key in the JWKS
             rsa_key = {}
             for key in jwks['keys']:
@@ -125,54 +158,48 @@ def requires_auth(f):
                         'e': key['e']
                     }
                     break
-            
+
             if not rsa_key:
                 return jsonify({'message': 'Unable to find appropriate key'}), 401
-            
+
             payload = jwt.decode(
                 token,
                 rsa_key,
                 algorithms=['RS256'],
                 options={"verify_aud": False},
-                issuer=f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
+                issuer=f"{user_data.kc.connection.base_url}/realms/{user_data.kc.realm_name}"
             )
-            request.token_payload = payload
+            return f(token_payload=payload, *args, **kwargs)
 
-            return f(*args, **kwargs)
-        except jwt.ExpiredSignatureError:
+        except jose.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired'}), 401
-        except jwt.JWTError as e:
+        except jose.JWTError as e:
             print(f"JWT Error: {str(e)}")
             return jsonify({'message': 'Invalid token'}), 401
 
     return decorated
 
 
-def get_current_user():
-    """Helper to get current user from token payload"""
-    if not hasattr(request, 'token_payload'):
-        return None
-        
+def get_current_user(token_payload: dict):
     return {
-        'id': request.token_payload.get('sub'),
-        'name': request.token_payload.get('sub'),
-        'preferred_username': request.token_payload.get('preferred_username'),
-        'given_name': request.token_payload.get('preferred_username'),
-        'family_name': request.token_payload.get('family_name'),
-        'email': request.token_payload.get('email'),
-        'roles': request.token_payload.get('realm_access', {}).get('roles', [])
+        'id': token_payload.get('sub'),
+        'name': token_payload.get('sub'),
+        'preferred_username': token_payload.get('preferred_username'),
+        'given_name': token_payload.get('preferred_username'),
+        'family_name': token_payload.get('family_name'),
+        'email': token_payload.get('email'),
+        'roles': token_payload.get('realm_access', {}).get('roles', [])
     }
 
-
-@app.route("/", methods=["GET"])
+@plan.route("/", methods=["GET"])
 def home():
     return redirect(url_for("chat"))
 
 
-@app.route("/chat-protected", methods=["POST"])
+@plan.route("/chat-protected", methods=["POST"])
 @requires_auth
 @get_conversation_id
-def chat_api(**kwargs):
+def chat_api(token_payload: dict, **kwargs):
     """
     Expects
     { "type" str, "value": str | dict }
@@ -211,7 +238,7 @@ def chat_api(**kwargs):
     print("REQUEST:", dict(session), request.json)
 
     user_message = request.json["value"]
-    user = get_current_user()
+    user = get_current_user(token_payload)
     print(user)
 
     if user is None:
@@ -226,15 +253,15 @@ def chat_api(**kwargs):
 
         message_stream = chat.api.chat(ai, history, user_message)
 
-    if not chat_config["SHOW_PROCESSING_MESSAGES"]:
+    if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
     text_stream = stream_messages(message_stream)
 
-    return app.response_class(stream_with_context(text_stream), mimetype="application/json")
+    return current_app.response_class(stream_with_context(text_stream), mimetype="application/json")
 
 
-@app.route("/chat", methods=["POST"])
+@plan.route("/chat", methods=["POST"])
 def chat_unprotected():
     user_message = request.json["value"]
     user = user_data.get_temp_user()
@@ -249,16 +276,16 @@ def chat_unprotected():
         message_stream = chat.api.greet(ai, user.history, "Hello!")
     else:
         message_stream = chat.api.chat(ai, user.history, user_message)
-    
-    if not chat_config["SHOW_PROCESSING_MESSAGES"]:
+
+    if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
-    
+
     text_stream = stream_messages(message_stream)
 
-    return app.response_class(stream_with_context(text_stream), mimetype="application/json")
+    return current_app.response_class(stream_with_context(text_stream), mimetype="application/json")
 
 
-@app.route("/search/generate_rq", methods=["POST"])
+@plan.route("/search/generate_rq", methods=["POST"])
 def generate_rq():
     print("REQUEST:", request.json)
     ai = AI()
@@ -268,7 +295,7 @@ def generate_rq():
     return response
 
 
-@app.route("/search/update_input", methods=["POST"])
+@plan.route("/search/update_input", methods=["POST"])
 def update_input():
     print("REQUEST:", request.json)
     ai = AI()
@@ -278,7 +305,7 @@ def update_input():
     return response
 
 
-@app.route("/search/demo/", methods=["GET", "POST"])
+@plan.route("/search/demo/", methods=["GET", "POST"])
 def textbox_demo():
     if request.method == "GET":
         return render_template("textbox.html.j2")
@@ -289,14 +316,14 @@ def textbox_demo():
         print("RESPONSE:", response)
 
         return render_template("textbox.html.j2", **response)
-    
 
-@app.route("/api/login", methods=['POST'])
+
+@plan.route("/api/login", methods=['POST'])
 def login():
     try:
         auth_code = request.json.get('code')
         userinfo = user_data.login(auth_code)
-        
+
         return jsonify({
             "message": "Login Successful.",
             "user": userinfo
@@ -304,9 +331,9 @@ def login():
 
     except Exception as e:
         return jsonify({"error": str(e)}), 400
-    
 
-@app.route("/api/logout", methods=['POST'])
+
+@plan.route("/api/logout", methods=['POST'])
 def logout():
     try:
         user_data.logout()
@@ -315,19 +342,19 @@ def logout():
         return jsonify({"error": str(e)})
 
 
-@app.route("/api/user", methods=['POST'])
+@plan.route("/api/user", methods=['POST'])
 def get_user():
     return jsonify(session['user'])
 
 
-@app.route('/api/refresh-token', methods=['POST'])
+@plan.route('/api/refresh-token', methods=['POST'])
 def refresh_token():
     try:
-        refresh_token = session.get('token', {}).get('refresh_token')
-        if not refresh_token:
+        token = session.get('token', {}).get('refresh_token')
+        if not token:
             return jsonify({"error": "No refresh token found"}), 401
-        
-        token = keycloak_openid.refresh_token(refresh_token)
+
+        token = user_data.kc.refresh_token(token)
         session['token'] = token
 
         return jsonify({
@@ -338,11 +365,11 @@ def refresh_token():
         return jsonify({"error": str(e)}), 400
 
 
-@app.route("/api/conversations", methods=['POST'])
+@plan.route("/api/conversations", methods=['POST'])
 @requires_auth
-def get_conversations():
+def get_conversations(token_payload: dict):
     try:
-        user_id = get_current_user()['id']
+        user_id = get_current_user(token_payload)['id']
         user_conversations = user_data.db.get_user_conversations(user_id)
         print(user_id)
         return jsonify({
@@ -352,9 +379,9 @@ def get_conversations():
     except Exception as e:
         print(e)
         return jsonify({"error": str(e)}), 400
-    
 
-@app.route("/api/get-conversation", methods=['POST'])
+
+@plan.route("/api/get-conversation", methods=['POST'])
 @requires_auth
 @get_conversation_id
 def get_conversation(**kwargs):
@@ -366,7 +393,7 @@ def get_conversation(**kwargs):
         conversation_id = kwargs['conversation_id']
 
         conversation = user_data.db.get_conversation_messages(conversation_id)
-        print(conversation)
+        
         return jsonify({
             "user": user_id,
             "history": conversation
@@ -376,6 +403,11 @@ def get_conversation(**kwargs):
         return jsonify({"error": str(e)}), 400
 
 
-
 if __name__ == '__main__':
-    app.run(debug=True, port=chat_config["SERVER"]["PORT"], host="0.0.0.0")  # , ssl_context='adhoc'
+    load_dotenv()
+
+    database_url = (f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:"
+                    f"{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable")
+
+    app = create_app("config.toml", database_url=database_url)
+    app.run(debug=True, port=app.config["PORT"], host=app.config["HOST"])  # , ssl_context='adhoc'

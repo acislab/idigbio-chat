@@ -4,6 +4,13 @@ A chatbot for [the iDigBio Portal](https://www.idigbio.org/portal).
 
 ## Develop
 
+Requirements:
+
+```bash
+sudo apt install postgresql
+sudo apt install libpq-dev
+```
+
 Quick start:
 
 ```bash

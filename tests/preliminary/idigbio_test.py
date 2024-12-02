@@ -49,8 +49,7 @@ def _get_fields(data: dict, deep: bool):
                 if tuple(v.keys()) == ("type", "fieldName"):
                     yield v
                 elif deep:
-                    for f in _get_fields(v, True):
-                        yield f
+                    yield from _get_fields(v, True)
 
 
 def get_fields(data: dict, deep=False) -> list[dict[str, str]]:
