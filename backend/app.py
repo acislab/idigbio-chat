@@ -114,7 +114,7 @@ def get_conversation_id(f):
 
 
 def get_public_key():
-    url, realm = current_app.config["URL"], current_app.config["REALM_NAME"]
+    url, realm = app.config["KEYCLOAK"]["URL"], app.config["KEYCLOAK"]["REALM_NAME"]
     key_url = f"{url}/realms/{realm}/protocol/openid-connect/certs"
     response = requests.get(key_url)
     keys = response.json()
