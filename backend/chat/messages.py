@@ -32,9 +32,6 @@ class ColdMessage:
     def read(self, key):
         return self.__raw[key]
     
-    def read_raw(self):
-        return self.__raw
-
     def read_all(self):
         return {k: self.read(k) for k in self.__raw}
 
@@ -54,9 +51,6 @@ class Message:
 
     def get_type(self) -> MessageType:
         pass
-
-    def get_value(self):
-        return self.value
 
     def to_role_and_content(self) -> list[dict]:
         """

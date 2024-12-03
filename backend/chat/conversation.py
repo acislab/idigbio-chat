@@ -30,9 +30,6 @@ class Conversation:
         if not isinstance(messages, list):
             messages = [messages]
         for message in messages:
-            print('APPEND PRINT LINE:')
-            for value in message.get_value():
-                print(value)
             cold_message = message.freeze()
             self.recorder(cold_message, self.conversation_id)
             self.history.append(cold_message)

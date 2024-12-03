@@ -90,14 +90,11 @@ class DatabaseEngine:
             except Exception as e:
                 trans.rollback()
                 print("Error inserting user:", e)
-
+        
         return self.user_exists(user['sub'])
 
     def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: UUID):
         cold_message_dict = cold_message.read_all()
-        print('COLD MESSAGE DICT:')
-        print(cold_message.read_raw())
-        print(cold_message_dict)
         new_message = {
             "id": str(uuid4()),
             "conversation_id": str(conversation_id),
@@ -118,15 +115,12 @@ class DatabaseEngine:
 
     def get_conversation_history(self, conversation_id: UUID) -> Conversation:
         cold_messages = []
-        print('CONVO')
-        print(conversation_id)
         with self.engine.connect() as conn:
             query = messages.select().where(messages.c.conversation_id == str(conversation_id))
             result = conn.execute(query)
             conversation_messages = result.fetchall()
 
             for message in conversation_messages:
-<<<<<<< HEAD
                 message_dict = dict(message._mapping)
                 cold_messages.append(ColdMessage(
                     type=message_dict['type'],
@@ -136,17 +130,6 @@ class DatabaseEngine:
                     type_and_value = {
                         'type': message_dict['type'],
                         'value': message_dict['value']
-=======
-                message = dict(message)
-                cold_messages.append(ColdMessage(
-                    type=message['type'],
-                    tool_name=message['tool'],
-                    show_user=message['show_user'],
-                    role_and_content=message['role_and_content'],
-                    type_and_value={
-                        'type': message['type'],
-                        'value': message['value']
->>>>>>> bb9713f8ab08e3c3b2907549bed0e09946df7942
                     }
                 ))
         history = Conversation(
@@ -154,10 +137,7 @@ class DatabaseEngine:
             recorder=self.write_message_to_storage,
             conversation_id=conversation_id
         )
-        print('-----------------COLD MESSAGES: ----------------')
-        print(cold_messages)
         return history
-<<<<<<< HEAD
     
     def get_conversation_messages(self, conversation_id: UUID) -> Conversation:
         cold_messages = []
@@ -178,9 +158,6 @@ class DatabaseEngine:
         
         return simplified_messages
     
-=======
-
->>>>>>> bb9713f8ab08e3c3b2907549bed0e09946df7942
     def conversation_history_exists(self, conversation_id: UUID):
         with self.engine.connect() as conn:
             query = text("""

@@ -34,6 +34,5 @@ def present_results(ai: AI, history: Conversation, request: str, results: str | 
     for chunk in response:
         if chunk.choices[0].delta.content:
             full_response += chunk.choices[0].delta.content
-    print(full_response)
 
     return AiChatMessage(full_response)
