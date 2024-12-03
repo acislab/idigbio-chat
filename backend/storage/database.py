@@ -2,11 +2,11 @@ from uuid import uuid4, UUID
 
 import sqlalchemy as alchemy
 from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, DateTime, \
-    func, JSON, insert, text
-
+    func, JSON, insert, text, desc
+from nlp.ai import AI
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
-
+from chat.tools.gen_conversation_title import GenConversationTitle, _ask_llm_to_generate_title
 metadata = MetaData()
 
 users = Table(
@@ -25,6 +25,7 @@ conversations = Table(
     Column('id', String(36), primary_key=True),
     Column('user_id', String(36), ForeignKey('users.id'), nullable=False),
     Column('created', DateTime, default=func.now()),
+    Column('title', String(36), nullable=False)
 )
 
 messages = Table(
@@ -44,7 +45,7 @@ class DatabaseEngine:
 
     def __init__(self, engine) -> None:
         self.engine = engine
-
+        # metadata.drop_all(self.engine)
         metadata.create_all(self.engine)
 
     def user_exists(self, user_id: str):
@@ -91,7 +92,7 @@ class DatabaseEngine:
                 trans.rollback()
                 print("Error inserting user:", e)
         
-        return self.user_exists(user['sub'])
+        return self.user_exists(user['id'])
 
     def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: UUID):
         cold_message_dict = cold_message.read_all()
@@ -169,10 +170,11 @@ class DatabaseEngine:
                 return True
             return False
 
-    def create_conversation_history(self, conversation_id: UUID, user_id: str):
+    def create_conversation_history(self, conversation_id: UUID, user_id: str, title: str):
         new_conversation = {
             'id': str(conversation_id),
-            'user_id': str(user_id)
+            'user_id': str(user_id),
+            'title': str(title)
         }
         with self.engine.connect() as conn:
             trans = conn.begin()
@@ -183,14 +185,17 @@ class DatabaseEngine:
                 trans.rollback()
                 print("Error inserting conversation:", e)
 
-    def get_or_create_conversation(self, conversation_id: UUID, user_id: str) -> Conversation:
+    def get_or_create_conversation(self, conversation_id: UUID, user_id: str, ai: AI, user_message: str = None,) -> Conversation:
         if not self.conversation_history_exists(conversation_id):
-            self.create_conversation_history(conversation_id, user_id)
+            title = _ask_llm_to_generate_title(ai=ai, request=user_message)
+            
+            self.create_conversation_history(conversation_id, user_id, title)
         return self.get_conversation_history(conversation_id)
 
     def get_user_conversations(self, user_id: str) -> list[str]:
         with self.engine.connect() as conn:
-            query = alchemy.select(conversations.c.id).where(conversations.c.user_id == user_id)
+            query = alchemy.select(conversations.c.id, conversations.c.title).where(conversations.c.user_id == user_id).order_by(desc(conversations.c.created))
             result = conn.execute(query)
-            ids = [row[0] for row in result.fetchall()]
+            
+            ids = [{"id": row[0], "title": row[1]} for row in result.fetchall()]
         return ids

@@ -249,10 +249,10 @@ def chat_api(token_payload: dict, **kwargs):
             user_data.db.insert_user(user)
 
         conversation_id = kwargs['conversation_id']
-        history = user_data.db.get_or_create_conversation(conversation_id, user_id)
-
+        history = user_data.db.get_or_create_conversation(conversation_id, user_id, ai, user_message)
+        
         message_stream = chat.api.chat(ai, history, user_message)
-
+        
     if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
@@ -373,7 +373,7 @@ def get_conversations(token_payload: dict):
         user_conversations = user_data.db.get_user_conversations(user_id)
         print(user_id)
         return jsonify({
-            "user": session.get('user'),
+            "user": user_id,
             "history": user_conversations
         })
     except Exception as e:
