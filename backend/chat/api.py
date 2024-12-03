@@ -23,7 +23,6 @@ def chat(ai: AI, history: Conversation, user_text_message: str) -> Iterator[Mess
     history.append(UserMessage(user_text_message))
 
     cold_message = UserMessage(user_text_message).freeze()
-    print(cold_message.read_all())
 
     response = _make_response(ai, history, user_text_message)
 
@@ -56,16 +55,22 @@ def _handle_individual_request(ai, history, request) -> Iterator[Message]:
 def _make_response(ai: AI, history: Conversation, user_message: str) -> Iterator[Message]:
     baked_response = _get_baked_response(user_message)
     if baked_response is not None:
-        yield from baked_response
-        return
+        i = 0
+        for message in baked_response:
+            i += 1
+            yield message
+        if i > 0:
+            return
 
     requests = _break_down_message_into_smaller_requests(ai, history, user_message)
 
     if len(requests) == 0:
-        yield from _respond_conversationally(ai, history)
+        for message in _respond_conversationally(ai, history):
+            yield message
     else:
         for request in requests:
-            yield from _handle_individual_request(ai, history, request)
+            for message in _handle_individual_request(ai, history, request):
+                yield message
 
 
 HELP_MESSAGE = """\
@@ -93,7 +98,7 @@ def _get_baked_response(user_message) -> Iterator[Message]:
         case "ping":
             yield AiChatMessage("pong")
         case _:
-            return
+            pass
 
 
 def _respond_conversationally(ai, history) -> Iterator[Message]:
