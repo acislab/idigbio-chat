@@ -384,12 +384,12 @@ def get_conversations(token_payload: dict):
 @plan.route("/api/get-conversation", methods=['POST'])
 @requires_auth
 @get_conversation_id
-def get_conversation(**kwargs):
+def get_conversation(token_payload: dict, **kwargs):
     try:
         if kwargs['conversation_id'] is None or '':
             return {"Invalid conversation id"}, 400
         
-        user_id = get_current_user()['id']
+        user_id = get_current_user(token_payload)['id']
         conversation_id = kwargs['conversation_id']
 
         conversation = user_data.db.get_conversation_messages(conversation_id)
