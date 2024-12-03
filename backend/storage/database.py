@@ -145,8 +145,6 @@ class DatabaseEngine:
             query = messages.select().where(messages.c.conversation_id == str(conversation_id))
             result = conn.execute(query)
             conversation_messages = result.fetchall()
-            print('------------------------')
-            print(conversation_messages)
             simplified_messages = [
             {
                 'type': message._mapping['type'],
@@ -154,7 +152,6 @@ class DatabaseEngine:
             }
             for message in conversation_messages
         ]
-        print(simplified_messages)
         
         return simplified_messages
     
