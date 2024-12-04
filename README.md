@@ -16,7 +16,7 @@ Quick start:
 ```bash
 git clone git@github.com:acislab/idigbio-chat
 cd idigbio-chat
-pip install virtualenv
+pip install virtualenv --python=python3.12
 virtualenv venv
 source venv/bin/activate
 pip install -r requirements.txt
