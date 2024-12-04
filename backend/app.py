@@ -406,5 +406,5 @@ if __name__ == '__main__':
     database_url = (f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:"
                     f"{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable")
 
-    app = create_app("config.toml", database_url=database_url)
+    app = create_app("../config.toml", database_url=database_url)
     app.run(debug=True, port=app.config["PORT"], host=app.config["HOST"])  # , ssl_context='adhoc'
