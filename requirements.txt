@@ -1,5 +1,5 @@
 instructor~=1.5.2
-openai~=1.51.2
+openai~=1.56.2
 python-dotenv~=1.0.1
 requests~=2.32.3
 flask~=3.0.3
