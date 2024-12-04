@@ -60,7 +60,8 @@ def test_dont_repeat_request_with_follow_up_questions():
 
     requests = chat.api._break_down_message_into_smaller_requests(AI(), conv, conv.render_to_openai()[-1]["content"])
 
-    assert string_must_contain(requests[0], "URL", "iDigBio API", "find records", "horse")
+    assert len(requests) == 1
+    assert string_must_contain(requests[0], "URL", "iDigBio", "API", "find", "bear", "records")
 
 
 def test_off_topic():

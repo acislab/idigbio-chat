@@ -2,7 +2,6 @@ from datetime import datetime, timezone
 from typing import Callable, Optional
 
 from chat.messages import ColdMessage, Message, UserMessage
-from uuid import UUID
 
 SYSTEM_HEADER = """\
 Today's date is {datetime}
@@ -12,11 +11,11 @@ Today's date is {datetime}
 
 class Conversation:
     history: list[ColdMessage]
-    recorder: Callable[[ColdMessage, Optional[UUID]], None]
-    conversation_id: UUID | None
+    recorder: Callable[[ColdMessage, Optional[str]], None]
+    conversation_id: str | None
 
     def __init__(self, history: list[ColdMessage] = None,
-                 recorder: Callable[[ColdMessage, Optional[UUID]], None] = None, conversation_id: UUID = None):
+                 recorder: Callable[[ColdMessage, Optional[str]], None] = None, conversation_id: str = None):
         if history is None:
             history = []
         if recorder is None:

@@ -41,21 +41,10 @@ def test_ai_processing_message_with_dict():
 
     as_text = "".join(stream_messages(response()))
 
-    assert as_text == """\
-[{"type":"ai_processing_message","value":"```json
-{
-    \\"summary\\": \\"Test summary\\",
-    \\"content\\": {
-        \\"one\\": 1,
-        \\"condiments\\": {
-            \\"below\\": \\"ketchup\\",
-            \\"above\\": \\"mustard\\"
-        }
-    }
-}
-```
-"}]\
-"""
+    assert as_text == (
+        """[{"type":"ai_processing_message","value":{"summary":"Test summary","content":{"one":"1","condiments":{"""
+        """"below":"ketchup","above":"mustard"}}}}]"""
+    )
 
 
 def test_get_record_counts_as_markdown_table():

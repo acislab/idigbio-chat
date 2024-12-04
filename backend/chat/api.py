@@ -152,7 +152,7 @@ def _break_down_message_into_smaller_requests(ai: AI, history: Conversation, use
         temperature=0,
         max_retries=5,
         response_model=RequestBreakdown,
-        messages=history.render_to_openai(BREAK_DOWN_PROMPT.format()),
+        messages=history.render_to_openai(BREAK_DOWN_PROMPT),
     )
     print(F"REQUESTS: {response.requests}")
     return response.requests

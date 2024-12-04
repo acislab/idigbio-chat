@@ -1,12 +1,14 @@
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 import sqlalchemy as alchemy
 from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, DateTime, \
     func, JSON, insert, text, desc
-from nlp.ai import AI
+
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
-from chat.tools.gen_conversation_title import GenConversationTitle, _ask_llm_to_generate_title
+from chat.tools.gen_conversation_title import _ask_llm_to_generate_title
+from nlp.ai import AI
+
 metadata = MetaData()
 
 users = Table(
@@ -91,14 +93,14 @@ class DatabaseEngine:
             except Exception as e:
                 trans.rollback()
                 print("Error inserting user:", e)
-        
+
         return self.user_exists(user['id'])
 
-    def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: UUID):
+    def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: str):
         cold_message_dict = cold_message.read_all()
         new_message = {
             "id": str(uuid4()),
-            "conversation_id": str(conversation_id),
+            "conversation_id": conversation_id,
             "type": cold_message_dict['type'],
             "value": cold_message_dict['type_and_value']['value'],
             "tool": cold_message_dict['tool_name'],
@@ -114,10 +116,10 @@ class DatabaseEngine:
                 trans.rollback()
                 print("Error inserting message:", e)
 
-    def get_conversation_history(self, conversation_id: UUID) -> Conversation:
+    def get_conversation_history(self, conversation_id: str) -> Conversation:
         cold_messages = []
         with self.engine.connect() as conn:
-            query = messages.select().where(messages.c.conversation_id == str(conversation_id))
+            query = messages.select().where(messages.c.conversation_id == conversation_id)
             result = conn.execute(query)
             conversation_messages = result.fetchall()
 
@@ -125,10 +127,10 @@ class DatabaseEngine:
                 message_dict = dict(message._mapping)
                 cold_messages.append(ColdMessage(
                     type=message_dict['type'],
-                    tool_name = message_dict['tool'],
+                    tool_name=message_dict['tool'],
                     show_user="",
-                    role_and_content = message_dict['role_and_content'],
-                    type_and_value = {
+                    role_and_content=message_dict['role_and_content'],
+                    type_and_value={
                         'type': message_dict['type'],
                         'value': message_dict['value']
                     }
@@ -139,24 +141,23 @@ class DatabaseEngine:
             conversation_id=conversation_id
         )
         return history
-    
-    def get_conversation_messages(self, conversation_id: UUID) -> Conversation:
-        cold_messages = []
+
+    def get_conversation_messages(self, conversation_id: str) -> Conversation:
         with self.engine.connect() as conn:
             query = messages.select().where(messages.c.conversation_id == str(conversation_id))
             result = conn.execute(query)
             conversation_messages = result.fetchall()
             simplified_messages = [
-            {
-                'type': message._mapping['type'],
-                'value': message._mapping['value']
-            }
-            for message in conversation_messages
-        ]
-        
+                {
+                    'type': message._mapping['type'],
+                    'value': message._mapping['value']
+                }
+                for message in conversation_messages
+            ]
+
         return simplified_messages
-    
-    def conversation_history_exists(self, conversation_id: UUID):
+
+    def conversation_history_exists(self, conversation_id: str):
         with self.engine.connect() as conn:
             query = text("""
                         SELECT 1
@@ -164,18 +165,19 @@ class DatabaseEngine:
                         WHERE id = :conversation_id
                         LIMIT 1;
                     """)
-            result = conn.execute(query, {"conversation_id": str(conversation_id)}).fetchall()
+            result = conn.execute(query, {"conversation_id": conversation_id}).fetchall()
 
             if len(result) == 1:
                 return True
             return False
 
-    def create_conversation_history(self, conversation_id: UUID, user_id: str, title: str):
+    def create_conversation_history(self, conversation_id: str, user_id: str, title: str):
         new_conversation = {
-            'id': str(conversation_id),
-            'user_id': str(user_id),
-            'title': str(title)
+            'id': conversation_id,
+            'user_id': user_id,
+            'title': title
         }
+
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
@@ -185,17 +187,19 @@ class DatabaseEngine:
                 trans.rollback()
                 print("Error inserting conversation:", e)
 
-    def get_or_create_conversation(self, conversation_id: UUID, user_id: str, ai: AI, user_message: str = None,) -> Conversation:
+    def get_or_create_conversation(self, conversation_id: str, user_id: str, ai: AI,
+                                   user_message: str = None, ) -> Conversation:
         if not self.conversation_history_exists(conversation_id):
             title = _ask_llm_to_generate_title(ai=ai, request=user_message)
-            
+
             self.create_conversation_history(conversation_id, user_id, title)
         return self.get_conversation_history(conversation_id)
 
     def get_user_conversations(self, user_id: str) -> list[str]:
         with self.engine.connect() as conn:
-            query = alchemy.select(conversations.c.id, conversations.c.title).where(conversations.c.user_id == user_id).order_by(desc(conversations.c.created))
+            query = alchemy.select(conversations.c.id, conversations.c.title).where(
+                conversations.c.user_id == user_id).order_by(desc(conversations.c.created))
             result = conn.execute(query)
-            
+
             ids = [{"id": row[0], "title": row[1]} for row in result.fetchall()]
         return ids

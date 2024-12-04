@@ -100,21 +100,20 @@ def login_required(f):
 def get_conversation_id(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        try:
-            if request.json['conversation_id'] != '':
-                kwargs['conversation_id'] = request.json['conversation_id']
-            else:
-                kwargs['conversation_id'] = uuid4()
-        except KeyError as e:
-            print("No conversation id provided.")
-            kwargs['conversation_id'] = uuid4()
-        return f(*args, **kwargs)
+        # Is conversation_id ever an empty string? If not, we can just do:
+        #  conversation_id = request.json.get("conversation_id", uuid4())
+
+        conversation_id = request.json.get("conversation_id")
+        if not conversation_id:
+            conversation_id = uuid4()
+
+        return f(*args, conversation_id=conversation_id, **kwargs)
 
     return wrapper
 
 
 def get_public_key():
-    url, realm = app.config["KEYCLOAK"]["URL"], app.config["KEYCLOAK"]["REALM_NAME"]
+    url, realm = current_app.config["KEYCLOAK"]["URL"], current_app.config["KEYCLOAK"]["REALM_NAME"]
     key_url = f"{url}/realms/{realm}/protocol/openid-connect/certs"
     response = requests.get(key_url)
     keys = response.json()
@@ -191,6 +190,7 @@ def get_current_user(token_payload: dict):
         'roles': token_payload.get('realm_access', {}).get('roles', [])
     }
 
+
 @plan.route("/", methods=["GET"])
 def home():
     return redirect(url_for("chat"))
@@ -199,7 +199,7 @@ def home():
 @plan.route("/chat-protected", methods=["POST"])
 @requires_auth
 @get_conversation_id
-def chat_api(token_payload: dict, **kwargs):
+def chat_api(token_payload: dict, conversation_id: str):
     """
     Expects
     { "type" str, "value": str | dict }
@@ -235,7 +235,7 @@ def chat_api(token_payload: dict, **kwargs):
             }
         ]
     """
-    print("REQUEST:", dict(session), request.json)
+    # print("REQUEST:", dict(session), request.json)
 
     user_message = request.json["value"]
     user = get_current_user(token_payload)
@@ -248,11 +248,10 @@ def chat_api(token_payload: dict, **kwargs):
         if not user_data.db.user_exists(user['id']):
             user_data.db.insert_user(user)
 
-        conversation_id = kwargs['conversation_id']
-        history = user_data.db.get_or_create_conversation(conversation_id, user_id, ai, user_message)
-        
+        history = user_data.db.get_or_create_conversation(conversation_id, user_id)
+
         message_stream = chat.api.chat(ai, history, user_message)
-        
+
     if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
@@ -371,7 +370,6 @@ def get_conversations(token_payload: dict):
     try:
         user_id = get_current_user(token_payload)['id']
         user_conversations = user_data.db.get_user_conversations(user_id)
-        print(user_id)
         return jsonify({
             "user": user_id,
             "history": user_conversations
@@ -384,16 +382,15 @@ def get_conversations(token_payload: dict):
 @plan.route("/api/get-conversation", methods=['POST'])
 @requires_auth
 @get_conversation_id
-def get_conversation(token_payload: dict, **kwargs):
+def get_conversation(token_payload: dict, conversation_id: str):
     try:
-        if kwargs['conversation_id'] is None or '':
-            return {"Invalid conversation id"}, 400
-        
+        if not conversation_id:
+            return jsonify({"error": "Invalid conversation id"}), 400
+
         user_id = get_current_user(token_payload)['id']
-        conversation_id = kwargs['conversation_id']
 
         conversation = user_data.db.get_conversation_messages(conversation_id)
-        
+
         return jsonify({
             "user": user_id,
             "history": conversation
