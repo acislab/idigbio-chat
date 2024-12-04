@@ -10,7 +10,7 @@ from flask import Flask, jsonify, request, render_template, stream_with_context,
     Blueprint, session
 from flask_cors import CORS
 from jose import jwt
-from keycloak.keycloak_openid import KeycloakOpenID
+from keycloak import KeycloakOpenID
 from pydantic.v1.utils import deep_update
 from sqlalchemy import create_engine
 from typing_extensions import Optional
