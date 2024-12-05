@@ -80,7 +80,7 @@ def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = 
     engine = create_engine(database_url, echo=True)
     db = DatabaseEngine(engine)
 
-    user_data.init_app(app, redis.inst, kc, db)
+    user_data.init_app(app, kc, db)
 
     CORS(app, supports_credentials=True)
     Session(app)

@@ -1,3 +1,4 @@
+from typing import Optional
 from uuid import uuid4
 
 import flask
@@ -11,10 +12,10 @@ from storage.database import DatabaseEngine
 
 @dataclass
 class UserMeta:
-    username: str
-    given_name: str
-    family_name: str
-    email: str
+    username: Optional[str]
+    given_name: Optional[str]
+    family_name: Optional[str]
+    email: Optional[str]
     roles: list[str]
 
 
@@ -37,7 +38,6 @@ def get_user_history_ptr(user_id: str):
 
 
 class UserData:
-    redis: Redis
     kc: KeycloakOpenID
     db: DatabaseEngine
 
@@ -45,30 +45,35 @@ class UserData:
         self.kc = kc
         self.db = db
 
-    def clear_temp_user_history(self, user_id: str):
-        history_ptr = get_user_history_ptr(user_id)
-        self.redis.delete(history_ptr)
-
     def temp_user_exists(self, user_id: str):
-        user_hash = get_user_hash_id(flask.session["id"])
-        return self.redis.exists(user_hash)
+        self.db.user_exists(user_id)
 
     def get_temp_user(self) -> User | None:
+        empty_user_meta = UserMeta(
+            username=None,
+            given_name=None,
+            family_name=None,
+            email=None,
+            roles=[]
+        )
+
         if "id" not in flask.session or not self.temp_user_exists(flask.session["id"]):
             if current_app.config["CHAT"]["SAFE_MODE"]:
                 return None
             else:
-                return self.make_temp_user()
+                return self.make_temp_user(empty_user_meta)
 
         user_id = flask.session["id"]
-        return User(user_id)
 
-    def make_temp_user(self) -> User:
+        return User(user_id, empty_user_meta)
+
+    def make_temp_user(self, user_meta) -> User:
         user_id = "temp_" + str(uuid4())
+
         flask.session.permanent = True
         flask.session["id"] = user_id
 
-        user = User(user_id)
+        user = User(user_id, user_meta)
         self.db.insert_user(user)
 
         return user
