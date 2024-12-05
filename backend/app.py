@@ -129,7 +129,7 @@ def requires_auth(f):
         if not auth_header:
             # restrict endpoints
             # return jsonify({'message': 'No authorization header'}), 401
-            return f(token_payload={}, *args, **kwargs)
+            return f(user={}, *args, **kwargs)
         try:
             token = auth_header.split(' ')[1]
 
@@ -169,7 +169,9 @@ def requires_auth(f):
                 options={"verify_aud": False},
                 issuer=f"{user_data.kc.connection.base_url}/realms/{user_data.kc.realm_name}"
             )
-            return f(token_payload=payload, *args, **kwargs)
+
+            user = get_current_user(payload)
+            return f(user=user, *args, **kwargs)
 
         except jose.ExpiredSignatureError:
             return jsonify({'message': 'Token has expired'}), 401
@@ -200,7 +202,7 @@ def home():
 @plan.route("/chat-protected", methods=["POST"])
 @requires_auth
 @get_conversation_id
-def chat_api(token_payload: dict, conversation_id: str):
+def chat_api(user: dict, conversation_id: str):
     """
     Expects
     { "type" str, "value": str | dict }
@@ -239,7 +241,6 @@ def chat_api(token_payload: dict, conversation_id: str):
     # print("REQUEST:", dict(session), request.json)
 
     user_message = request.json["value"]
-    user = get_current_user(token_payload)
     print(user)
 
     if user is None:
@@ -249,7 +250,7 @@ def chat_api(token_payload: dict, conversation_id: str):
         if not user_data.db.user_exists(user['id']):
             user_data.db.insert_user(user)
 
-        conversation = user_data.db.get_or_create_conversation(conversation_id, user_id, ai)
+        conversation = user_data.db.get_or_create_conversation(conversation_id, user['id'], ai)
 
         message_stream = chat.api.chat(ai, conversation, user_message)
 
@@ -367,12 +368,11 @@ def refresh_token():
 
 @plan.route("/api/conversations", methods=['POST'])
 @requires_auth
-def get_conversations(token_payload: dict):
+def get_conversations(user: dict):
     try:
-        user_id = get_current_user(token_payload)['id']
-        user_conversations = user_data.db.get_user_conversations(user_id)
+        user_conversations = user_data.db.get_user_conversations(user['id'])
         return jsonify({
-            "user": user_id,
+            "user": user['id'],
             "history": user_conversations
         })
     except Exception as e:
@@ -383,7 +383,7 @@ def get_conversations(token_payload: dict):
 @plan.route("/api/get-conversation", methods=['POST'])
 @requires_auth
 @get_conversation_id
-def get_conversation(token_payload: dict, conversation_id: str):
+def get_conversation(user: dict, conversation_id: str):
     try:
         if not conversation_id:
             return jsonify({"error": "Invalid conversation id"}), 400
@@ -393,7 +393,7 @@ def get_conversation(token_payload: dict, conversation_id: str):
         conversation = user_data.db.get_conversation_messages(conversation_id)
 
         return jsonify({
-            "user": user_id,
+            "user": user['id'],
             "history": conversation
         })
     except Exception as e:
