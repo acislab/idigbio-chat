@@ -1,6 +1,7 @@
 import json
 from enum import Enum
 from typing import Any, Iterator
+from uuid import uuid4
 
 from chat.content_streams import StreamedContent
 from chat.utils.json import stream_as_json
@@ -37,10 +38,12 @@ class ColdMessage:
 
 
 class Message:
+    message_id: str
     value: MessageValue
     tool_name: str
 
     def __init__(self, value: MessageValue):
+        self.id = str(uuid4())
         self.value = value
         self.tool_name = ""
 
@@ -57,7 +60,7 @@ class Message:
         """
         Stream to the frontend.
         """
-        return stream_as_json({"type": self.get_type().value, "value": self.value})
+        return stream_as_json({"id": self.message_id, "type": self.get_type().value, "value": self.value})
 
     def to_frontend(self) -> list[dict]:
         return json.loads("".join(self.stream_to_frontend()))
@@ -67,6 +70,7 @@ class Message:
         Encode as json for persistent storage.
         """
         return ColdMessage(
+            message_id=self.message_id,
             type=self.get_type().value,
             tool_name=self.tool_name,
             openai_messages=self.to_openai(),

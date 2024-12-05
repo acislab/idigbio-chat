@@ -103,7 +103,7 @@ class DatabaseEngine:
 
     def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: str):
         new_message = {
-            "id": str(uuid4()),
+            "id": cold_message.read("message_id"),
             "conversation_id": conversation_id,
             "type": cold_message.read("type"),
             "tool_name": cold_message.read("tool_name"),
@@ -128,8 +128,9 @@ class DatabaseEngine:
             conversation_messages = result.fetchall()
 
             for message in conversation_messages:
-                message_dict = dict(message._mapping)
+                message_dict = message._asdict()
                 cold_messages.append(ColdMessage(
+                    id=message_dict["id"],
                     type=message_dict["type"],
                     tool_name=message_dict["tool_name"],
                     openai_messages=message_dict["openai_messages"],
