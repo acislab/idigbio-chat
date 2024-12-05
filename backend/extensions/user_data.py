@@ -15,11 +15,11 @@ from storage.database import DatabaseEngine
 
 class User:
     user_id: str
-    history: Conversation
+    conversation: Conversation
 
-    def __init__(self, user_id: str, history: Conversation):
+    def __init__(self, user_id: str, conversation: Conversation):
         self.user_id = user_id
-        self.history = history
+        self.conversation = conversation
 
 
 def get_user_hash_id(user_id: str):
@@ -42,7 +42,7 @@ class UserData:
         self.kc = kc
         self.db = db
 
-    def get_temp_user_history(self, user_id: str) -> Conversation:
+    def get_temp_user_conversation_history(self, user_id: str) -> Conversation:
         if flask.session.get("user"):
             return Conversation(None, None)
         else:
@@ -71,8 +71,8 @@ class UserData:
                 return self.make_temp_user()
 
         user_id = flask.session["id"]
-        history = self.get_temp_user_history(user_id)
-        return User(user_id, history)
+        conversation = self.get_temp_user_conversation_history(user_id)
+        return User(user_id, conversation)
 
     def make_temp_user(self) -> User:
         user_id = str(uuid4())
@@ -82,8 +82,8 @@ class UserData:
         self.redis.rpush("users", user_id)
         self.redis.hset(get_user_hash_id(user_id), "join_date", str(datetime.now().isoformat()))
 
-        history = self.get_temp_user_history(user_id)
-        return User(user_id, history)
+        conversation = self.get_temp_user_conversation_history(user_id)
+        return User(user_id, conversation)
 
     def login(self, auth_code):
         token = self.kc.token(

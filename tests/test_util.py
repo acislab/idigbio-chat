@@ -15,7 +15,7 @@ def repeat(n):
         yield n
 
 
-def make_history(m: str | Message | list[Message]):
+def make_convo(m: str | Message | list[Message]):
     conv = Conversation()
 
     if isinstance(m, str):

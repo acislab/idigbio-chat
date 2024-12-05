@@ -21,8 +21,8 @@ class DownloadSpeciesOccurrenceRecords(Tool):
     description = DESCRIPTION
     output = DataType.species_occurrence_records_download_email
 
-    def call(self, ai: AI, history: Conversation, request: str = None, state=None) -> Iterator[Message]:
-        search = IDigBioRecordsDownload(ai, history, request)
+    def call(self, ai: AI, conversation: Conversation, request: str = None, state=None) -> Iterator[Message]:
+        search = IDigBioRecordsDownload(ai, conversation, request)
         yield search.make_message()
 
         if search.results.success:
@@ -33,4 +33,4 @@ class DownloadSpeciesOccurrenceRecords(Tool):
         else:
             success_message = "\n\nPlease inform the user that something went wrong with the download request."
 
-        yield present_results(ai, history, request, search.describe() + success_message)
+        yield present_results(ai, conversation, request, search.describe() + success_message)

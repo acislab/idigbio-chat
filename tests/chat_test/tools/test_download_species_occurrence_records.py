@@ -5,7 +5,7 @@ from chat.messages import stream_messages, UserMessage
 from chat.processes.idigbio_records_download import IDigBioRecordsDownload
 from chat.tools import download_species_occurrence_records
 from chat.tools.download_species_occurrence_records import DownloadSpeciesOccurrenceRecords
-from chat_test.chat_test_util import parse_response_stream, make_history
+from chat_test.chat_test_util import parse_response_stream, make_convo
 from nlp.ai import AI
 from test_util import assert_string_matches_template
 
@@ -42,8 +42,8 @@ The portal shows the records in an interactive list and plots them on a map. The
 API can be found at https://search.idigbio.org/v2/search/records?email="test@idigbio.org". The user can resend the 
 download request manually using https://search.idigbio.org/v2/download?email="test@idigbio.org".
 """
-    history = make_history(UserMessage("Send everything to test@idigbio.org"))
-    process = IDigBioRecordsDownload(AI(), history)
+    conversation = make_convo(UserMessage("Send everything to test@idigbio.org"))
+    process = IDigBioRecordsDownload(AI(), conversation)
     summary = process.describe()
     assert_string_matches_template(summary, ref_summary)
 

@@ -5,7 +5,7 @@ from chat_test.conversation import Conversation
 def test_append():
     conv = Conversation()
     conv.append(UserMessage("Good morning"))
-    assert conv.history[0].read_all() == {
+    assert conv.conversation[0].read_all() == {
         'role_and_content': [{'content': 'Good morning', 'role': 'user'}],
         'show_user': True,
         'tool_name': '',

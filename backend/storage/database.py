@@ -135,12 +135,12 @@ class DatabaseEngine:
                         'value': message_dict['value']
                     }
                 ))
-        history = Conversation(
+        conversation = Conversation(
             history=cold_messages,
             recorder=self.write_message_to_storage,
             conversation_id=conversation_id
         )
-        return history
+        return conversation
 
     def get_conversation_messages(self, conversation_id: str) -> Conversation:
         with self.engine.connect() as conn:

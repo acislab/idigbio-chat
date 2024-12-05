@@ -30,9 +30,9 @@ class Results(dict):
 class IDigBioRecordsSummary(Process):
     process_summary = "Searching iDigBio..."
 
-    def __run__(self, ai: AI, history, request: str) -> StreamedString:
+    def __run__(self, ai: AI, conversation, request: str) -> StreamedString:
         try:
-            params = _generate_records_summary_parameters(ai, history, request)
+            params = _generate_records_summary_parameters(ai, conversation, request)
         except AIGenerationException as e:
             yield self.note(e.message)
             return
@@ -80,14 +80,14 @@ def _query_summary_api(query_url: str) -> (int, dict):
     return res.json()["itemCount"], res.json()
 
 
-def _generate_records_summary_parameters(ai: AI, history: Conversation, request: str) -> dict:
+def _generate_records_summary_parameters(ai: AI, conversation: Conversation, request: str) -> dict:
     try:
         result = ai.client.chat.completions.create(
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioSummaryApiParameters,
-            messages=history.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
-                                              request=request),
+            messages=conversation.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
+                                                   request=request),
             max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
         )
     except InstructorRetryException as e:

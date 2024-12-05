@@ -53,5 +53,5 @@ def parse_response_stream(response) -> list[dict]:
     return json.loads(text)
 
 
-def make_history(*messages: Message) -> Conversation:
+def make_convo(*messages: Message) -> Conversation:
     return Conversation([m.freeze() for m in messages])

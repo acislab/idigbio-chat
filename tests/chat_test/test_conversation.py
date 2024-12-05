@@ -3,13 +3,13 @@ from chat.processes.idigbio_records_summary import _generate_records_summary_par
 from chat.messages import AiProcessingMessage, AiChatMessage, UserMessage
 from chat.messages import stream_messages
 from chat.conversation import Conversation
-from chat_test.chat_test_util import make_history
+from chat_test.chat_test_util import make_convo
 from idigbio_util import url_encode_params
 from nlp.ai import AI
 
 
 def test_render_for_openai():
-    conv = make_history(
+    conv = make_convo(
         AiChatMessage("a1"),
         UserMessage("u1")
     )
@@ -24,7 +24,7 @@ def test_render_for_openai():
 
 
 def test_render_for_openai_with_datetime():
-    conv = make_history(AiChatMessage("a1"))
+    conv = make_convo(AiChatMessage("a1"))
     texts = conv.render_to_openai("This is the system message")
     assert texts[0]["content"].startswith("Today's date is")
 
