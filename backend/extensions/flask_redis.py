@@ -14,4 +14,5 @@ class FlaskRedis:
             port = app.config["REDIS"]["PORT"]
             host = app.config["REDIS"]["HOST"]
             secret = os.getenv('REDIS_SECRET')
-            self.inst = Redis.from_url(f"redis://:{secret}@{host}:{port}/2")
+            database_number = app.config["REDIS"]["DATABASE_NUMBER"]
+            self.inst = Redis(password=secret, host=host, port=port, database_number=2)
