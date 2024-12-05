@@ -63,7 +63,8 @@ def _make_response(ai: AI, conversation: Conversation, user_message: str) -> Ite
     requests = _break_down_message_into_smaller_requests(ai, conversation, user_message)
 
     if len(requests) == 0:
-        yield from _respond_conversationally(ai, conversation)
+        request = user_message
+        yield from _respond_conversationally(ai, conversation, request)
     else:
         for request in requests:
             yield from _handle_individual_request(ai, conversation, request)
@@ -97,13 +98,13 @@ def _get_baked_response(user_message: str) -> Iterator[Message]:
             pass
 
 
-def _respond_conversationally(ai: AI, conversation: Conversation) -> Iterator[Message]:
+def _respond_conversationally(ai: AI, conversation: Conversation, request: str) -> Iterator[Message]:
     tool = tool_lookup["converse"]()
     response = tool.call(
         ai=ai,
         conversation=conversation,
         state={},
-        request=""
+        request=request
     )
     yield from response
 
