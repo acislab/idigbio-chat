@@ -54,7 +54,7 @@ class UserData:
         self.db = db
 
     def temp_user_exists(self, user_id: str):
-        self.db.user_exists(user_id)
+        return self.db.user_exists(user_id)
 
     def get_temp_user(self) -> User | None:
         if "id" not in flask.session or not self.temp_user_exists(flask.session["id"]):
