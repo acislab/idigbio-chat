@@ -60,9 +60,13 @@ class Message:
         """
         Stream to the frontend.
         """
-        return stream_as_json({"id": self.message_id, "type": self.get_type().value, "value": self.value})
+        return stream_as_json({
+            "id": self.message_id,
+            "type": self.get_type().value,
+            "value": self.value
+        })
 
-    def to_frontend(self) -> list[dict]:
+    def to_frontend(self) -> dict:
         return json.loads("".join(self.stream_to_frontend()))
 
     def freeze(self) -> ColdMessage:
