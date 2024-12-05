@@ -68,7 +68,7 @@ class UserData:
         return User(user_id, empty_user_meta)
 
     def make_temp_user(self) -> User:
-        user_id = "temp_" + str(uuid4())
+        user_id = str(uuid4())
 
         flask.session.permanent = True
         flask.session["id"] = user_id
