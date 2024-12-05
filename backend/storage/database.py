@@ -6,8 +6,6 @@ from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, Date
 
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
-from chat.gen_conversation_title import _ask_llm_to_generate_title
-from nlp.ai import AI
 
 metadata = MetaData()
 
@@ -86,33 +84,22 @@ class DatabaseEngine:
 
             return result.fetchall()
 
-    def insert_user(self, user):
-        if self.is_temp_user(user["id"]):
+    def insert_user(self, data: dict):
+        if self.is_temp_user(data["id"]):
             table = temp_users
-            new_user = {
-                "id": user['id']
-            }
         else:
             table = users
-            new_user = {
-                "id": user['id'],
-                "name": user['name'],
-                "preferred_username": user['preferred_username'],
-                "given_name": user['given_name'],
-                "family_name": user['family_name'],
-                "email": user['email']
-            }
 
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
-                result = conn.execute(insert(table).values(new_user))
+                result = conn.execute(insert(table).values(data))
                 trans.commit()
             except Exception as e:
                 trans.rollback()
-                print(f"Error inserting user {user['id']}:", e)
+                print(f"Error inserting user {data['id']}:", e)
 
-        return self.user_exists(user['id'])
+        return self.user_exists(data['id'])
 
     def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: str):
         cold_message_dict = cold_message.read_all()
@@ -180,7 +167,7 @@ class DatabaseEngine:
             query = text("""
                         SELECT 1
                         FROM conversations
-                        WHERE id::uuid = :conversation_id
+                        WHERE id = :conversation_id
                         LIMIT 1;
                     """)
             result = conn.execute(query, {"conversation_id": conversation_id}).fetchall()

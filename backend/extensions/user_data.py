@@ -5,7 +5,6 @@ import flask
 from attr import dataclass
 from flask import request, Flask, current_app
 from keycloak import KeycloakOpenID
-from redis import Redis
 
 from storage.database import DatabaseEngine
 
@@ -37,6 +36,15 @@ def get_user_history_ptr(user_id: str):
     return f"history_{user_id}_{conv_id}"
 
 
+empty_user_meta = UserMeta(
+    username=None,
+    given_name=None,
+    family_name=None,
+    email=None,
+    roles=[]
+)
+
+
 class UserData:
     kc: KeycloakOpenID
     db: DatabaseEngine
@@ -49,32 +57,26 @@ class UserData:
         self.db.user_exists(user_id)
 
     def get_temp_user(self) -> User | None:
-        empty_user_meta = UserMeta(
-            username=None,
-            given_name=None,
-            family_name=None,
-            email=None,
-            roles=[]
-        )
-
         if "id" not in flask.session or not self.temp_user_exists(flask.session["id"]):
             if current_app.config["CHAT"]["SAFE_MODE"]:
                 return None
             else:
-                return self.make_temp_user(empty_user_meta)
+                return self.make_temp_user()
 
         user_id = flask.session["id"]
 
         return User(user_id, empty_user_meta)
 
-    def make_temp_user(self, user_meta) -> User:
+    def make_temp_user(self) -> User:
         user_id = "temp_" + str(uuid4())
 
         flask.session.permanent = True
         flask.session["id"] = user_id
 
-        user = User(user_id, user_meta)
-        self.db.insert_user(user)
+        user = User(user_id, empty_user_meta)
+        self.db.insert_user({
+            "id": user_id
+        })
 
         return user
 
