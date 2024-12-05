@@ -23,7 +23,7 @@ from flask_session import Session
 from nlp.ai import AI
 from storage.database import DatabaseEngine
 from extensions.flask_redis import FlaskRedis
-from extensions.user_data import UserData
+from extensions.user_data import UserData, UserMeta, User
 
 plan = Blueprint("blueprint", __name__)
 
@@ -170,7 +170,9 @@ def requires_auth(f):
                 issuer=f"{user_data.kc.connection.base_url}/realms/{user_data.kc.realm_name}"
             )
 
-            user = get_current_user(payload)
+            user_meta = read_user_token_payload(payload)
+            user = User(user_meta.name, None, user_meta)
+
             return f(user=user, *args, **kwargs)
 
         except jose.ExpiredSignatureError:
@@ -182,16 +184,15 @@ def requires_auth(f):
     return decorated
 
 
-def get_current_user(token_payload: dict):
-    return {
-        'id': token_payload.get('sub'),
-        'name': token_payload.get('sub'),
-        'preferred_username': token_payload.get('preferred_username'),
-        'given_name': token_payload.get('preferred_username'),
-        'family_name': token_payload.get('family_name'),
-        'email': token_payload.get('email'),
-        'roles': token_payload.get('realm_access', {}).get('roles', [])
-    }
+def read_user_token_payload(token_payload: dict) -> UserMeta:
+    return UserMeta(
+        name=token_payload.get('sub'),
+        username=token_payload.get('preferred_username'),
+        given_name=token_payload.get('preferred_username'),
+        family_name=token_payload.get('family_name'),
+        email=token_payload.get('email'),
+        roles=token_payload.get('realm_access', {}).get('roles', [])
+    )
 
 
 @plan.route("/", methods=["GET"])
@@ -202,7 +203,7 @@ def home():
 @plan.route("/chat-protected", methods=["POST"])
 @requires_auth
 @get_conversation_id
-def chat_api(user: dict, conversation_id: str):
+def chat_api(user: User, conversation_id: str):
     """
     Expects
     { "type" str, "value": str | dict }
@@ -246,11 +247,10 @@ def chat_api(user: dict, conversation_id: str):
     if user is None:
         return jsonify({'message': 'User must be authenticated to access this endpoint.'}), 401
     else:
-        user_id = user['id']
-        if not user_data.db.user_exists(user['id']):
+        if not user_data.db.user_exists(user.user_id):
             user_data.db.insert_user(user)
 
-        conversation = user_data.db.get_or_create_conversation(conversation_id, user['id'], ai)
+        conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id, ai)
 
         message_stream = chat.api.chat(ai, conversation, user_message)
 
@@ -368,11 +368,11 @@ def refresh_token():
 
 @plan.route("/api/conversations", methods=['POST'])
 @requires_auth
-def get_conversations(user: dict):
+def get_conversations(user: User):
     try:
-        user_conversations = user_data.db.get_user_conversations(user['id'])
+        user_conversations = user_data.db.get_user_conversations(user.user_id)
         return jsonify({
-            "user": user['id'],
+            "user": user.user_id,
             "history": user_conversations
         })
     except Exception as e:
@@ -383,17 +383,15 @@ def get_conversations(user: dict):
 @plan.route("/api/get-conversation", methods=['POST'])
 @requires_auth
 @get_conversation_id
-def get_conversation(user: dict, conversation_id: str):
+def get_conversation(user: User, conversation_id: str):
     try:
         if not conversation_id:
             return jsonify({"error": "Invalid conversation id"}), 400
 
-        user_id = get_current_user(token_payload)['id']
-
         conversation = user_data.db.get_conversation_messages(conversation_id)
 
         return jsonify({
-            "user": user['id'],
+            "user": user.user_id,
             "history": conversation
         })
     except Exception as e:

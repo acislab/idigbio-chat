@@ -1,9 +1,9 @@
 import json
-from datetime import datetime
 from typing import Optional
-from uuid import uuid4, UUID
+from uuid import uuid4
 
 import flask
+from attr import dataclass
 from flask import request, Flask, current_app
 from keycloak import KeycloakOpenID
 from redis import Redis
@@ -13,13 +13,25 @@ from chat.messages import ColdMessage
 from storage.database import DatabaseEngine
 
 
+@dataclass
+class UserMeta:
+    name: str
+    username: str
+    given_name: str
+    family_name: str
+    email: str
+    roles: list[str]
+
+
 class User:
     user_id: str
     conversation: Conversation
+    meta: UserMeta
 
-    def __init__(self, user_id: str, conversation: Conversation):
+    def __init__(self, user_id: str, conversation: Conversation, user_meta: UserMeta):
         self.user_id = user_id
         self.conversation = conversation
+        self.meta = user_meta
 
 
 def get_user_hash_id(user_id: str):
@@ -36,9 +48,7 @@ class UserData:
     kc: KeycloakOpenID
     db: DatabaseEngine
 
-    def init_app(self, app: Flask, redis: Redis, kc: KeycloakOpenID,
-                 db: DatabaseEngine):
-        self.redis = redis
+    def init_app(self, app: Flask, kc: KeycloakOpenID, db: DatabaseEngine):
         self.kc = kc
         self.db = db
 
@@ -49,7 +59,7 @@ class UserData:
             history_ptr = get_user_history_ptr(user_id)
             raw_history = self.redis.lrange(history_ptr, 0, -1)
 
-            def record(message: ColdMessage, conversation_id: Optional[UUID]):
+            def record(message: ColdMessage, conversation_id: Optional[str]):
                 self.redis.rpush(history_ptr, message.stringify())
 
             history = [ColdMessage(json.loads(message)) for message in raw_history]
@@ -75,15 +85,16 @@ class UserData:
         return User(user_id, conversation)
 
     def make_temp_user(self) -> User:
-        user_id = str(uuid4())
+        user_id = "temp_" + str(uuid4())
         flask.session.permanent = True
         flask.session["id"] = user_id
 
-        self.redis.rpush("users", user_id)
-        self.redis.hset(get_user_hash_id(user_id), "join_date", str(datetime.now().isoformat()))
-
         conversation = self.get_temp_user_conversation_history(user_id)
-        return User(user_id, conversation)
+
+        user = User(user_id, conversation)
+        self.db.insert_user(user)
+
+        return user
 
     def login(self, auth_code):
         token = self.kc.token(
