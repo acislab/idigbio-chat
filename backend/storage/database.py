@@ -6,7 +6,7 @@ from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, Date
 
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
-from chat.tools.gen_conversation_title import _ask_llm_to_generate_title
+from chat.gen_conversation_title import _ask_llm_to_generate_title
 from nlp.ai import AI
 
 metadata = MetaData()
