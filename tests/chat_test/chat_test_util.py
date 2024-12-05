@@ -2,11 +2,13 @@ import json
 from typing import Iterable
 
 import pytest
+import sqlalchemy
 from pydantic.v1.utils import deep_update
 
 from app import create_app
 from chat.conversation import Conversation
 from chat.messages import Message
+from storage.database import DatabaseEngine
 
 
 @pytest.fixture(params=[({"config_overrides": None},)])
@@ -21,7 +23,10 @@ def app(request):
     if "config_overrides" in request.param:
         test_config = deep_update(test_config, request.param["config_overrides"])
 
-    app = create_app(config_dict=test_config)
+    engine = sqlalchemy.create_engine("sqlite://")
+    db = DatabaseEngine(engine)
+
+    app = create_app(config_dict=test_config, database=db)
     app.testing = True
 
     with app.app_context():
