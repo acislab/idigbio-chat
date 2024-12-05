@@ -89,7 +89,7 @@ crucial.
 """
 
 
-class GenConversationTitle(Tool):
+class GenConversationTitle():
     name = 'gen_conversation_title'
     description = DESCRIPTION
 
