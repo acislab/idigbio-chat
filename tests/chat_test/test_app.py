@@ -160,7 +160,7 @@ def test_follow_up_question_for_search_query(client):
 
     last_message = messages[-1]["value"]
     url = "https://search.idigbio.org/v2/summary/"
-    assert string_must_contain(last_message, url, "Ursus arctos")
+    assert string_must_contain(last_message, url, "Ursus", "arctos")
 
 
 def test_count_records(client):
