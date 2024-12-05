@@ -31,4 +31,6 @@ RUN pip3 install -r requirements.txt
 # Define the port number the container should expose
 EXPOSE 8989
 
-CMD ["python3", "backend/app.py"]
+WORKDIR /home/app/backend
+
+CMD ["python3", "app.py"]
