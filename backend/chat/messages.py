@@ -43,7 +43,7 @@ class Message:
     tool_name: str
 
     def __init__(self, value: MessageValue):
-        self.id = str(uuid4())
+        self.message_id = str(uuid4())
         self.value = value
         self.tool_name = ""
 

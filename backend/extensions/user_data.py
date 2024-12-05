@@ -59,7 +59,7 @@ class UserData:
     def get_temp_user(self) -> User | None:
         if "id" not in flask.session or not self.temp_user_exists(flask.session["id"]):
             if current_app.config["CHAT"]["SAFE_MODE"]:
-                return None
+                return None  # Defer user creation until passing the robo check
             else:
                 return self.make_temp_user()
 
@@ -82,25 +82,23 @@ class UserData:
 
     def login(self, auth_code):
         token = self.kc.token(
-            grant_type='authorization_code',
+            grant_type="authorization_code",
             code=auth_code,
             redirect_uri=request.root_url,
         )
-        userinfo = self.kc.userinfo(token['access_token'])
+        userinfo = self.kc.userinfo(token["access_token"])
 
-        flask.session['user'] = userinfo
-        flask.session['token'] = token
+        flask.session["user"] = userinfo
+        flask.session["token"] = token
 
-        if self.db.user_exists(userinfo['sub']):
-            return userinfo
-        else:
+        if not self.db.user_exists(userinfo["sub"]):
             self.db.insert_user(userinfo)
 
         return userinfo
 
     def logout(self):
         flask.session.clear()
-        flask.session.pop('session_key', None)
+        flask.session.pop("session_key", None)
         self.kc.logout(refresh_token=None)
 
 # class UserEntity(db.Model):

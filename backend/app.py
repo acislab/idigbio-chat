@@ -61,7 +61,7 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
             server_url=kc_config["URL"],
             client_id=kc_config["CLIENT_ID"],
             realm_name=kc_config["REALM_NAME"],
-            client_secret_key=os.getenv('KC_SECRET'),
+            client_secret_key=os.getenv("KC_SECRET"),
         )
     else:
         kc = None
@@ -79,7 +79,7 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
 def login_required(f):
     @wraps(f)
     def decorated_function(*args, **kwargs):
-        if 'user' not in session:
+        if "user" not in session:
             return jsonify({"error": "Unauthorized"}), 401
         return f(*args, **kwargs)
 
@@ -113,47 +113,47 @@ def get_public_key():
 def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
-        auth_header = request.headers.get('Authorization', None)
+        auth_header = request.headers.get("Authorization", None)
         if not auth_header:
             # restrict endpoints
-            # return jsonify({'message': 'No authorization header'}), 401
+            # return jsonify({"message": "No authorization header"}), 401
             return f(user={}, *args, **kwargs)
         try:
-            token = auth_header.split(' ')[1]
+            token = auth_header.split(" ")[1]
 
             # Debugging
             # unverified_claims = jwt.get_unverified_claims(token)
             # expected_issuer = f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
-            # actual_issuer = unverified_claims.get('iss')
+            # actual_issuer = unverified_claims.get("iss")
             # print(f"Expected issuer: {expected_issuer}")
             # print(f"Actual issuer: {actual_issuer}")
 
             # Get the unverified headers to find the key ID
             headers = jwt.get_unverified_headers(token)
-            kid = headers.get('kid')
+            kid = headers.get("kid")
 
             # Get the full JWKS
             jwks = get_public_key()
 
             # Find the matching key in the JWKS
             rsa_key = {}
-            for key in jwks['keys']:
-                if key['kid'] == kid:
+            for key in jwks["keys"]:
+                if key["kid"] == kid:
                     rsa_key = {
-                        'kty': key['kty'],
-                        'kid': key['kid'],
-                        'n': key['n'],
-                        'e': key['e']
+                        "kty": key["kty"],
+                        "kid": key["kid"],
+                        "n": key["n"],
+                        "e": key["e"]
                     }
                     break
 
             if not rsa_key:
-                return jsonify({'message': 'Unable to find appropriate key'}), 401
+                return jsonify({"message": "Unable to find appropriate key"}), 401
 
             payload = jwt.decode(
                 token,
                 rsa_key,
-                algorithms=['RS256'],
+                algorithms=["RS256"],
                 options={"verify_aud": False},
                 issuer=f"{user_data.kc.connection.base_url}/realms/{user_data.kc.realm_name}"
             )
@@ -164,24 +164,24 @@ def requires_auth(f):
             return f(user=user, *args, **kwargs)
 
         except jose.ExpiredSignatureError:
-            return jsonify({'message': 'Token has expired'}), 401
+            return jsonify({"message": "Token has expired"}), 401
         except jose.JWTError as e:
             print(f"JWT Error: {str(e)}")
-            return jsonify({'message': 'Invalid token'}), 401
+            return jsonify({"message": "Invalid token"}), 401
 
     return decorated
 
 
 def read_user_token_payload(token_payload: dict) -> (str, UserMeta):
-    user_id = token_payload.get('sub')
+    user_id = token_payload.get("sub")
     return (
         user_id,
         UserMeta(
-            username=token_payload.get('preferred_username'),
-            given_name=token_payload.get('preferred_username'),
-            family_name=token_payload.get('family_name'),
-            email=token_payload.get('email'),
-            roles=token_payload.get('realm_access', {}).get('roles', [])
+            username=token_payload.get("preferred_username"),
+            given_name=token_payload.get("preferred_username"),
+            family_name=token_payload.get("family_name"),
+            email=token_payload.get("email"),
+            roles=token_payload.get("realm_access", {}).get("roles", [])
         )
     )
 
@@ -216,8 +216,8 @@ def chat_api(user: User, conversation_id: str):
             {
                 "type": "ai_processing_message",
                 "value": {
-                    "summary": "Here's what I'm doing...",
-                    "content": "Here's some markdown"
+                    "summary": "Here"s what I"m doing...",
+                    "content": "Here"s some markdown"
                 }
             },
             {
@@ -236,7 +236,7 @@ def chat_api(user: User, conversation_id: str):
     print(user)
 
     if user is None:
-        return jsonify({'message': 'User must be authenticated to access this endpoint.'}), 401
+        return jsonify({"message": "User must be authenticated to access this endpoint."}), 401
     else:
         if not user_data.db.user_exists(user.user_id):
             user_data.db.insert_user({
@@ -317,10 +317,10 @@ def textbox_demo():
         return render_template("textbox.html.j2", **response)
 
 
-@plan.route("/api/login", methods=['POST'])
+@plan.route("/api/login", methods=["POST"])
 def login():
     try:
-        auth_code = request.json.get('code')
+        auth_code = request.json.get("code")
         userinfo = user_data.login(auth_code)
 
         return jsonify({
@@ -332,7 +332,7 @@ def login():
         return jsonify({"error": str(e)}), 400
 
 
-@plan.route("/api/logout", methods=['POST'])
+@plan.route("/api/logout", methods=["POST"])
 def logout():
     try:
         user_data.logout()
@@ -341,20 +341,20 @@ def logout():
         return jsonify({"error": str(e)})
 
 
-@plan.route("/api/user", methods=['POST'])
+@plan.route("/api/user", methods=["POST"])
 def get_user():
-    return jsonify(session['user'])
+    return jsonify(session["user"])
 
 
-@plan.route('/api/refresh-token', methods=['POST'])
+@plan.route("/api/refresh-token", methods=["POST"])
 def refresh_token():
     try:
-        token = session.get('token', {}).get('refresh_token')
+        token = session.get("token", {}).get("refresh_token")
         if not token:
             return jsonify({"error": "No refresh token found"}), 401
 
         token = user_data.kc.refresh_token(token)
-        session['token'] = token
+        session["token"] = token
 
         return jsonify({
             "message": "Token Refreshed.",
@@ -364,7 +364,7 @@ def refresh_token():
         return jsonify({"error": str(e)}), 400
 
 
-@plan.route("/api/conversations", methods=['POST'])
+@plan.route("/api/conversations", methods=["POST"])
 @requires_auth
 def get_conversations(user: User):
     try:
@@ -378,7 +378,7 @@ def get_conversations(user: User):
         return jsonify({"error": str(e)}), 400
 
 
-@plan.route("/api/get-conversation", methods=['POST'])
+@plan.route("/api/get-conversation", methods=["POST"])
 @requires_auth
 @get_conversation_id
 def get_conversation(user: User, conversation_id: str):
@@ -397,7 +397,7 @@ def get_conversation(user: User, conversation_id: str):
         return jsonify({"error": str(e)}), 400
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     load_dotenv()
 
     with open("../config.toml", "rb") as f:
@@ -410,4 +410,4 @@ if __name__ == '__main__':
     db = DatabaseEngine(engine)
 
     app = create_app(config, database=db)
-    app.run(debug=True, port=app.config["PORT"], host=app.config["HOST"])  # , ssl_context='adhoc'
+    app.run(debug=True, port=app.config["PORT"], host=app.config["HOST"])  # , ssl_context="adhoc"

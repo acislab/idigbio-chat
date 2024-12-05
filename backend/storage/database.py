@@ -1,5 +1,3 @@
-from uuid import uuid4
-
 import sqlalchemy as alchemy
 from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, DateTime, \
     func, JSON, insert, text, desc
