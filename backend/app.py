@@ -74,11 +74,11 @@ def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = 
 
     redis.init_app(app)
 
-    if database_url:
-        engine = create_engine(database_url, echo=True)
-        db = DatabaseEngine(engine)
-    else:
-        db = None
+    if not database_url:
+        raise RuntimeError("No SQL database URL specified")
+
+    engine = create_engine(database_url, echo=True)
+    db = DatabaseEngine(engine)
 
     user_data.init_app(app, redis.inst, kc, db)
 

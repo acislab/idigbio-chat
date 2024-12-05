@@ -45,7 +45,7 @@ messages = Table(
 class DatabaseEngine:
     engine: Engine
 
-    def __init__(self, engine) -> None:
+    def __init__(self, engine: Engine) -> None:
         self.engine = engine
         # metadata.drop_all(self.engine)
         metadata.create_all(self.engine)
