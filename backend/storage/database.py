@@ -162,7 +162,7 @@ class DatabaseEngine:
             query = text("""
                         SELECT 1
                         FROM conversations
-                        WHERE id = :conversation_id
+                        WHERE id::uuid = :conversation_id
                         LIMIT 1;
                     """)
             result = conn.execute(query, {"conversation_id": conversation_id}).fetchall()
