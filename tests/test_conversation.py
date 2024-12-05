@@ -6,7 +6,6 @@ def test_append():
     conv = Conversation()
     conv.append(UserMessage("Good morning"))
     assert conv.history[0].read_all() == {
-        "show_user": True,
         "tool_name": "",
         "type": "user_text_message",
         "openai_messages": [{"content": "Good morning", "role": "user"}],

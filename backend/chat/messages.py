@@ -39,12 +39,10 @@ class ColdMessage:
 class Message:
     value: MessageValue
     tool_name: str
-    show_user: bool = True
 
-    def __init__(self, value: MessageValue, show_user: bool = True):
+    def __init__(self, value: MessageValue):
         self.value = value
         self.tool_name = ""
-        self.show_user = show_user
 
     def get_type(self) -> MessageType:
         pass
@@ -61,7 +59,7 @@ class Message:
         """
         return stream_as_json({"type": self.get_type().value, "value": self.value})
 
-    def to_frontend(self) -> dict:
+    def to_frontend(self) -> list[dict]:
         return json.loads("".join(self.stream_to_frontend()))
 
     def freeze(self) -> ColdMessage:
@@ -71,7 +69,6 @@ class Message:
         return ColdMessage(
             type=self.get_type().value,
             tool_name=self.tool_name,
-            show_user=self.show_user,
             openai_messages=self.to_openai(),
             frontend_messages=self.to_frontend(),
         )
@@ -120,7 +117,8 @@ class AiProcessingMessage(Message):
     def __init__(self, summary: MessageValue, content: MessageValue, thoughts: MessageValue = None,
                  show_user: bool = True):
         self.thoughts = content if thoughts is None else thoughts
-        super().__init__({"summary": summary, "content": content}, show_user)
+        self.show_user = show_user
+        super().__init__({"summary": summary, "content": content})
 
     def get_type(self) -> MessageType:
         return MessageType.ai_processing_message
@@ -138,6 +136,12 @@ class AiProcessingMessage(Message):
                 "content": "".join(self.thoughts)
             }
         ]
+
+    def stream_to_frontend(self) -> Iterator[str]:
+        if self.show_user:
+            yield from super().stream_to_frontend()
+        else:
+            yield "[]"
 
 
 class ErrorMessage(Message):
@@ -159,7 +163,6 @@ def stream_messages(message_stream: Iterator[Message]) -> Iterator[str]:
     for i, message in enumerate(message_stream):
         if streamed_previous_message:
             yield ","
-        if message.show_user:
-            yield from message.stream_to_frontend()
-            streamed_previous_message = True
+        yield from message.stream_to_frontend()
+        streamed_previous_message = True
     yield "]"
