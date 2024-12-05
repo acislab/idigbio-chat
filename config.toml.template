@@ -13,9 +13,7 @@ SAFE_MODE = true
 SHOW_PROCESSING_MESSAGES = true
 
 [REDIS]
-HOST = "localhost"
-PORT = 0 # Set to 0 to set up a temporary Redis instance
-DATABASE_NUMBER = 2
+URI = "" # Leave empty to set up a temporary Redis instance. May contain environment variables.
 
 [KEYCLOAK]
 URL = "https://auth.acis.ufl.edu"

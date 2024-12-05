@@ -1,18 +1,16 @@
-from redis import Redis
+from expandvars import expandvars
 from flask import Flask
+from redis import Redis
+
 from storage.fake_redis import FakeRedis
-import os
 
 
 class FlaskRedis:
     inst: Redis
 
     def init_app(self, app: Flask):
-        if "REDIS" not in app.config or app.config["REDIS"]["PORT"] == 0:
+        if "REDIS" not in app.config or not app.config["REDIS"].get("URI"):
             self.inst = FakeRedis().redis
         else:
-            port = app.config["REDIS"]["PORT"]
-            host = app.config["REDIS"]["HOST"]
-            secret = os.getenv('REDIS_SECRET')
-            database_number = app.config["REDIS"]["DATABASE_NUMBER"]
-            self.inst = Redis(password=secret, host=host, port=port, database_number=2)
+            uri = expandvars(app.config["REDIS"]["URI"])
+            self.inst = Redis.from_url(uri)
