@@ -1,5 +1,3 @@
-import json
-from typing import Optional
 from uuid import uuid4
 
 import flask
@@ -8,8 +6,6 @@ from flask import request, Flask, current_app
 from keycloak import KeycloakOpenID
 from redis import Redis
 
-from chat.conversation import Conversation
-from chat.messages import ColdMessage
 from storage.database import DatabaseEngine
 
 
@@ -25,12 +21,10 @@ class UserMeta:
 
 class User:
     user_id: str
-    conversation: Conversation
     meta: UserMeta
 
-    def __init__(self, user_id: str, conversation: Conversation, user_meta: UserMeta):
+    def __init__(self, user_id: str, user_meta: UserMeta):
         self.user_id = user_id
-        self.conversation = conversation
         self.meta = user_meta
 
 
@@ -52,19 +46,6 @@ class UserData:
         self.kc = kc
         self.db = db
 
-    def get_temp_user_conversation_history(self, user_id: str) -> Conversation:
-        if flask.session.get("user"):
-            return Conversation(None, None)
-        else:
-            history_ptr = get_user_history_ptr(user_id)
-            raw_history = self.redis.lrange(history_ptr, 0, -1)
-
-            def record(message: ColdMessage, conversation_id: Optional[str]):
-                self.redis.rpush(history_ptr, message.stringify())
-
-            history = [ColdMessage(json.loads(message)) for message in raw_history]
-            return Conversation(history, record)
-
     def clear_temp_user_history(self, user_id: str):
         history_ptr = get_user_history_ptr(user_id)
         self.redis.delete(history_ptr)
@@ -81,17 +62,14 @@ class UserData:
                 return self.make_temp_user()
 
         user_id = flask.session["id"]
-        conversation = self.get_temp_user_conversation_history(user_id)
-        return User(user_id, conversation)
+        return User(user_id)
 
     def make_temp_user(self) -> User:
         user_id = "temp_" + str(uuid4())
         flask.session.permanent = True
         flask.session["id"] = user_id
 
-        conversation = self.get_temp_user_conversation_history(user_id)
-
-        user = User(user_id, conversation)
+        user = User(user_id)
         self.db.insert_user(user)
 
         return user

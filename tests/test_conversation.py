@@ -1,11 +1,11 @@
-from chat_test.messages import UserMessage
-from chat_test.conversation import Conversation
+from chat.conversation import Conversation
+from chat.messages import UserMessage
 
 
 def test_append():
     conv = Conversation()
     conv.append(UserMessage("Good morning"))
-    assert conv.conversation[0].read_all() == {
+    assert conv.history[0].read_all() == {
         'role_and_content': [{'content': 'Good morning', 'role': 'user'}],
         'show_user': True,
         'tool_name': '',

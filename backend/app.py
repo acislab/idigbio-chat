@@ -171,7 +171,7 @@ def requires_auth(f):
             )
 
             user_meta = read_user_token_payload(payload)
-            user = User(user_meta.name, None, user_meta)
+            user = User(user_meta.name, user_meta)
 
             return f(user=user, *args, **kwargs)
 
@@ -263,20 +263,20 @@ def chat_api(user: User, conversation_id: str):
 
 
 @plan.route("/chat", methods=["POST"])
-def chat_unprotected():
+@get_conversation_id
+def chat_unprotected(conversation_id: str):
     user_message = request.json["value"]
     user = user_data.get_temp_user()
     if user is None:
         if "not a robot" in user_message.lower():
             user = user_data.make_temp_user()
-            message_stream = chat.api.greet(ai, user.conversation, user_message)
+            conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id, AI())
+            message_stream = chat.api.greet(ai, conversation, user_message)
         else:
             message_stream = chat.api.are_you_a_robot()
-    elif user_message.lower() == "clear":
-        user_data.clear_temp_user_history(user.user_id)
-        message_stream = chat.api.greet(ai, user.conversation, "Hello!")
     else:
-        message_stream = chat.api.chat(ai, user.conversation, user_message)
+        conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id, AI())
+        message_stream = chat.api.chat(ai, conversation, user_message)
 
     if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
         message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
