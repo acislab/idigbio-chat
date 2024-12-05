@@ -21,7 +21,7 @@ class Tool:
     description: str
     output: DataType
 
-    def call(self, ai: AI, conversation=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+    def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
         """
         :param ai: An interface for using LLMs.
         :param conversation: Stores all user- and AI-generated messages.

@@ -6,13 +6,13 @@ from chat.tools.tool import Tool
 from chat.utils.json import stream_openai
 from nlp.ai import AI
 
-
 DESCRIPTION = """
 This tool is used to generate a relevant title for a conversation. 
 """
 
 PROMPT = """
-You are a conversation title generation agent. Your role is to analyze conversation histories and generate clear, descriptive titles that will help users find their conversations later.
+You are a conversation title generation agent. Your role is to analyze conversation histories and generate clear, 
+descriptive titles that will help users find their conversations later.
 The title is of type character varying(36).
 Key Responsibilities:
 
@@ -75,24 +75,27 @@ Examples of Poor Titles:
 "Help Needed"
 "Various Topics"
 
-Always ensure the title is something a user would recognize and associate with their conversation when scanning through a list of past chats. The title should immediately remind them of what was discussed and why the conversation was important.
+Always ensure the title is something a user would recognize and associate with their conversation when scanning 
+through a list of past chats. The title should immediately remind them of what was discussed and why the conversation 
+was important.
 Output Format:
 
 Provide only the generated title
 Do not include explanations or multiple options
 Do not prefix with "Title:" or similar labels
 
-Remember: Users will rely on these titles to find important conversations later, so accuracy and specificity are crucial. 
+Remember: Users will rely on these titles to find important conversations later, so accuracy and specificity are 
+crucial. 
 """
+
 
 class GenConversationTitle(Tool):
     name = 'gen_conversation_title'
     description = DESCRIPTION
 
-    def call(self, ai: AI, message):
-        result = _ask_llm_to_generate_title(ai, message)
+    def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
+        result = _ask_llm_to_generate_title(ai, request)
         yield result
-        
 
 
 def _ask_llm_to_generate_title(ai: AI, request: str):

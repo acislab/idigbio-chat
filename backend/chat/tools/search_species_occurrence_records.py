@@ -20,7 +20,7 @@ class SearchSpeciesOccurrenceRecords(Tool):
     description = DESCRIPTION
     output = DataType.species_occurrence_records
 
-    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        search = IDigBioRecordsSearch(ai, history, request)
+    def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
+        search = IDigBioRecordsSearch(ai, conversation, request)
         yield search.make_message()
-        yield present_results(ai, history, request, search.describe())
+        yield present_results(ai, conversation, request, search.describe())

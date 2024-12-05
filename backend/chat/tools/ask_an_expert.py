@@ -12,7 +12,7 @@ class AskAnExpert(Tool):
     description = "If none of the other tools satisfy the user's request, ask an expert for help."
     output = None
 
-    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+    def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
         """
         Asks the LLM to answer the user's prompt directly.
         """
@@ -21,4 +21,4 @@ class AskAnExpert(Tool):
             "Something went wrong. The system either failed to understand the user's request or is incapable of "
             "handling it.")
         yield AiProcessingMessage("Thinking...", result, show_user=False)
-        yield present_results(ai, history, request, result + "\n\nPlease apologize.")
+        yield present_results(ai, conversation, request, result + "\n\nPlease apologize.")

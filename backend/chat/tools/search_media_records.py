@@ -20,7 +20,7 @@ class SearchMediaRecords(Tool):
     description = DESCRIPTION
     output = DataType.species_media_records
 
-    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        search = IDigBioMediaSearch(ai, history, request)
+    def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
+        search = IDigBioMediaSearch(ai, conversation, request)
         yield search.make_message()
-        yield present_results(ai, history, request, search.describe())
+        yield present_results(ai, conversation, request, search.describe())

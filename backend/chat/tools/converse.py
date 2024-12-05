@@ -17,8 +17,8 @@ class Converse(Tool):
     description = DESCRIPTION
     output = None
 
-    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
-        yield _ask_llm_for_a_friendly_response(ai, history, request)
+    def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
+        yield _ask_llm_for_a_friendly_response(ai, conversation, request)
 
 
 CONVERSATIONAL_PROMPT = """
@@ -40,7 +40,5 @@ def _ask_llm_for_a_friendly_response(ai: AI, conversation: Conversation, request
         stream=True,
         messages=conversation.render_to_openai(system_message=CONVERSATIONAL_PROMPT, request=request)
     )
-    
 
     return AiChatMessage("".join(filter(None, stream_openai(result))))
-

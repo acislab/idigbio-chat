@@ -21,7 +21,7 @@ class DownloadSpeciesOccurrenceRecords(Tool):
     description = DESCRIPTION
     output = DataType.species_occurrence_records_download_email
 
-    def call(self, ai: AI, history=Conversation([]), request: str = None, state=None) -> Iterator[Message]:
+    def call(self, ai: AI, history: Conversation, request: str = None, state=None) -> Iterator[Message]:
         search = IDigBioRecordsDownload(ai, history, request)
         yield search.make_message()
 
