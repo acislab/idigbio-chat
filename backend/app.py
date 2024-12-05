@@ -170,8 +170,8 @@ def requires_auth(f):
                 issuer=f"{user_data.kc.connection.base_url}/realms/{user_data.kc.realm_name}"
             )
 
-            user_meta = read_user_token_payload(payload)
-            user = User(user_meta.name, user_meta)
+            user_id, user_meta = read_user_token_payload(payload)
+            user = User(user_id, user_meta)
 
             return f(user=user, *args, **kwargs)
 
@@ -184,14 +184,17 @@ def requires_auth(f):
     return decorated
 
 
-def read_user_token_payload(token_payload: dict) -> UserMeta:
-    return UserMeta(
-        name=token_payload.get('sub'),
-        username=token_payload.get('preferred_username'),
-        given_name=token_payload.get('preferred_username'),
-        family_name=token_payload.get('family_name'),
-        email=token_payload.get('email'),
-        roles=token_payload.get('realm_access', {}).get('roles', [])
+def read_user_token_payload(token_payload: dict) -> (str, UserMeta):
+    user_id = token_payload.get('sub')
+    return (
+        user_id,
+        UserMeta(
+            username=token_payload.get('preferred_username'),
+            given_name=token_payload.get('preferred_username'),
+            family_name=token_payload.get('family_name'),
+            email=token_payload.get('email'),
+            roles=token_payload.get('realm_access', {}).get('roles', [])
+        )
     )
 
 

@@ -11,7 +11,6 @@ from storage.database import DatabaseEngine
 
 @dataclass
 class UserMeta:
-    name: str
     username: str
     given_name: str
     family_name: str
