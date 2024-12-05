@@ -1,4 +1,4 @@
-instructor~=1.5.2
+instructor~=1.7.0
 openai~=1.56.2
 python-dotenv~=1.0.1
 requests~=2.32.3
@@ -12,7 +12,6 @@ tomli~=2.0.1
 redis~=5.1.0
 fakeredis~=2.25.1
 pytest~=8.3.3
-pytest-postgresql~=6.1.1
 python-keycloak~=4.7.3
 sqlalchemy~=2.0.36
 psycopg2~=2.9.10
