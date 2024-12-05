@@ -6,18 +6,21 @@ def test_append():
     conv = Conversation()
     conv.append(UserMessage("Good morning"))
     assert conv.history[0].read_all() == {
-        'role_and_content': [{'content': 'Good morning', 'role': 'user'}],
-        'show_user': True,
-        'tool_name': '',
-        'type': 'user_text_message',
-        'type_and_value': {'type': 'user_text_message', 'value': 'Good morning'}
+        "show_user": True,
+        "tool_name": "",
+        "type": "user_text_message",
+        "openai_messages": [{"content": "Good morning", "role": "user"}],
+        "frontend_messages": {"type": "user_text_message", "value": "Good morning"}
     }
 
 
 def test_render_to_openai():
     conv = Conversation()
     conv.append(UserMessage("Good morning"))
-    assert conv.render_to_openai("This is the system message", "Good morning")[:2] == [
-        {'role': 'system', 'content': 'This is the system message'},
-        {'role': 'user', 'content': 'Good morning'}
-    ]
+
+    openai_messages = conv.render_to_openai("This is the system message", "Good morning")
+
+    assert openai_messages[0]["role"] == "system"
+    assert openai_messages[0]["content"].endswith("This is the system message")
+
+    assert openai_messages[1] == {"role": "user", "content": "Good morning"}

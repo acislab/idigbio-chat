@@ -47,8 +47,8 @@ class Conversation:
         yield {"role": "system", "content": system_message}
 
         for message in self.history:
-            yield from message.read("role_and_content")
+            yield from message.read("openai_messages")
 
         if request is not None:
             atomized_request = UserMessage(f"First address the following request: {request}")
-            yield from atomized_request.to_role_and_content()
+            yield from atomized_request.to_openai()

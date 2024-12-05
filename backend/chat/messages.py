@@ -31,12 +31,9 @@ class ColdMessage:
 
     def read(self, key):
         return self.__raw[key]
-    
+
     def read_all(self):
         return {k: self.read(k) for k in self.__raw}
-
-    def stringify(self):
-        return json.dumps(self.__raw)
 
 
 class Message:
@@ -52,20 +49,20 @@ class Message:
     def get_type(self) -> MessageType:
         pass
 
-    def to_role_and_content(self) -> list[dict]:
+    def to_openai(self) -> list[dict]:
         """
         Render in OpenAI format.
         """
         pass
 
-    def stream_type_and_value(self) -> Iterator[str]:
+    def stream_to_frontend(self) -> Iterator[str]:
         """
         Stream to the frontend.
         """
         return stream_as_json({"type": self.get_type().value, "value": self.value})
 
-    def to_type_and_value(self) -> dict:
-        return json.loads("".join(self.stream_type_and_value()))
+    def to_frontend(self) -> dict:
+        return json.loads("".join(self.stream_to_frontend()))
 
     def freeze(self) -> ColdMessage:
         """
@@ -75,8 +72,8 @@ class Message:
             type=self.get_type().value,
             tool_name=self.tool_name,
             show_user=self.show_user,
-            role_and_content=self.to_role_and_content(),
-            type_and_value=self.to_type_and_value(),
+            openai_messages=self.to_openai(),
+            frontend_messages=self.to_frontend(),
         )
 
 
@@ -84,7 +81,7 @@ class UserMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.user_text_message
 
-    def to_role_and_content(self) -> list[dict]:
+    def to_openai(self) -> list[dict]:
         return [
             {
                 "role": "user",
@@ -97,7 +94,7 @@ class AiChatMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.ai_text_message
 
-    def to_role_and_content(self) -> list[dict]:
+    def to_openai(self) -> list[dict]:
         return [
             {
                 "role": "assistant",
@@ -110,7 +107,7 @@ class AiMapMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.ai_map_message
 
-    def to_role_and_content(self) -> list[dict]:
+    def to_openai(self) -> list[dict]:
         return [
             {
                 "role": "assistant",
@@ -128,7 +125,7 @@ class AiProcessingMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.ai_processing_message
 
-    def to_role_and_content(self) -> list[dict]:
+    def to_openai(self) -> list[dict]:
         return [
             {
                 "role": "function",
@@ -147,7 +144,7 @@ class ErrorMessage(Message):
     def get_type(self) -> MessageType:
         return MessageType.error
 
-    def to_role_and_content(self) -> list[dict]:
+    def to_openai(self) -> list[dict]:
         return [
             {
                 "role": "error",
@@ -163,6 +160,6 @@ def stream_messages(message_stream: Iterator[Message]) -> Iterator[str]:
         if streamed_previous_message:
             yield ","
         if message.show_user:
-            yield from message.stream_type_and_value()
+            yield from message.stream_to_frontend()
             streamed_previous_message = True
     yield "]"

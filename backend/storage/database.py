@@ -38,11 +38,11 @@ messages = Table(
     'messages', metadata,
     Column('id', String(36), primary_key=True),
     Column('conversation_id', String(36), ForeignKey('conversations.id'), nullable=False),
-    Column('type', String, nullable=False),
-    Column('value', JSON, nullable=False),
+    Column('type', String, primary_key=True),
+    Column('tool_name', String, primary_key=True),
+    Column('frontend_messages', JSON, nullable=False),
+    Column('openai_messages', JSON, nullable=False),
     Column('created', DateTime, default=func.now()),
-    Column('tool', String, nullable=False),
-    Column('role_and_content', JSON, nullable=False),
 )
 
 
@@ -102,14 +102,13 @@ class DatabaseEngine:
         return self.user_exists(data['id'])
 
     def write_message_to_storage(self, cold_message: ColdMessage, conversation_id: str):
-        cold_message_dict = cold_message.read_all()
         new_message = {
             "id": str(uuid4()),
             "conversation_id": conversation_id,
-            "type": cold_message_dict['type'],
-            "value": cold_message_dict['type_and_value']['value'],
-            "tool": cold_message_dict['tool_name'],
-            "role_and_content": cold_message_dict['role_and_content']
+            "type": cold_message.read("type"),
+            "tool_name": cold_message.read("tool_name"),
+            "frontend_messages": cold_message.read("frontend_messages"),
+            "openai_messages": cold_message.read("openai_messages")
         }
 
         with self.engine.connect() as conn:
@@ -131,14 +130,10 @@ class DatabaseEngine:
             for message in conversation_messages:
                 message_dict = dict(message._mapping)
                 cold_messages.append(ColdMessage(
-                    type=message_dict['type'],
-                    tool_name=message_dict['tool'],
-                    show_user="",
-                    role_and_content=message_dict['role_and_content'],
-                    type_and_value={
-                        'type': message_dict['type'],
-                        'value': message_dict['value']
-                    }
+                    type=message_dict["type"],
+                    tool_name=message_dict["tool_name"],
+                    openai_messages=message_dict["openai_messages"],
+                    frontend_messages=message_dict["frontend_messages"]
                 ))
         conversation = Conversation(
             history=cold_messages,

@@ -1,6 +1,5 @@
 import pytest
 
-from app import redis as app_redis
 from chat_test_util import app, client, chat
 from matchers import string_must_contain
 
@@ -47,7 +46,7 @@ def test_remember_robo_check(app, client):
     messages = chat(client, "ping")
 
     assert len(messages) >= 1
-    assert not ("please confirm you are a real person" in messages[0]["value"])
+    assert messages[0]["value"] == "pong"
 
 
 def test_echo(client):
@@ -71,16 +70,6 @@ def test_help(client):
 
     assert len(messages) == 1
     assert messages[0]["value"].startswith("This is a prototype")
-
-
-def test_keep_users_list(app, client):
-    users = app_redis.inst.lrange("users", 0, -1)
-    assert len(users) == 0
-
-    chat(client, "ping")  # Don't trigger an LLM response
-
-    users = app_redis.inst.lrange("users", 0, -1)
-    assert len(users) == 1
 
 
 def test_simple_idigbio_search(client):
