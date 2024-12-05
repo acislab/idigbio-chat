@@ -1,5 +1,5 @@
 import json
-from typing import Iterable
+from typing import Iterable, Optional
 
 import pytest
 import sqlalchemy
@@ -39,10 +39,14 @@ def client(app):
         yield c
 
 
-def chat(client, message) -> list[dict]:
+def chat(client, message, conversation_id: Optional[str] = None) -> list[dict]:
+    if not conversation_id:
+        conversation_id = "7141b7e1-d5f6-40c1-b032-118aece4e708"
+
     wrapped_response: Iterable[bytes] = client.post('/chat', json={
         "type": "user_text_message",
-        "value": message
+        "value": message,
+        "conversation_id": conversation_id
     }).response
 
     return parse_response_stream(wrapped_response)
