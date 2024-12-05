@@ -106,7 +106,7 @@ def get_conversation_id(f):
 
         conversation_id = request.json.get("conversation_id")
         if not conversation_id:
-            conversation_id = uuid4()
+            conversation_id = str(uuid4())
 
         return f(*args, conversation_id=conversation_id, **kwargs)
 
