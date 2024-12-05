@@ -1,6 +1,6 @@
 import sqlalchemy as alchemy
 from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, DateTime, \
-    func, JSON, insert, text, desc
+    func, JSON, insert, text, desc, Boolean
 
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
@@ -15,12 +15,7 @@ users = Table(
     Column('given_name', String, nullable=False),
     Column('family_name', String, nullable=False),
     Column('email', String, nullable=False),
-    Column('created', DateTime, default=func.now()),
-)
-
-temp_users = Table(
-    "temp_users", metadata,
-    Column('id', String(41), primary_key=True),
+    Column('temp', Boolean, default=False),
     Column('created', DateTime, default=func.now()),
 )
 
@@ -36,8 +31,8 @@ messages = Table(
     'messages', metadata,
     Column('id', String(36), primary_key=True),
     Column('conversation_id', String(36), ForeignKey('conversations.id'), nullable=False),
-    Column('type', String, primary_key=True),
-    Column('tool_name', String, primary_key=True),
+    Column('type', String(32), primary_key=True),
+    Column('tool', String(32), primary_key=True),
     Column('frontend_messages', JSON, nullable=False),
     Column('openai_messages', JSON, nullable=False),
     Column('created', DateTime, default=func.now()),
@@ -52,17 +47,24 @@ class DatabaseEngine:
         # metadata.drop_all(self.engine)
         metadata.create_all(self.engine)
 
-    def is_temp_user(self, user_id):
-        return user_id.startswith("temp")
-
     def user_exists(self, user_id: str):
-        table = temp_users if self.is_temp_user(user_id) else users
-
         with self.engine.connect() as conn:
             query = text(f"""
                         SELECT 1
-                        FROM {table}
-                        WHERE id = :user_id
+                        FROM users
+                        WHERE id = :user_id AND NOT temp
+                        LIMIT 1;
+                    """)
+            result = conn.execute(query, {"user_id": user_id}).fetchall()
+
+            return len(result) == 1
+
+    def temp_user_exists(self, user_id: str):
+        with self.engine.connect() as conn:
+            query = text(f"""
+                        SELECT 1
+                        FROM users
+                        WHERE id = :user_id AND temp
                         LIMIT 1;
                     """)
             result = conn.execute(query, {"user_id": user_id}).fetchall()
@@ -70,12 +72,10 @@ class DatabaseEngine:
             return len(result) == 1
 
     def get_user(self, user_id: str):
-        table = temp_users if self.is_temp_user(user_id) else users
-
         with self.engine.connect() as conn:
             query = text(f"""
                         SELECT *
-                        FROM {table}
+                        FROM users
                         WHERE user_id = :user_id;
                     """)
             result = conn.execute(query, {"user_id": user_id})
@@ -83,15 +83,10 @@ class DatabaseEngine:
             return result.fetchall()
 
     def insert_user(self, data: dict):
-        if self.is_temp_user(data["id"]):
-            table = temp_users
-        else:
-            table = users
-
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
-                result = conn.execute(insert(table).values(data))
+                conn.execute(insert(users).values(data))
                 trans.commit()
             except Exception as e:
                 trans.rollback()
@@ -104,7 +99,7 @@ class DatabaseEngine:
             "id": cold_message.read("message_id"),
             "conversation_id": conversation_id,
             "type": cold_message.read("type"),
-            "tool_name": cold_message.read("tool_name"),
+            "tool": cold_message.read("tool_name"),
             "frontend_messages": cold_message.read("frontend_messages"),
             "openai_messages": cold_message.read("openai_messages")
         }
@@ -130,7 +125,7 @@ class DatabaseEngine:
                 cold_messages.append(ColdMessage(
                     id=message_dict["id"],
                     type=message_dict["type"],
-                    tool_name=message_dict["tool_name"],
+                    tool_name=message_dict["tool"],
                     openai_messages=message_dict["openai_messages"],
                     frontend_messages=message_dict["frontend_messages"]
                 ))

@@ -6,7 +6,7 @@ def test_append():
     conv = Conversation()
     conv.append(UserMessage("Good morning"))
     assert conv.history[0].read_all() == {
-        "tool_name": "",
+        "tool": "",
         "type": "user_text_message",
         "openai_messages": [{"content": "Good morning", "role": "user"}],
         "frontend_messages": {"type": "user_text_message", "value": "Good morning"}

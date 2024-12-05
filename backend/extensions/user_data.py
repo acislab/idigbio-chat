@@ -75,7 +75,8 @@ class UserData:
 
         user = User(user_id, empty_user_meta)
         self.db.insert_user({
-            "id": user_id
+            "id": user_id,
+            "temp": True
         })
 
         return user
