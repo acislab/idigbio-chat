@@ -19,11 +19,11 @@ import chat
 import search.api
 import search.demo
 from chat.messages import AiProcessingMessage, stream_messages
+from extensions.flask_redis import FlaskRedis
+from extensions.user_data import UserData, UserMeta, User
 from flask_session import Session
 from nlp.ai import AI
 from storage.database import DatabaseEngine
-from extensions.flask_redis import FlaskRedis
-from extensions.user_data import UserData, UserMeta, User
 
 plan = Blueprint("blueprint", __name__)
 
@@ -32,8 +32,7 @@ user_data = UserData()
 ai = AI()
 
 
-def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = None,
-               database_url=""):
+def create_app(config_dict: Optional[dict], database: DatabaseEngine):
     app = Flask(__name__, template_folder="templates")
     app.register_blueprint(plan)
 
@@ -53,11 +52,6 @@ def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = 
     }
     app.config.update(defaults)
 
-    if config_file:
-        with open(config_file, "rb") as f:
-            config_file_content = tomli.load(f, )
-            app.config = deep_update(app.config, config_file_content)
-
     if config_dict:
         app.config = deep_update(app.config, config_dict)
 
@@ -74,13 +68,7 @@ def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = 
 
     redis.init_app(app)
 
-    if not database_url:
-        raise RuntimeError("No SQL database URL specified")
-
-    engine = create_engine(database_url, echo=True)
-    db = DatabaseEngine(engine)
-
-    user_data.init_app(app, kc, db)
+    user_data.init_app(app, kc, database)
 
     CORS(app, supports_credentials=True)
     Session(app)
@@ -251,9 +239,16 @@ def chat_api(user: User, conversation_id: str):
         return jsonify({'message': 'User must be authenticated to access this endpoint.'}), 401
     else:
         if not user_data.db.user_exists(user.user_id):
-            user_data.db.insert_user(user)
+            user_data.db.insert_user({
+                "id": user.meta['user_id'],
+                "name": user.meta['name'],
+                "preferred_username": user.meta['preferred_username'],
+                "given_name": user.meta['given_name'],
+                "family_name": user.meta['family_name'],
+                "email": user.meta['email']
+            })
 
-        conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id, ai)
+        conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id)
 
         message_stream = chat.api.chat(ai, conversation, user_message)
 
@@ -273,12 +268,12 @@ def chat_unprotected(conversation_id: str):
     if user is None:
         if "not a robot" in user_message.lower():
             user = user_data.make_temp_user()
-            conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id, AI())
+            conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id)
             message_stream = chat.api.greet(ai, conversation, user_message)
         else:
             message_stream = chat.api.are_you_a_robot()
     else:
-        conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id, AI())
+        conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id)
         message_stream = chat.api.chat(ai, conversation, user_message)
 
     if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
@@ -405,8 +400,14 @@ def get_conversation(user: User, conversation_id: str):
 if __name__ == '__main__':
     load_dotenv()
 
+    with open("../config.toml", "rb") as f:
+        config = tomli.load(f)
+
     database_url = (f"postgresql://{os.getenv('PG_USER')}:{os.getenv('PG_PASS')}@{os.getenv('PG_HOST')}:"
                     f"{os.getenv('PG_PORT')}/{os.getenv('PG_DB')}?sslmode=disable")
 
-    app = create_app("../config.toml", database_url=database_url)
+    engine = create_engine(database_url, echo=True)
+    db = DatabaseEngine(engine)
+
+    app = create_app(config, database=db)
     app.run(debug=True, port=app.config["PORT"], host=app.config["HOST"])  # , ssl_context='adhoc'
