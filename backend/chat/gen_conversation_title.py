@@ -94,26 +94,14 @@ class GenConversationTitle():
     description = DESCRIPTION
 
     def call(self, ai: AI, conversation: Conversation, request: str, state: dict) -> Iterator[Message]:
-        result = _ask_llm_to_generate_title(ai, request)
+        result = _ask_llm_to_generate_title(ai, conversation)
         yield result
 
 
-def _ask_llm_to_generate_title(ai: AI, request: str):
-    print('AI')
-    print(ai)
-    print(request)
+def _ask_llm_to_generate_title(ai: AI, conversation: Conversation):
     result = ai.openai.chat.completions.create(
         model="gpt-4o",
         temperature=1,
-        messages=[
-            {
-                "role": "system",
-                "content": PROMPT
-            },
-            {
-                "role": "user",
-                "content": request
-            }
-        ]
+        messages=conversation.render_to_openai(PROMPT)
     )
     return result.choices[0].message.content

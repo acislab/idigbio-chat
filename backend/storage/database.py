@@ -205,12 +205,9 @@ class DatabaseEngine:
                 trans.rollback()
                 print("Error inserting conversation:", e)
 
-    def get_or_create_conversation(self, conversation_id: str, user_id: str, ai: AI,
-                                   user_message: str = None, ) -> Conversation:
+    def get_or_create_conversation(self, conversation_id: str, user_id: str) -> Conversation:
         if not self.conversation_history_exists(conversation_id):
-            title = _ask_llm_to_generate_title(ai=ai, request=user_message)
-
-            self.create_conversation_history(conversation_id, user_id, title)
+            self.create_conversation_history(conversation_id, user_id, "New Chat")
         return self.get_conversation_history(conversation_id)
 
     def get_user_conversations(self, user_id: str) -> list[str]:
