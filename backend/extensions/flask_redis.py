@@ -11,6 +11,8 @@ class FlaskRedis:
     def init_app(self, app: Flask):
         if "REDIS" not in app.config or not app.config["REDIS"].get("URI"):
             self.inst = FakeRedis().redis
+            print("Using temporary Redis instance")
         else:
             uri = expandvars(app.config["REDIS"]["URI"])
+            print(f"Connecting to Redis: {uri}")
             self.inst = Redis.from_url(uri)
