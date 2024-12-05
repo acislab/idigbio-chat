@@ -72,8 +72,6 @@ def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = 
     else:
         kc = None
 
-    CORS(app, supports_credentials=True)
-    Session(app)
     redis.init_app(app)
 
     if database_url:
@@ -83,6 +81,9 @@ def create_app(config_file: Optional[str] = None, config_dict: Optional[dict] = 
         db = None
 
     user_data.init_app(app, redis.inst, kc, db)
+
+    CORS(app, supports_credentials=True)
+    Session(app)
 
     return app
 

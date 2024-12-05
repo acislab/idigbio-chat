@@ -17,4 +17,6 @@ class FlaskRedis:
             print(f"Connecting to Redis: {uri}")
             self.inst = Redis.from_url(uri)
 
+        app.config["SESSION_REDIS"] = self.inst
+
         self.inst.ping()
