@@ -22,6 +22,12 @@ users = Table(
     Column('created', DateTime, default=func.now()),
 )
 
+temp_users = Table(
+    "temp_users", metadata,
+    Column('id', String(41), primary_key=True),
+    Column('created', DateTime, default=func.now()),
+)
+
 conversations = Table(
     'conversations', metadata,
     Column('id', String(36), primary_key=True),
@@ -50,25 +56,30 @@ class DatabaseEngine:
         # metadata.drop_all(self.engine)
         metadata.create_all(self.engine)
 
+    def is_temp_user(self, user_id):
+        return user_id.startswith("temp")
+
     def user_exists(self, user_id: str):
+        table = temp_users if self.is_temp_user(user_id) else users
+
         with self.engine.connect() as conn:
-            query = text("""
+            query = text(f"""
                         SELECT 1
-                        FROM users
+                        FROM {table}
                         WHERE id = :user_id
                         LIMIT 1;
                     """)
             result = conn.execute(query, {"user_id": user_id}).fetchall()
 
-            if len(result) == 1:
-                return True
-            return False
+            return len(result) == 1
 
     def get_user(self, user_id: str):
+        table = temp_users if self.is_temp_user(user_id) else users
+
         with self.engine.connect() as conn:
-            query = text("""
+            query = text(f"""
                         SELECT *
-                        FROM users
+                        FROM {table}
                         WHERE user_id = :user_id;
                     """)
             result = conn.execute(query, {"user_id": user_id})
@@ -76,23 +87,30 @@ class DatabaseEngine:
             return result.fetchall()
 
     def insert_user(self, user):
-        new_user = {
-            "id": user['id'],
-            "name": user['name'],
-            "preferred_username": user['preferred_username'],
-            "given_name": user['given_name'],
-            "family_name": user['family_name'],
-            "email": user['email']
-        }
+        if self.is_temp_user(user["id"]):
+            table = temp_users
+            new_user = {
+                "id": user['id']
+            }
+        else:
+            table = users
+            new_user = {
+                "id": user['id'],
+                "name": user['name'],
+                "preferred_username": user['preferred_username'],
+                "given_name": user['given_name'],
+                "family_name": user['family_name'],
+                "email": user['email']
+            }
 
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
-                result = conn.execute(insert(users).values(new_user))
+                result = conn.execute(insert(table).values(new_user))
                 trans.commit()
             except Exception as e:
                 trans.rollback()
-                print("Error inserting user:", e)
+                print(f"Error inserting user {user['id']}:", e)
 
         return self.user_exists(user['id'])
 
