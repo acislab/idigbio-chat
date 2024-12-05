@@ -14,9 +14,9 @@ def are_you_a_robot() -> Iterator[Message]:
     yield AiChatMessage("Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
 
 
-def greet(ai: AI, conversation: Conversation, user_text_message: str) -> Iterator[Message]:
-    conversation.append(UserMessage(user_text_message))
-    return _respond_conversationally(ai, conversation)
+def greet(ai: AI, conversation: Conversation, user_message: str) -> Iterator[Message]:
+    conversation.append(UserMessage(user_message))
+    return _respond_conversationally(ai, conversation, user_message)
 
 
 def chat(ai: AI, conversation: Conversation, user_text_message: str) -> Iterator[Message]:
