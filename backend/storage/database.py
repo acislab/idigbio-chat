@@ -10,11 +10,11 @@ metadata = MetaData()
 users = Table(
     'users', metadata,
     Column('id', String(36), primary_key=True),
-    Column('name', String, nullable=False),
-    Column('preferred_username', String, nullable=False),
-    Column('given_name', String, nullable=False),
-    Column('family_name', String, nullable=False),
-    Column('email', String, nullable=False),
+    Column('name', String, nullable=True),
+    Column('preferred_username', String, nullable=True),
+    Column('given_name', String, nullable=True),
+    Column('family_name', String, nullable=True),
+    Column('email', String, nullable=True),
     Column('temp', Boolean, default=False),
     Column('created', DateTime, default=func.now()),
 )
