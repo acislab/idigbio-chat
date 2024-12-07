@@ -36,21 +36,9 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
     app = Flask(__name__, template_folder="templates")
     app.register_blueprint(plan)
 
-    defaults = {
-        "HOST": "0.0.0.0",
-        "PORT": 8989,
-        "PERMANENT_SESSION_LIFETIME": 2678400,  # In seconds. 2678400 seconds = 31 days.
-        "SESSION_COOKIE_SAMESITE": "Lax",
-        "SESSION_COOKIE_SECURE": True,
-        "SESSION_PERMANENT": False,
-        "SESSION_REFRESH_EACH_REQUEST": True,
-        "SESSION_TYPE": "redis",
-        "CHAT": {
-            "SAFE_MODE": True,
-            "SHOW_PROCESSING_MESSAGES": True
-        },
-    }
-    app.config.update(defaults)
+    with open("../config.toml.template", "rb") as f:
+        defaults = tomli.load(f)
+        app.config.update(defaults)
 
     if config_dict:
         app.config = deep_update(app.config, config_dict)
