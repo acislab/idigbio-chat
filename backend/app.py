@@ -25,16 +25,21 @@ from flask_session import Session
 from nlp.ai import AI
 from storage.database import DatabaseEngine
 
-plan = Blueprint("blueprint", __name__)
-
 redis = FlaskRedis()
 user_data = UserData()
 ai = AI()
+
+plan = Blueprint("blueprint", __name__)
+
+
+def handle_error(e: Exception):
+    return jsonify(message="Something went wrong.", error=str(e)), 500
 
 
 def create_app(config_dict: Optional[dict], database: DatabaseEngine):
     app = Flask(__name__, template_folder="templates")
     app.register_blueprint(plan)
+    app.register_error_handler(Exception, handle_error)
 
     with open("../config.toml.template", "rb") as f:
         defaults = tomli.load(f)
@@ -300,26 +305,19 @@ def textbox_demo():
 
 @plan.route("/api/login", methods=["POST"])
 def login():
-    try:
-        auth_code = request.json.get("code")
-        userinfo = user_data.login(auth_code)
+    auth_code = request.json.get("code")
+    userinfo = user_data.login(auth_code)
 
-        return jsonify({
-            "message": "Login Successful.",
-            "user": userinfo
-        })
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    return jsonify({
+        "message": "Login Successful.",
+        "user": userinfo
+    })
 
 
 @plan.route("/api/logout", methods=["POST"])
 def logout():
-    try:
-        user_data.logout()
-        return jsonify({"message": "Logged out successfully"})
-    except Exception as e:
-        return jsonify({"error": str(e)})
+    user_data.logout()
+    return jsonify({"message": "Logged out successfully"})
 
 
 @plan.route("/api/user", methods=["POST"])
@@ -329,53 +327,42 @@ def get_user():
 
 @plan.route("/api/refresh-token", methods=["POST"])
 def refresh_token():
-    try:
-        token = session.get("token", {}).get("refresh_token")
-        if not token:
-            return jsonify({"error": "No refresh token found"}), 401
+    token = session.get("token", {}).get("refresh_token")
+    if not token:
+        return jsonify({"error": "No refresh token found"}), 401
 
-        token = user_data.kc.refresh_token(token)
-        session["token"] = token
+    token = user_data.kc.refresh_token(token)
+    session["token"] = token
 
-        return jsonify({
-            "message": "Token Refreshed.",
-            "token": token
-        })
-    except Exception as e:
-        return jsonify({"error": str(e)}), 400
+    return jsonify({
+        "message": "Token Refreshed.",
+        "token": token
+    })
 
 
 @plan.route("/api/conversations", methods=["POST"])
 @requires_auth
 def get_conversations(user: User):
-    try:
-        user_conversations = user_data.db.get_user_conversations(user.user_id)
-        return jsonify({
-            "user": user.user_id,
-            "history": user_conversations
-        })
-    except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 400
+    user_conversations = user_data.db.get_user_conversations(user.user_id)
+    return jsonify({
+        "user": user.user_id,
+        "history": user_conversations
+    })
 
 
 @plan.route("/api/get-conversation", methods=["POST"])
 @requires_auth
 @get_conversation_id
 def get_conversation(user: User, conversation_id: str):
-    try:
-        if not conversation_id:
-            return jsonify({"error": "Invalid conversation id"}), 400
+    if not conversation_id:
+        return jsonify({"error": "Invalid conversation id"}), 400
 
-        conversation = user_data.db.get_conversation_messages(conversation_id)
+    conversation = user_data.db.get_conversation_messages(conversation_id)
 
-        return jsonify({
-            "user": user.user_id,
-            "history": conversation
-        })
-    except Exception as e:
-        print(e)
-        return jsonify({"error": str(e)}), 400
+    return jsonify({
+        "user": user.user_id,
+        "history": conversation
+    })
 
 
 if __name__ == "__main__":

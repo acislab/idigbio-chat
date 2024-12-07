@@ -4,6 +4,15 @@ from chat_test_util import app, client, chat
 from matchers import string_must_contain
 
 
+def test_error_handler(app, client):
+    result = client.post('/chat-protected', json={
+        "type": "user_text_message",
+        "value": "LET ME IN!!!"
+    })
+
+    assert result.status_code == 500
+
+
 @pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": True}}}], indirect=True)
 def test_robo_check(app, client):
     messages = chat(client, "ping")
