@@ -227,14 +227,7 @@ def chat_api(user: User, conversation_id: str):
         return jsonify({"message": "User must be authenticated to access this endpoint."}), 401
     else:
         if not user_data.db.user_exists(user.user_id):
-            user_data.db.insert_user({
-                "id": user.meta['user_id'],
-                "name": user.meta['name'],
-                "preferred_username": user.meta['preferred_username'],
-                "given_name": user.meta['given_name'],
-                "family_name": user.meta['family_name'],
-                "email": user.meta['email']
-            })
+            return jsonify({"message": "Something went wrong. Try logging in again."}), 500
 
         conversation = user_data.db.get_or_create_conversation(conversation_id, user.user_id)
 
