@@ -20,7 +20,7 @@ import search.api
 import search.demo
 from chat.messages import AiProcessingMessage, stream_messages
 from extensions.flask_redis import FlaskRedis
-from extensions.user_auth import UserAuth
+from extensions.user_auth import UserAuth, AuthenticationError
 from extensions.user_data import UserData, UserMeta, User
 from flask_session import Session
 from nlp.ai import AI
@@ -50,20 +50,8 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
     if config_dict:
         app.config = deep_update(app.config, config_dict)
 
-    if "KEYCLOAK" in app.config:
-        kc_config = app.config["KEYCLOAK"]
-        kc = KeycloakOpenID(
-            server_url=kc_config["URL"],
-            client_id=kc_config["CLIENT_ID"],
-            realm_name=kc_config["REALM_NAME"],
-            client_secret_key=os.getenv("KC_SECRET"),
-        )
-    else:
-        kc = None
-
     redis.init_app(app)
-
-    user_auth.init_app(app, kc)
+    user_auth.init_app(app)
     user_data.init_app(app, database)
 
     CORS(app, supports_credentials=True)
@@ -72,38 +60,13 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
     return app
 
 
-def login_required(f):
-    @wraps(f)
-    def decorated_function(*args, **kwargs):
-        if "user" not in session:
-            return jsonify({"error": "Unauthorized"}), 401
-        return f(*args, **kwargs)
-
-    return decorated_function
-
-
 def get_conversation_id(f):
     @wraps(f)
     def wrapper(*args, **kwargs):
-        # Is conversation_id ever an empty string? If not, we can just do:
-        #  conversation_id = request.json.get("conversation_id", uuid4())
-
-        conversation_id = request.json.get("conversation_id")
-        if not conversation_id:
-            conversation_id = str(uuid4())
-
+        conversation_id = request.json.get("conversation_id", str(uuid4()))
         return f(*args, conversation_id=conversation_id, **kwargs)
 
     return wrapper
-
-
-def get_public_key():
-    url, realm = current_app.config["KEYCLOAK"]["URL"], current_app.config["KEYCLOAK"]["REALM_NAME"]
-    key_url = f"{url}/realms/{realm}/protocol/openid-connect/certs"
-    response = requests.get(key_url)
-    keys = response.json()
-    # Return the complete key set - python-jose will handle key selection
-    return keys
 
 
 def requires_auth(f):
@@ -111,75 +74,17 @@ def requires_auth(f):
     def decorated(*args, **kwargs):
         auth_header = request.headers.get("Authorization", None)
         if not auth_header:
-            # restrict endpoints
-            # return jsonify({"message": "No authorization header"}), 401
-            return f(user={}, *args, **kwargs)
+            return f(user=None, *args, **kwargs)
+
         try:
             token = auth_header.split(" ")[1]
-
-            # Debugging
-            # unverified_claims = jwt.get_unverified_claims(token)
-            # expected_issuer = f"{KEYCLOAK_URL}/realms/{REALM_NAME}"
-            # actual_issuer = unverified_claims.get("iss")
-            # print(f"Expected issuer: {expected_issuer}")
-            # print(f"Actual issuer: {actual_issuer}")
-
-            # Get the unverified headers to find the key ID
-            headers = jwt.get_unverified_headers(token)
-            kid = headers.get("kid")
-
-            # Get the full JWKS
-            jwks = get_public_key()
-
-            # Find the matching key in the JWKS
-            rsa_key = {}
-            for key in jwks["keys"]:
-                if key["kid"] == kid:
-                    rsa_key = {
-                        "kty": key["kty"],
-                        "kid": key["kid"],
-                        "n": key["n"],
-                        "e": key["e"]
-                    }
-                    break
-
-            if not rsa_key:
-                return jsonify({"message": "Unable to find appropriate key"}), 401
-
-            user_id, user_meta = read_user_token(token, rsa_key)
-            user = User(user_id, user_meta)
-
+            user = user_auth.authenticate(token)
             return f(user=user, *args, **kwargs)
-
-        except jose.ExpiredSignatureError:
-            return jsonify({"message": "Token has expired"}), 401
-        except jose.JWTError as e:
-            print(f"JWT Error: {str(e)}")
-            return jsonify({"message": "Invalid token"}), 401
+        except AuthenticationError as e:
+            print(e)
+            return f(user=None, *args, **kwargs)
 
     return decorated
-
-
-def read_user_token(token, rsa_key) -> (str, UserMeta):
-    payload = jwt.decode(
-        token,
-        rsa_key,
-        algorithms=["RS256"],
-        options={"verify_aud": False},
-        issuer=user_auth.token_issuer
-    )
-
-    user_id = payload.get("sub")
-    return (
-        user_id,
-        UserMeta(
-            username=payload.get("preferred_username"),
-            given_name=payload.get("preferred_username"),
-            family_name=payload.get("family_name"),
-            email=payload.get("email"),
-            roles=payload.get("realm_access", {}).get("roles", [])
-        )
-    )
 
 
 @plan.route("/", methods=["GET"])
@@ -307,7 +212,7 @@ def login():
     user_data.register_user(userinfo)
 
     return jsonify({
-        "message": "Login Successful.",
+        "message": "Success",
         "user": userinfo
     })
 
@@ -316,7 +221,7 @@ def login():
 def logout():
     session.clear()
     user_auth.logout()
-    return jsonify({"message": "Logged out successfully"})
+    return jsonify({"message": "Success"})
 
 
 @plan.route("/api/user", methods=["POST"])
@@ -342,6 +247,9 @@ def refresh_token():
 @plan.route("/api/conversations", methods=["POST"])
 @requires_auth
 def get_conversations(user: User):
+    if not user:
+        return jsonify(error="Unauthorized"), 401
+
     user_conversations = user_data.get_user_conversations(user.user_id)
     return jsonify({
         "user": user.user_id,
@@ -353,8 +261,11 @@ def get_conversations(user: User):
 @requires_auth
 @get_conversation_id
 def get_conversation(user: User, conversation_id: str):
+    if not user:
+        return jsonify(error="Unauthorized"), 401
+
     if not conversation_id:
-        return jsonify({"error": "Invalid conversation id"}), 400
+        return jsonify(error="Invalid conversation id"), 400
 
     conversation = list(user_data.stream_conversation_for_frontend(conversation_id))
 
