@@ -15,7 +15,6 @@ from storage.database import DatabaseEngine
 def app(request):
     test_config = {
         "CHAT": {
-            "SHOW_PROCESSING_MESSAGES": True,
             "SAFE_MODE": False,
         },
     }
