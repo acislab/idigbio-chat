@@ -102,6 +102,9 @@ class UserData:
         flask.session.pop("session_key", None)
         self.kc.logout(refresh_token=None)
 
+    def stream_conversation_for_frontend(self, conversation_id: str):
+        return self.db.stream_conversation_for_frontend(conversation_id)
+
 # class UserEntity(db.Model):
 #     __tablename__ = 'user_entity'
 #     id = db.Column(db.String, primary_key=True)  # Assuming it's a string ID from Keycloak

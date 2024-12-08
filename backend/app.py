@@ -357,7 +357,7 @@ def get_conversation(user: User, conversation_id: str):
     if not conversation_id:
         return jsonify({"error": "Invalid conversation id"}), 400
 
-    conversation = user_data.db.get_conversation_messages(conversation_id)
+    conversation = list(user_data.stream_conversation_for_frontend(conversation_id))
 
     return jsonify({
         "user": user.user_id,
