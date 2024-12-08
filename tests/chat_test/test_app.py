@@ -1,16 +1,26 @@
 import pytest
 
+from chat.api import HELP_MESSAGE
 from chat_test_util import app, client, chat
 from matchers import string_must_contain
 
 
 def test_error_handler(app, client):
-    result = client.post('/chat-protected', json={
+    result = client.post("/chat", json={
+        "type": "haha this isnt real",
+        "value": "got you"
+    })
+
+    assert result.status_code == 500
+
+
+def test_unauthorized(app, client):
+    result = client.post("/chat-protected", json={
         "type": "user_text_message",
         "value": "LET ME IN!!!"
     })
 
-    assert result.status_code == 500
+    assert result.status_code == 401
 
 
 @pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": True}}}], indirect=True)
@@ -29,6 +39,14 @@ def test_not_a_robot(app, client):
     assert len(messages) == 1
     assert messages[0]["type"] == "ai_text_message"
     assert not ("please confirm you are a real person" in messages[0]["value"])
+
+
+def test_intro(client):
+    messages = chat(client, "")
+
+    assert len(messages) == 1
+    assert messages[0]["type"] == "ai_text_message"
+    assert messages[0]["value"] == HELP_MESSAGE
 
 
 @pytest.mark.parametrize("app", [{"config_overrides": {"CHAT": {"SAFE_MODE": False}}}], indirect=True)

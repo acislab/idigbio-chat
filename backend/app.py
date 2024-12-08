@@ -1,16 +1,13 @@
 import os
 from functools import wraps
+from typing import Iterator
 from uuid import uuid4
 
-import jose
-import requests
 import tomli
 from dotenv import load_dotenv
 from flask import Flask, jsonify, request, render_template, stream_with_context, redirect, url_for, current_app, \
     Blueprint, session
 from flask_cors import CORS
-from jose import jwt
-from keycloak import KeycloakOpenID
 from pydantic.v1.utils import deep_update
 from sqlalchemy import create_engine
 from typing_extensions import Optional
@@ -18,10 +15,10 @@ from typing_extensions import Optional
 import chat
 import search.api
 import search.demo
-from chat.messages import AiProcessingMessage, stream_messages
+from chat.messages import stream_messages, Message
 from extensions.flask_redis import FlaskRedis
 from extensions.user_auth import UserAuth, AuthenticationError
-from extensions.user_data import UserData, UserMeta, User
+from extensions.user_data import UserData, User
 from flask_session import Session
 from nlp.ai import AI
 from storage.database import DatabaseEngine
@@ -45,7 +42,7 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
 
     with open("../config.toml.template", "rb") as f:
         defaults = tomli.load(f)
-        app.config.update(defaults)
+        app.config = deep_update(app.config, defaults)
 
     if config_dict:
         app.config = deep_update(app.config, config_dict)
@@ -131,21 +128,16 @@ def chat_api(user: User, conversation_id: str):
             }
         ]
     """
-    # print("REQUEST:", dict(session), request.json)
-
     user_message = request.json["value"]
     print(user)
 
     if user is None:
-        return jsonify({"message": "User must be authenticated to access this endpoint."}), 401
-    else:
-        if not user_data.user_exists(user.user_id, temp=False):
-            return jsonify({"message": "Something went wrong. Try logging in again."}), 500
+        return jsonify(error="Unauthorized"), 401
 
-        conversation = user_data.get_or_create_conversation(conversation_id, user.user_id)
+    if not user_data.user_exists(user.user_id, temp=False):
+        return jsonify({"message": "Something went wrong. Try logging in again."}), 500
 
-        message_stream = chat.api.chat(ai, conversation, user_message)
-
+    message_stream = _build_chat_response(user, conversation_id, user_message)
     text_stream = stream_messages(message_stream)
 
     return current_app.response_class(stream_with_context(text_stream), mimetype="application/json")
@@ -154,22 +146,30 @@ def chat_api(user: User, conversation_id: str):
 @plan.route("/chat", methods=["POST"])
 @get_conversation_id
 def chat_unprotected(conversation_id: str):
-    user_message = request.json["value"]
+    user_message = request.json.get("value", "")
     user = user_data.get_temp_user()
-    if user is None:
-        if "not a robot" in user_message.lower():
-            user = user_data.make_temp_user()
-            conversation = user_data.get_or_create_conversation(conversation_id, user.user_id)
-            message_stream = chat.api.greet(ai, conversation, user_message)
-        else:
-            message_stream = chat.api.are_you_a_robot()
-    else:
-        conversation = user_data.get_or_create_conversation(conversation_id, user.user_id)
-        message_stream = chat.api.chat(ai, conversation, user_message)
 
+    if user_message and "not a robot" in user_message.lower():
+        user = user_data.make_temp_user()
+
+    message_stream = _build_chat_response(user, conversation_id, user_message)
     text_stream = stream_messages(message_stream)
 
     return current_app.response_class(stream_with_context(text_stream), mimetype="application/json")
+
+
+def _build_chat_response(user: User, conversation_id: str, user_message: Optional[str]) -> Iterator[
+    Message]:
+    if not user_message and current_app.config["CHAT"]["SHOW_INTRO_MESSAGE"]:
+        yield from chat.api.intro()
+
+    if user is None:
+        yield from chat.api.are_you_a_robot()
+        return
+
+    if user_message:
+        conversation = user_data.get_or_create_conversation(conversation_id, user.user_id)
+        yield from chat.api.chat(ai, conversation, user_message)
 
 
 @plan.route("/search/generate_rq", methods=["POST"])

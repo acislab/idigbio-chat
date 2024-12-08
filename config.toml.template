@@ -10,6 +10,7 @@ SESSION_TYPE = "redis"
 
 [CHAT]
 SAFE_MODE = true
+SHOW_INTRO_MESSAGE = true
 
 [REDIS]
 URI = "" # Leave empty to set up a temporary Redis instance. May contain environment variables.

@@ -14,9 +14,8 @@ def are_you_a_robot() -> Iterator[Message]:
     yield AiChatMessage("Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
 
 
-def greet(ai: AI, conversation: Conversation, user_message: str) -> Iterator[Message]:
-    conversation.append(UserMessage(user_message))
-    return _respond_conversationally(ai, conversation, user_message)
+def intro() -> Iterator[Message]:
+    yield AiChatMessage(HELP_MESSAGE)
 
 
 def chat(ai: AI, conversation: Conversation, user_text_message: str) -> Iterator[Message]:
@@ -24,9 +23,9 @@ def chat(ai: AI, conversation: Conversation, user_text_message: str) -> Iterator
 
     response = _make_response(ai, conversation, user_text_message)
 
-    for ai_message in response:
-        yield ai_message
-        conversation.append(ai_message)
+    for message in response:
+        yield message
+        conversation.append(message)
 
 
 def _handle_individual_request(ai: AI, conversation: Conversation, request: str) -> Iterator[Message]:
@@ -71,8 +70,8 @@ def _make_response(ai: AI, conversation: Conversation, user_message: str) -> Ite
 
 
 HELP_MESSAGE = """\
-This is a prototype chatbot that intelligently uses the iDigBio portal to find and discover species
-occurrence records and their media.
+This is a prototype chatbot that intelligently uses the iDigBio portal to 
+find and discover species occurrence records and their associated media.
 
 Here are some examples of questions this chatbot can answer:
 
@@ -80,11 +79,14 @@ Here are some examples of questions this chatbot can answer:
 * "Find records of *Acer saccharum* that have images in iDigBio"
 * "Show a map of *Ursus arctos* occurrences"
 * "What species has the most reported occurrences in Okinawa, Japan?"
+* "Where can I find *Alligator mississippiensis*?"
+
+Try to be as precise as possible, asking questions that rely solely on the information available in biodiversity 
+record data. For example, identify species using their scientific names rather than their common names. Avoid asking 
+questions that require expert knowledge to answer.
 
 If you'd like to provide feedback or want to know more about this service, you can reach the
 developers at https://github.com/acislab/idigbio-chat/issues.
-
-Type "help" to repeat this message.
 """
 
 

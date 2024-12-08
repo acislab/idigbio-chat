@@ -14,8 +14,10 @@ from storage.database import DatabaseEngine
 @pytest.fixture(params=[({"config_overrides": None},)])
 def app(request):
     test_config = {
+        "SESSION_PERMANENT": True,
         "CHAT": {
             "SAFE_MODE": False,
+            "SHOW_INTRO_MESSAGE": True,
         },
     }
 
@@ -38,10 +40,7 @@ def client(app):
         yield c
 
 
-def chat(client, message, conversation_id: Optional[str] = None) -> list[dict]:
-    if not conversation_id:
-        conversation_id = "7141b7e1-d5f6-40c1-b032-118aece4e708"
-
+def chat(client, message, conversation_id="7141b7e1-d5f6-40c1-b032-118aece4e708") -> list[dict]:
     wrapped_response: Iterable[bytes] = client.post('/chat', json={
         "type": "user_text_message",
         "value": message,
