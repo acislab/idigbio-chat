@@ -241,9 +241,6 @@ def chat_api(user: User, conversation_id: str):
 
         message_stream = chat.api.chat(ai, conversation, user_message)
 
-    if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
-        message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
-
     text_stream = stream_messages(message_stream)
 
     return current_app.response_class(stream_with_context(text_stream), mimetype="application/json")
@@ -264,9 +261,6 @@ def chat_unprotected(conversation_id: str):
     else:
         conversation = user_data.get_or_create_conversation(conversation_id, user.user_id)
         message_stream = chat.api.chat(ai, conversation, user_message)
-
-    if not current_app.config["CHAT"]["SHOW_PROCESSING_MESSAGES"]:
-        message_stream = filter(lambda m: not isinstance(m, AiProcessingMessage), message_stream)
 
     text_stream = stream_messages(message_stream)
 
