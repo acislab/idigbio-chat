@@ -46,18 +46,21 @@ empty_user_meta = UserMeta(
 
 
 class UserData:
-    kc: KeycloakOpenID
-    db: DatabaseEngine
+    _kc: KeycloakOpenID
+    _db: DatabaseEngine
 
     def init_app(self, app: Flask, kc: KeycloakOpenID, db: DatabaseEngine):
-        self.kc = kc
-        self.db = db
+        self._kc = kc
+        self._db = db
 
-    def temp_user_exists(self, user_id: str):
-        return self.db.temp_user_exists(user_id)
+    def user_exists(self, user_id: str, temp: bool):
+        if temp:
+            return self._db.temp_user_exists(user_id)
+        else:
+            return self._db.user_exists(user_id)
 
     def get_temp_user(self) -> User | None:
-        if "id" not in flask.session or not self.temp_user_exists(flask.session["id"]):
+        if "id" not in flask.session or not self.user_exists(flask.session["id"], True):
             if current_app.config["CHAT"]["SAFE_MODE"]:
                 return None  # Defer user creation until passing the robo check
             else:
@@ -74,7 +77,7 @@ class UserData:
         flask.session["id"] = user_id
 
         user = User(user_id, empty_user_meta)
-        self.db.insert_user({
+        self._db.insert_user({
             "id": user_id,
             "temp": True
         })
@@ -82,28 +85,28 @@ class UserData:
         return user
 
     def login(self, auth_code):
-        token = self.kc.token(
+        token = self._kc.token(
             grant_type="authorization_code",
             code=auth_code,
             redirect_uri=request.root_url,
         )
-        userinfo = self.kc.userinfo(token["access_token"])
+        userinfo = self._kc.userinfo(token["access_token"])
 
         flask.session["user"] = userinfo
         flask.session["token"] = token
 
-        if not self.db.user_exists(userinfo["sub"]):
-            self.db.insert_user(userinfo)
+        if not self._db.user_exists(userinfo["sub"]):
+            self._db.insert_user(userinfo)
 
         return userinfo
 
     def logout(self):
         flask.session.clear()
         flask.session.pop("session_key", None)
-        self.kc.logout(refresh_token=None)
+        self._kc.logout(refresh_token=None)
 
     def stream_conversation_for_frontend(self, conversation_id: str):
-        return self.db.stream_conversation_for_frontend(conversation_id)
+        return self._db.stream_conversation_for_frontend(conversation_id)
 
 # class UserEntity(db.Model):
 #     __tablename__ = 'user_entity'
