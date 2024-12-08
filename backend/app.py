@@ -20,12 +20,14 @@ import search.api
 import search.demo
 from chat.messages import AiProcessingMessage, stream_messages
 from extensions.flask_redis import FlaskRedis
+from extensions.user_auth import UserAuth
 from extensions.user_data import UserData, UserMeta, User
 from flask_session import Session
 from nlp.ai import AI
 from storage.database import DatabaseEngine
 
 redis = FlaskRedis()
+user_auth = UserAuth()
 user_data = UserData()
 ai = AI()
 
@@ -61,7 +63,8 @@ def create_app(config_dict: Optional[dict], database: DatabaseEngine):
 
     redis.init_app(app)
 
-    user_data.init_app(app, kc, database)
+    user_auth.init_app(app, kc)
+    user_data.init_app(app, database)
 
     CORS(app, supports_credentials=True)
     Session(app)
@@ -143,15 +146,7 @@ def requires_auth(f):
             if not rsa_key:
                 return jsonify({"message": "Unable to find appropriate key"}), 401
 
-            payload = jwt.decode(
-                token,
-                rsa_key,
-                algorithms=["RS256"],
-                options={"verify_aud": False},
-                issuer=f"{user_data._kc.connection.base_url}/realms/{user_data._kc.realm_name}"
-            )
-
-            user_id, user_meta = read_user_token_payload(payload)
+            user_id, user_meta = read_user_token(token, rsa_key)
             user = User(user_id, user_meta)
 
             return f(user=user, *args, **kwargs)
@@ -165,16 +160,24 @@ def requires_auth(f):
     return decorated
 
 
-def read_user_token_payload(token_payload: dict) -> (str, UserMeta):
-    user_id = token_payload.get("sub")
+def read_user_token(token, rsa_key) -> (str, UserMeta):
+    payload = jwt.decode(
+        token,
+        rsa_key,
+        algorithms=["RS256"],
+        options={"verify_aud": False},
+        issuer=user_auth.token_issuer
+    )
+
+    user_id = payload.get("sub")
     return (
         user_id,
         UserMeta(
-            username=token_payload.get("preferred_username"),
-            given_name=token_payload.get("preferred_username"),
-            family_name=token_payload.get("family_name"),
-            email=token_payload.get("email"),
-            roles=token_payload.get("realm_access", {}).get("roles", [])
+            username=payload.get("preferred_username"),
+            given_name=payload.get("preferred_username"),
+            family_name=payload.get("family_name"),
+            email=payload.get("email"),
+            roles=payload.get("realm_access", {}).get("roles", [])
         )
     )
 
@@ -306,7 +309,8 @@ def textbox_demo():
 @plan.route("/api/login", methods=["POST"])
 def login():
     auth_code = request.json.get("code")
-    userinfo = user_data.login(auth_code)
+    userinfo = user_auth.login(auth_code)
+    user_data.register_user(userinfo)
 
     return jsonify({
         "message": "Login Successful.",
@@ -316,7 +320,8 @@ def login():
 
 @plan.route("/api/logout", methods=["POST"])
 def logout():
-    user_data.logout()
+    session.clear()
+    user_auth.logout()
     return jsonify({"message": "Logged out successfully"})
 
 
@@ -331,7 +336,7 @@ def refresh_token():
     if not token:
         return jsonify({"error": "No refresh token found"}), 401
 
-    token = user_data._kc.refresh_token(token)
+    token = user_auth.refresh_token(token)
     session["token"] = token
 
     return jsonify({

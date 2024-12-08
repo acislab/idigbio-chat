@@ -46,11 +46,9 @@ empty_user_meta = UserMeta(
 
 
 class UserData:
-    _kc: KeycloakOpenID
     _db: DatabaseEngine
 
-    def init_app(self, app: Flask, kc: KeycloakOpenID, db: DatabaseEngine):
-        self._kc = kc
+    def init_app(self, app: Flask, db: DatabaseEngine):
         self._db = db
 
     def user_exists(self, user_id: str, temp: bool):
@@ -84,26 +82,11 @@ class UserData:
 
         return user
 
-    def login(self, auth_code):
-        token = self._kc.token(
-            grant_type="authorization_code",
-            code=auth_code,
-            redirect_uri=request.root_url,
-        )
-        userinfo = self._kc.userinfo(token["access_token"])
-
-        flask.session["user"] = userinfo
-        flask.session["token"] = token
-
+    def register_user(self, userinfo: dict[str, str]):
         if not self._db.user_exists(userinfo["sub"]):
             self._db.insert_user(userinfo)
 
         return userinfo
-
-    def logout(self):
-        flask.session.clear()
-        flask.session.pop("session_key", None)
-        self._kc.logout(refresh_token=None)
 
     def stream_conversation_for_frontend(self, conversation_id: str):
         return self._db.stream_conversation_for_frontend(conversation_id)
