@@ -108,6 +108,12 @@ class UserData:
     def stream_conversation_for_frontend(self, conversation_id: str):
         return self._db.stream_conversation_for_frontend(conversation_id)
 
+    def get_or_create_conversation(self, conversation_id, user_id: str):
+        return self._db.get_or_create_conversation(conversation_id, user_id)
+
+    def get_user_conversations(self, user_id: str):
+        return self._db.get_user_conversations(user_id)
+
 # class UserEntity(db.Model):
 #     __tablename__ = 'user_entity'
 #     id = db.Column(db.String, primary_key=True)  # Assuming it's a string ID from Keycloak

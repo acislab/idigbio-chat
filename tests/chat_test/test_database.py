@@ -60,7 +60,7 @@ def test_conversation_tracking(db: DatabaseEngine):
         "title": "A friendly chat"
     }]
 
-    conv = db.get_conversation_history(conv_id)
+    conv = db.get_conversation(conv_id)
     assert conv.history[0].read_all() == {
         "id": message_id,
         "type": "user_text_message",

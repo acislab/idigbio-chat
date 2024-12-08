@@ -55,7 +55,7 @@ class DatabaseEngine:
                      .where(users.c.id == user_id)
                      .where(users.c.temp == False))
 
-            result = session.execute(query, {"user_id": user_id}).fetchall()
+            result = session.execute(query).fetchall()
 
             return len(result) == 1
 
@@ -66,7 +66,7 @@ class DatabaseEngine:
                      .where(users.c.temp)
                      .limit(1))
 
-            result = session.execute(query, {"user_id": user_id}).fetchall()
+            result = session.execute(query).fetchall()
 
             return len(result) == 1
 
@@ -77,7 +77,7 @@ class DatabaseEngine:
                      .where(users.c.temp == False)
                      .limit(1))
 
-            result = session.execute(query, {"user_id": user_id})
+            result = session.execute(query)
 
             return result.fetchall()
 
@@ -99,7 +99,7 @@ class DatabaseEngine:
         with self.sessions.begin() as session:
             session.execute(messages.insert().values(new_message))
 
-    def get_conversation_history(self, conversation_id: str) -> Conversation:
+    def get_conversation(self, conversation_id: str) -> Conversation:
         cold_messages = []
         with self.sessions.begin() as session:
             query = (messages.select()
@@ -109,13 +109,12 @@ class DatabaseEngine:
             conversation_messages = result.fetchall()
 
             for message in conversation_messages:
-                message_dict = message._asdict()
                 cold_messages.append(ColdMessage(
-                    id=message_dict["id"],
-                    type=message_dict["type"],
-                    tool_name=message_dict["tool"],
-                    openai_messages=message_dict["openai_messages"],
-                    frontend_messages=message_dict["frontend_messages"]
+                    id=message.id,
+                    type=message.type,
+                    tool_name=message.tool,
+                    openai_messages=message.openai_messages,
+                    frontend_messages=message.frontend_messages
                 ))
 
             conversation = Conversation(
@@ -157,11 +156,11 @@ class DatabaseEngine:
     def get_or_create_conversation(self, conversation_id: str, user_id: str) -> Conversation:
         if not self.conversation_history_exists(conversation_id):
             self.create_conversation_history(conversation_id, user_id, "New Chat")
-        return self.get_conversation_history(conversation_id)
+        return self.get_conversation(conversation_id)
 
     def get_user_conversations(self, user_id: str) -> list[dict[str, str]]:
         with self.sessions.begin() as session:
-            query = (alchemy.select(conversations.c.id, conversations.c.title)
+            query = (select(conversations.c.id, conversations.c.title)
                      .where(conversations.c.user_id == user_id)
                      .order_by(desc(conversations.c.created)))
 
