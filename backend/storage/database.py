@@ -1,6 +1,6 @@
 import sqlalchemy as alchemy
 from sqlalchemy import Engine, MetaData, Table, Column, String, ForeignKey, DateTime, \
-    func, JSON, insert, text, desc, Boolean
+    func, JSON, desc, Boolean
 
 from chat.conversation import Conversation
 from chat.messages import ColdMessage
@@ -44,40 +44,36 @@ class DatabaseEngine:
 
     def __init__(self, engine: Engine) -> None:
         self.engine = engine
-        # metadata.drop_all(self.engine)
         metadata.create_all(self.engine)
 
     def user_exists(self, user_id: str):
         with self.engine.connect() as conn:
-            query = text(f"""
-                        SELECT 1
-                        FROM users
-                        WHERE id = :user_id AND NOT temp
-                        LIMIT 1;
-                    """)
+            query = (users.select()
+                     .where(users.c.id == user_id)
+                     .where(users.c.temp == False))
+
             result = conn.execute(query, {"user_id": user_id}).fetchall()
 
             return len(result) == 1
 
     def temp_user_exists(self, user_id: str):
         with self.engine.connect() as conn:
-            query = text(f"""
-                        SELECT 1
-                        FROM users
-                        WHERE id = :user_id AND temp
-                        LIMIT 1;
-                    """)
+            query = (users.select()
+                     .where(users.c.id == user_id)
+                     .where(users.c.temp)
+                     .limit(1))
+
             result = conn.execute(query, {"user_id": user_id}).fetchall()
 
             return len(result) == 1
 
     def get_user(self, user_id: str):
         with self.engine.connect() as conn:
-            query = text(f"""
-                        SELECT *
-                        FROM users
-                        WHERE user_id = :user_id;
-                    """)
+            query = (users.select()
+                     .where(users.c.id == user_id)
+                     .where(users.c.temp == False)
+                     .limit(1))
+
             result = conn.execute(query, {"user_id": user_id})
 
             return result.fetchall()
@@ -86,7 +82,7 @@ class DatabaseEngine:
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
-                conn.execute(insert(users).values(data))
+                conn.execute(users.insert().values(data))
                 trans.commit()
             except Exception as e:
                 trans.rollback()
@@ -107,7 +103,7 @@ class DatabaseEngine:
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
-                result = conn.execute(insert(messages).values(new_message))
+                conn.execute(messages.insert().values(new_message))
                 trans.commit()
             except Exception as e:
                 trans.rollback()
@@ -116,7 +112,9 @@ class DatabaseEngine:
     def get_conversation_history(self, conversation_id: str) -> Conversation:
         cold_messages = []
         with self.engine.connect() as conn:
-            query = messages.select().where(messages.c.conversation_id == conversation_id)
+            query = (messages.select()
+                     .where(messages.c.conversation_id == conversation_id))
+
             result = conn.execute(query)
             conversation_messages = result.fetchall()
 
@@ -129,6 +127,7 @@ class DatabaseEngine:
                     openai_messages=message_dict["openai_messages"],
                     frontend_messages=message_dict["frontend_messages"]
                 ))
+
         conversation = Conversation(
             history=cold_messages,
             recorder=self.write_message_to_storage,
@@ -136,9 +135,11 @@ class DatabaseEngine:
         )
         return conversation
 
-    def get_conversation_messages(self, conversation_id: str) -> Conversation:
+    def get_conversation_messages(self, conversation_id: str) -> list[dict[str, str]]:
         with self.engine.connect() as conn:
-            query = messages.select().where(messages.c.conversation_id == str(conversation_id))
+            query = (messages.select()
+                     .where(messages.c.conversation_id == str(conversation_id)))
+
             result = conn.execute(query)
             conversation_messages = result.fetchall()
             simplified_messages = [
@@ -149,21 +150,17 @@ class DatabaseEngine:
                 for message in conversation_messages
             ]
 
-        return simplified_messages
+            return simplified_messages
 
     def conversation_history_exists(self, conversation_id: str):
         with self.engine.connect() as conn:
-            query = text("""
-                        SELECT 1
-                        FROM conversations
-                        WHERE id = :conversation_id
-                        LIMIT 1;
-                    """)
-            result = conn.execute(query, {"conversation_id": conversation_id}).fetchall()
+            query = (conversations.select()
+                     .where(conversations.c.id == conversation_id)
+                     .limit(1))
 
-            if len(result) == 1:
-                return True
-            return False
+            result = conn.execute(query).fetchall()
+
+            return len(result) == 1
 
     def create_conversation_history(self, conversation_id: str, user_id: str, title: str):
         new_conversation = {
@@ -175,7 +172,7 @@ class DatabaseEngine:
         with self.engine.connect() as conn:
             trans = conn.begin()
             try:
-                result = conn.execute(insert(conversations).values(new_conversation))
+                conn.execute(conversations.insert().values(new_conversation))
                 trans.commit()
             except Exception as e:
                 trans.rollback()
@@ -186,11 +183,13 @@ class DatabaseEngine:
             self.create_conversation_history(conversation_id, user_id, "New Chat")
         return self.get_conversation_history(conversation_id)
 
-    def get_user_conversations(self, user_id: str) -> list[str]:
+    def get_user_conversations(self, user_id: str) -> list[dict[str, str]]:
         with self.engine.connect() as conn:
-            query = alchemy.select(conversations.c.id, conversations.c.title).where(
-                conversations.c.user_id == user_id).order_by(desc(conversations.c.created))
+            query = (alchemy.select(conversations.c.id, conversations.c.title)
+                     .where(conversations.c.user_id == user_id)
+                     .order_by(desc(conversations.c.created)))
+
             result = conn.execute(query)
 
             ids = [{"id": row[0], "title": row[1]} for row in result.fetchall()]
-        return ids
+            return ids

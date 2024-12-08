@@ -30,10 +30,10 @@ class ColdMessage:
         for k, v in kwargs.items():
             self.__raw[k] = v
 
-    def read(self, key):
+    def read(self, key) -> Any:
         return self.__raw[key]
 
-    def read_all(self):
+    def read_all(self) -> dict[str, Any]:
         return {k: self.read(k) for k in self.__raw}
 
 
