@@ -75,11 +75,12 @@ find and discover species occurrence records and their associated media.
 
 Here are some examples of questions this chatbot can answer:
 
-* "How many records does iDigBio have for occurrences in Canada?"
-* "Find records of *Acer saccharum* that have images in iDigBio"
-* "Show a map of *Ursus arctos* occurrences"
-* "What species has the most reported occurrences in Okinawa, Japan?"
-* "Where can I find *Alligator mississippiensis*?"
+- "How many records does iDigBio have for occurrences in Canada?"
+- "Find records of *Acer saccharum* that have images in iDigBio"
+- "Show a map of *Ursus arctos* occurrences"
+- "What species has the most reported occurrences in Okinawa, Japan?"
+- "Where can I find *Alligator mississippiensis*?"
+
 
 Try to be as precise as possible, asking questions that rely solely on the information available in biodiversity 
 record data. For example, identify species using their scientific names rather than their common names. Avoid asking 
