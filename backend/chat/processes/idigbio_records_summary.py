@@ -6,9 +6,9 @@ from instructor.exceptions import InstructorRetryException
 from tenacity import Retrying
 
 import idigbio_util
-import search
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
+from chat.processes import idigbio_records_search
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
 from nlp.ai import AI, StopOnTerminalErrorOrMaxAttempts, AIGenerationException
@@ -86,7 +86,7 @@ def _generate_records_summary_parameters(ai: AI, conversation: Conversation, req
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioSummaryApiParameters,
-            messages=conversation.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
+            messages=conversation.render_to_openai(system_message=idigbio_records_search.SYSTEM_PROMPT,
                                                    request=request),
             max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
         )

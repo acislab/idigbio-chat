@@ -2,9 +2,9 @@ from attr import dataclass
 from instructor.exceptions import InstructorRetryException
 from tenacity import Retrying
 
-import search
 from chat.content_streams import StreamedString
 from chat.conversation import Conversation
+from chat.processes import idigbio_records_search
 from chat.processes.process import Process
 from chat.utils.json import make_pretty_json_string
 from idigbio_util import query_idigbio_api, make_idigbio_api_url, make_idigbio_portal_url
@@ -73,7 +73,7 @@ def _generate_records_download_parameters(ai: AI, conversation: Conversation, re
         model="gpt-4o",
         temperature=0,
         response_model=IDigBioDownloadApiParameters,
-        messages=conversation.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
+        messages=conversation.render_to_openai(system_message=idigbio_records_search.SYSTEM_PROMPT,
                                                request=request),
     )
 
@@ -87,7 +87,7 @@ def _generate_records_search_parameters(ai: AI, conversation: Conversation, requ
             model="gpt-4o",
             temperature=0,
             response_model=IDigBioRecordsApiParameters,
-            messages=conversation.render_to_openai(system_message=search.functions.generate_rq.SYSTEM_PROMPT,
+            messages=conversation.render_to_openai(system_message=idigbio_records_search.SYSTEM_PROMPT,
                                                    request=request),
             max_retries=Retrying(stop=StopOnTerminalErrorOrMaxAttempts(3))
         )
