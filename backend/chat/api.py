@@ -11,7 +11,7 @@ tool_lookup = {t.name: t for t in all_tools}
 
 
 def are_you_a_robot() -> Iterator[Message]:
-    yield AiChatMessage("Hi! Before we chat, please confirm you are a real person by telling me \"I am not a robot\".")
+    yield AiChatMessage("Before we can chat, please confirm you are a real person by telling me \"I am not a robot\".")
 
 
 def intro() -> Iterator[Message]:
