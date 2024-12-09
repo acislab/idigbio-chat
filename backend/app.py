@@ -13,8 +13,6 @@ from sqlalchemy import create_engine
 from typing_extensions import Optional
 
 import chat
-import search.api
-import search.demo
 from chat.messages import stream_messages, Message
 from extensions.flask_redis import FlaskRedis
 from extensions.user_auth import UserAuth, AuthenticationError
@@ -172,40 +170,7 @@ def _build_chat_response(user: User, conversation_id: str, user_message: Optiona
         yield from chat.api.chat(ai, conversation, user_message)
 
 
-@plan.route("/search/generate_rq", methods=["POST"])
-def generate_rq():
-    print("REQUEST:", request.json)
-    ai = AI()
-    response = search.api.generate_rq(ai, request.json)
-    print("RESPONSE:", response)
-
-    return response
-
-
-@plan.route("/search/update_input", methods=["POST"])
-def update_input():
-    print("REQUEST:", request.json)
-    ai = AI()
-    response = search.api.update_input(ai, request.json)
-    print("RESPONSE:", response)
-
-    return response
-
-
-@plan.route("/search/demo/", methods=["GET", "POST"])
-def textbox_demo():
-    if request.method == "GET":
-        return render_template("textbox.html.j2")
-    elif request.method == "POST":
-        print("REQUEST:", request.form)
-        ai = AI()
-        response = search.demo.run(ai, request.form)
-        print("RESPONSE:", response)
-
-        return render_template("textbox.html.j2", **response)
-
-
-@plan.route("/api/login", methods=["POST"])
+@plan.route("/login", methods=["POST"])
 def login():
     auth_code = request.json.get("code")
     userinfo = user_auth.login(auth_code)
@@ -217,19 +182,19 @@ def login():
     })
 
 
-@plan.route("/api/logout", methods=["POST"])
+@plan.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     user_auth.logout()
     return jsonify({"message": "Success"})
 
 
-@plan.route("/api/user", methods=["POST"])
+@plan.route("/user", methods=["POST"])
 def get_user():
     return jsonify(session["user"])
 
 
-@plan.route("/api/refresh-token", methods=["POST"])
+@plan.route("/refresh-token", methods=["POST"])
 def refresh_token():
     token = session.get("token", {}).get("refresh_token")
     if not token:
@@ -244,7 +209,7 @@ def refresh_token():
     })
 
 
-@plan.route("/api/conversations", methods=["POST"])
+@plan.route("/conversations", methods=["POST"])
 @requires_auth
 def get_conversations(user: User):
     if not user:
@@ -257,7 +222,7 @@ def get_conversations(user: User):
     })
 
 
-@plan.route("/api/get-conversation", methods=["POST"])
+@plan.route("/get-conversation", methods=["POST"])
 @requires_auth
 @get_conversation_id
 def get_conversation(user: User, conversation_id: str):
