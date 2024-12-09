@@ -70,24 +70,23 @@ def _make_response(ai: AI, conversation: Conversation, user_message: str) -> Ite
 
 
 HELP_MESSAGE = """\
-This is a prototype chatbot that intelligently uses the iDigBio portal to 
-find and discover species occurrence records and their associated media.
+This is a prototype chatbot that intelligently uses the iDigBio portal to find and discover species occurrence 
+records and their associated media.
 
 Here are some examples of questions this chatbot can answer:
 
-- "How many records does iDigBio have for occurrences in Canada?"
+- "How many species occurrences does iDigBio have for Canada?"
 - "Find records of *Acer saccharum* that have images in iDigBio"
 - "Show a map of *Ursus arctos* occurrences"
 - "What species has the most reported occurrences in Okinawa, Japan?"
 - "Where can I find *Alligator mississippiensis*?"
 
-
 Try to be as precise as possible, asking questions that rely solely on the information available in biodiversity 
 record data. For example, identify species using their scientific names rather than their common names. Avoid asking 
 questions that require expert knowledge to answer.
 
-If you'd like to provide feedback or want to know more about this service, you can reach the
-developers at https://github.com/acislab/idigbio-chat/issues.
+If you'd like to provide feedback or want to know more about this service, you can reach the developers through 
+[GitHub](https://github.com/acislab/idigbio-chat/issues).
 """
 
 
